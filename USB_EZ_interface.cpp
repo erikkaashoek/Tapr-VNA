@@ -381,7 +381,11 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 #define PhaseToQ(X) (short)( sin((X  + (cable_before + cable_after ) * freq / 1000000 ) * DEGR2RAD) * 1800 + 1850 )
 #define PhaseToI(X) (short)( cos((X  + (cable_before + cable_after ) * freq / 1000000 ) * DEGR2RAD) * 1800 + 1850 )
 #define Noise(X, Y) (short)( X * (1.0 +  Y * ((1.0 * rand() / RAND_MAX) - 0.5) ));
-#define NoiseLevel 0.02
+#define NoiseLevel 0.005
+#define MaxLevel 0
+#define MinLevel -57
+#define MaxDAC	3500
+#define MagDac(X)	((short)(MaxDAC * (X - MinLevel) / (MaxLevel - MinLevel))) 
 
 	/// Write TxBuffer to VNA (command),  readback the result to RxBuffer (response)
 bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
@@ -404,18 +408,18 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 
 
 	if (mode == M_SHORT) {
-		reflphase = -180;
-		reflmag = 0;
-		tranmag = -100;
+		reflphase = 0;
+		reflmag = -5;
+		tranmag = -55;
 		tranphase = 0;
 //		RxBuffer->ReflPI = PhaseToI(-180);
 //		RxBuffer->ReflPQ = PhaseToQ(-180) ;
 //		RxBuffer->ReflMQ = Noise(3700, NoiseLevel);
 	}
 	if (mode == M_OPEN) {
-		reflphase = 0;
-		reflmag = 0;
-		tranmag = -100;
+		reflphase = -180;
+		reflmag = -5;
+		tranmag = -55;
 		tranphase = 0;
 //		RxBuffer->ReflPI = PhaseToI(0);
 //		RxBuffer->ReflPQ = PhaseToQ(0);
@@ -423,8 +427,8 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 	}
 	if (mode == M_LOAD) {
 		reflphase = 0;
-		reflmag = -100;
-		tranmag = -100;
+		reflmag = -55;
+		tranmag = -55;
 		tranphase = 0;
 //		RxBuffer->ReflPI = PhaseToI(0);
 //		RxBuffer->ReflPQ = PhaseToQ(0);
@@ -455,8 +459,8 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 						BufferS[k] = RxBuf->TranPQLow;
 */
 		reflphase = 0;
-		reflmag = -100;
-		tranmag = 0;
+		reflmag = -50;
+		tranmag = -5;
 		tranphase = 0;
 
 
@@ -473,11 +477,11 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 	if (reply == VNA_REPLYTYPE_FULL) {
 		RxBuffer->ReflPI = PhaseToI(reflphase);
 		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
-		RxBuffer->ReflMQ = Noise(3200/(1-reflmag), NoiseLevel);
+		RxBuffer->ReflMQ = Noise(MagDac(reflmag), NoiseLevel);
 		RxBuffer->TranPI = PhaseToI(tranphase);
 		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
 		RxBuffer->TranMQHi = 3800;
-		RxBuffer->TranMQLo = Noise(3200/(1-tranmag), NoiseLevel);
+		RxBuffer->TranMQLo = Noise(MagDac(tranmag), NoiseLevel);
 		RxBuffer->TranMQMid = 3800;
 
 				RxBuffer->ReflMI = 0;
@@ -495,11 +499,11 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 	} else {
 		RxBuffer->ReflPI = PhaseToI(reflphase);
 		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
-		RxBuffer->ReflMQ = Noise(3200/(1-reflmag), NoiseLevel);
+		RxBuffer->ReflMQ = Noise(MagDac(reflmag), NoiseLevel);
 		RxBuffer->TranPI = PhaseToI(tranphase);
 		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
 		RxBuffer->TranMQHi = 3800;
-		RxBuffer->TranMQLo = Noise(3200/(1-tranmag), NoiseLevel);
+		RxBuffer->TranMQLo = Noise(MagDac(tranmag), NoiseLevel);
 		RxBuffer->TranMQMid = 3800;
 				RxBuffer->ReflMI = 0;
 				RxBuffer->Vref1 = 3800;

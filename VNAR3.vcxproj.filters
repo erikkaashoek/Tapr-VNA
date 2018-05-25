@@ -66,6 +66,9 @@
     <ClCompile Include="Mockup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AudioInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="About.h">
@@ -125,6 +128,9 @@
     <ClInclude Include="Mockup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AudioInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.ico">
@@ -169,6 +175,9 @@
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
     <EmbeddedResource Include="TextEntry.resX">
+      <Filter>Resource Files</Filter>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Mockup.resx">
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
   </ItemGroup>

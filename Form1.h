@@ -40,12 +40,13 @@ using the .NET style of Event Delegates.
 #include "CursorStatus.h"
 #include "TextEntry.h"
 #include "Fourier.h"
+#include "AudioInput.h"
 #include "TDRSetupDialog.h"
 #include "Constants.h"
 #include "Mockup.h"
-
 #include <complex>
 
+#define DEBUGAUDIO
 //#define DEBUGRAWTRANMAG		// display 3 raw transmission magnitude (0, -17, -34) ADc counts on rectangular screen
 //#define DEBUGRAWTRANHIPHASE	// display raw transmission phase ADC counts on rectangular screen
 //#define DEBUGRAWTRANLOPHASE	// display raw transmission low level phase ADC counts on rectangular screen
@@ -132,6 +133,8 @@ namespace VNAR3
 
 		bool WorkerCollect;				///< Work for VNA Thread to do
 
+		bool AudioCollect;				///< Work for VNA Thread to do
+
 		bool VNAConnected;				///< True if VNA is connected
 
 		bool PreCharge;					///< True when Integration factor changed. Worker thread should
@@ -154,7 +157,9 @@ namespace VNAR3
 		String^ CurrentUserDataPath;	///< Directory Path for application data specific to current user
 
 		Thread^ VNAWorkerThread;				///< Thread for VNA data gathering
+		Thread^ AudioThread;				    ///< Thread for audio data gathering
 		ThreadStart^ VNAWorkerThreadDelegate;	///< Threadstart points to method
+		ThreadStart^ AudioThreadDelegate;	    ///< Threadstart points to method
 
 		// Holds string that underlines the digit at position[FrequencyDigitIndex]
 		static array<String^>^ FrequencyDigitText = gcnew array<String^>{"-", "-_", "-__", "-____", "-_____",
@@ -2059,7 +2064,21 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 											// explicitly stop the VNAWorkerThread before terminating,
 											// normally using Environment::Exit
 
-		}
+			AudioThreadDelegate = gcnew ThreadStart(this, &Form1::Audio_Worker);
+			AudioThread = gcnew Thread(AudioThreadDelegate);
+			AudioThread->IsBackground = true;
+			AudioThread->Name = "Audio Thread";
+
+			// debug for VS2005 but it doesn't solve the cross-thread UI access problem
+			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
+
+			AudioCollect = false;			// nothing for worker thread to do yet
+			AudioThread->Start();		// start up the thread
+
+			if(OpenAudio())
+			{}
+		 
+}
 
 private: System::Void printItem_Click(System::Object^  sender, System::EventArgs^  e)
     {
@@ -2506,6 +2525,16 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflMQ * scopeDisp.Height / 3800;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 #endif
+
+#ifdef DEBUGAUDIO
+				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
+				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+0] * scopeDisp.Height / 70000;
+				gr->DrawLine(penS21Mag, traceStart, traceStop);
+				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+1] * scopeDisp.Height / 70000;
+				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+1] * scopeDisp.Height / 70000;
+				gr->DrawLine(penS11Phs, traceStart, traceStop);
+#endif
+
 
 
 #ifdef DEBUGRAWREFV
@@ -4534,10 +4563,10 @@ private: System::Void VNA_Initialize(void)
 
 
 	// Open the target 8051 binary file, and prepare to download it
-			FileStream^ fs;
+#if 0
 			array<Byte>^ Codebuffer;
 			int Length;
-#if 0
+			FileStream^ fs;
 
 			OpenFileDialog^ infile = gcnew OpenFileDialog();
 
@@ -4585,9 +4614,9 @@ private: System::Void VNA_Initialize(void)
 				if (!result)
 					MessageBox::Show("VNA Device Error: Stop","Error");
 
-				result = VNA->Download(Codebuffer, Length, 0);
-				if (!result)
-					MessageBox::Show("VNA Device Error: Download","Error");
+//				result = VNA->Download(Codebuffer, Length, 0);
+//				if (!result)
+//					MessageBox::Show("VNA Device Error: Download","Error");
 
 				result = VNA->Start();				// Start the 8051 processor
 				if (!result)
@@ -5007,6 +5036,402 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 		}	//end	while(true)
 
 		}
+
+		/// Background thread that reads & writes VNA hardware
+private: System::Void Audio_Worker(void)			// runs as a background thread
+		{
+
+		VNA_RXBUFFER * RxBuf = new VNA_RXBUFFER;
+		VNA_RXBUFF_FAST * RxBufast = new VNA_RXBUFF_FAST;
+		VNA_TXBUFFER * TxBuf = new VNA_TXBUFFER;
+
+		long Keep, TotalSize;			// Amount of exponential integrator to keep, and total integrator count
+
+		// Buffers to hold integrand for integration of sweep values
+		// New in V1.5
+
+		array<MeasurementSet^>^ ITrace;
+		ITrace = gcnew array<MeasurementSet^>(1024);
+		for (int i=0; i<1024; i++)
+			ITrace[i] = gcnew MeasurementSet;
+
+
+
+		// hold temporary sweep results if glitch is detected in slow glitch mode only
+#ifndef FASTGLITCH
+		int tempSweep1 __gc[], tempSweep2 __gc[], tempSweep3 __gc[], tempSweep4 __gc[];
+		int tempSweep5 __gc[], tempSweep6 __gc[], tempSweep7 __gc[], tempSweep8 __gc[];
+        int tempSweep9 __gc[], tempSweep10 __gc[], tempSweep11 __gc[], tempSweep12 __gc[];
+		int tempSweep13 __gc[], tempSweep14 __gc[];
+
+		tempSweep1 = new int __gc[7];
+		tempSweep2 = new int __gc[7];
+		tempSweep3 = new int __gc[7];
+		tempSweep4 = new int __gc[7];
+		tempSweep5 = new int __gc[7];
+		tempSweep6 = new int __gc[7];
+		tempSweep7 = new int __gc[7];
+		tempSweep8 = new int __gc[7];
+		tempSweep9 = new int __gc[7];
+		tempSweep10 = new int __gc[7];
+		tempSweep11 = new int __gc[7];
+		tempSweep12 = new int __gc[7];
+		tempSweep13 = new int __gc[7];
+		tempSweep14 = new int __gc[7];
+
+#endif
+
+
+		while(true)								// thread runs until terminated by program exit
+		{
+			while(AudioCollect == false)		// while nothing to do
+			{
+				if(TDRItem->Checked == false)
+				{
+					menuItem5->Enabled = true;		// allow freq grid to be changed
+					calibrateMenu->Enabled = true;	// enable calibration menu launch while collecting data
+				}
+
+				AudioThread->Sleep(500);	// go to sleep for 500 milliseconds (since nothing to do)
+			}
+	
+		menuItem5->Enabled = false;				// disable change of FreqGrid while collecting data
+		calibrateMenu->Enabled = false;			// disable calibration menu launch while collecting data
+
+		for (int i=0; i<FG->points; i++)			// Save current values to integrand
+		{
+			ITrace[i]->ReflMI = trace[i]->ReflMI;
+			ITrace[i]->ReflMQ = trace[i]->ReflMQ;
+			ITrace[i]->ReflPI = trace[i]->ReflPI;
+			ITrace[i]->ReflPQ = trace[i]->ReflPQ;
+			ITrace[i]->TranMI = trace[i]->TranMI;
+			ITrace[i]->TranMQHi = trace[i]->TranMQHi;
+			ITrace[i]->TranPI = trace[i]->TranPI;
+			ITrace[i]->TranPQ = trace[i]->TranPQ;
+			ITrace[i]->TranMQLo = trace[i]->TranMQLo;
+			ITrace[i]->TranMQMid = trace[i]->TranMQMid;
+			ITrace[i]->TranPILow = trace[i]->TranPILow;
+			ITrace[i]->TranPQLow = trace[i]->TranPQLow;
+		}
+
+
+		// Disable !!!!!!!!!!!!!!!!!!!
+		if (false && String::Compare(SweepSpd->Text, "Fast") == 0)				// if fast reading mode
+		{
+
+			TxBuf->ReplyType = VNA_REPLYTYPE_FAST;
+			TxBuf->MeasureDelay = 0;					// Fastest sweep speed
+			TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
+			TxBuf->IDAClevelHi = TxLevLinear(txLevel);	// Set High Tx Level
+			TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Set Low TX Level
+			TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Set Mid TX Level
+
+			// Set the Lo phase tran measurement level for the target   09-30-2007
+			TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Set Lo Phase Level (not used in FAST)
+
+
+			for (int m=0; m<FG->points; m+=4)	// measure 4 frequencies at a time
+			{
+
+				// calculate linear frequency spot for each sweep
+
+				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
+				TxBuf->Freq2 = FG->DDS(FG->Frequency(m+1));
+				TxBuf->Freq3 = FG->DDS(FG->Frequency(m+2));
+				TxBuf->Freq4 = FG->DDS(FG->Frequency(m+3));
+
+				VNA->WriteRead(TxBuf, (VNA_RXBUFFER *)RxBufast);
+
+				// Save received data by grid point
+
+				trace[m]->ReflMQ = RxBufast->ReflMQ1;
+				trace[m+1]->ReflMQ = RxBufast->ReflMQ2;
+				trace[m+2]->ReflMQ = RxBufast->ReflMQ3;
+				trace[m+3]->ReflMQ = RxBufast->ReflMQ4; 
+
+				trace[m]->ReflPI = RxBufast->ReflPI1;
+				trace[m+1]->ReflPI = RxBufast->ReflPI2;
+				trace[m+2]->ReflPI = RxBufast->ReflPI3;
+				trace[m+3]->ReflPI = RxBufast->ReflPI4; 
+
+				trace[m]->ReflPQ = RxBufast->ReflPQ1;
+				trace[m+1]->ReflPQ = RxBufast->ReflPQ2;
+				trace[m+2]->ReflPQ = RxBufast->ReflPQ3;
+				trace[m+3]->ReflPQ = RxBufast->ReflPQ4; 
+
+				trace[m]->TranMQHi = RxBufast->TranMQ1Hi;
+				trace[m+1]->TranMQHi = RxBufast->TranMQ2Hi;
+				trace[m+2]->TranMQHi = RxBufast->TranMQ3Hi;
+				trace[m+3]->TranMQHi = RxBufast->TranMQ4Hi; 
+
+				trace[m]->TranPI = RxBufast->TranPI1;
+				trace[m+1]->TranPI = RxBufast->TranPI2;
+				trace[m+2]->TranPI = RxBufast->TranPI3;
+				trace[m+3]->TranPI = (RxBufast->TranPI4Mix & 0xFFF); // demultiplex TranPI4
+
+				trace[m]->TranPQ = RxBufast->TranPQ1;
+				trace[m+1]->TranPQ = RxBufast->TranPQ2;
+				trace[m+2]->TranPQ = RxBufast->TranPQ3;
+				trace[m+3]->TranPQ = (RxBufast->TranPQ4Mix & 0xFFF);  // demultiplex TranPQ4
+
+				trace[m]->TranMQLo = RxBufast->TranMQ1Lo;
+				trace[m+1]->TranMQLo = RxBufast->TranMQ2Lo;
+				trace[m+2]->TranMQLo = RxBufast->TranMQ3Lo;
+				trace[m+3]->TranMQLo = (RxBufast->TranMQ4LoMix & 0xFFF);	// demultiplex TranMQ4Lo 
+
+				trace[m]->TranMQMid = RxBufast->TranMQ1Mid;
+				trace[m+1]->TranMQMid = RxBufast->TranMQ2Mid;
+				trace[m+2]->TranMQMid = RxBufast->TranMQ3Mid;
+
+				trace[m]->TranPILow = 0;		// fast mode does not measure TranPILow, zero indicates 'no data'
+				trace[m+1]->TranPILow = 0;
+				trace[m+2]->TranPILow = 0;
+				trace[m+3]->TranPILow = 0;
+
+				trace[m]->TranPQLow = 0;		// fast mode does not measure TranPQLow, zero indicates 'no data'
+				trace[m+1]->TranPQLow = 0;
+				trace[m+2]->TranPQLow = 0;
+				trace[m+3]->TranPQLow = 0;
+
+				// Demultiplex the last 12-bit word from the top 4 bits of each of 3 borrowed buffer locations.
+				// Sorry this is ugly, but we were one buffer word short in the fast buffer.
+				unsigned short temp2 = (RxBufast->TranPI4Mix & 0xF000); // grab just top nibble
+				unsigned short temp1 = (RxBufast->TranPQ4Mix & 0xF000); 
+				unsigned short temp0 = (RxBufast->TranMQ4LoMix & 0xF000);
+
+				trace[m+3]->TranMQMid = (temp2 >> 4) + (temp1 >> 8) + (temp0 >> 12); // Assemble TranMQ4Mid from nibbles
+
+			}
+		}
+		else										// slow reading mode
+		{
+
+			TxBuf->ReplyType = VNA_REPLYTYPE_FULL;
+			TxBuf->MeasureDelay = MeasureDelayStringToCount(SweepSpd->Text);
+			TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
+
+			// Set the Lo magnitude and Mid magnitude generator levels for the target
+			// (Hi level is always 0 db.)
+			TxBuf->IDAClevelHi = TxLevLinear(txLevel);					// High Tx Level
+			TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Low TX Level
+			TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Mid TX Level
+
+			// Set the Lo phase tran measurement level for the target   09-30-2007
+			TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Lo Phase TX Level
+
+			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
+
+			for (int m=0; m<FG->points; m++)
+			{
+    
+				// calculate linear frequency spot for each sweep
+				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
+				VNA->WriteRead(TxBuf, RxBuf);
+
+				// Test for ADC Write Error - retry if error
+				
+				//if(RxBuf->Header != 1)
+				//{
+				//	if(m)
+				//		m--;
+				//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
+				//	VNA->WriteRead(TxBuf, RxBuf);
+				//}
+
+
+
+				// Save received data by grid point
+
+				trace[m]->ReflMI = RxBuf->ReflMI;
+				trace[m]->ReflMQ = RxBuf->ReflMQ;
+				trace[m]->ReflPI = RxBuf->ReflPI;
+				trace[m]->ReflPQ = RxBuf->ReflPQ;
+				trace[m]->Vref1 = RxBuf->Vref1;
+
+				trace[m]->TranMI = RxBuf->TranMI;
+				trace[m]->TranMQHi = RxBuf->TranMQHi;
+				trace[m]->TranPI = RxBuf->TranPI;
+				trace[m]->TranPQ = RxBuf->TranPQ;
+				trace[m]->Vref2 = RxBuf->Vref2;
+
+				trace[m]->TranMQLo = RxBuf->TranMQLo;
+				trace[m]->TranMQMid = RxBuf->TranMQMid;
+
+				// New 09-30-2007
+				trace[m]->TranPILow = RxBuf->TranPILow;
+				trace[m]->TranPQLow = RxBuf->TranPQLow;
+
+				// Update Sweep Progress
+
+				SweepProgressBar->Value = m+1;
+			}
+
+			// Glitch detection using median filtering algorithm,
+			// faster but not as accurate as slow version.
+			// Modified for V2.1 to examine the range of samples
+			// in a group of 7, and to predict the value from slope
+			// of neighboring values to avoid un-necessary filtering.
+
+#ifdef FASTGLITCH
+			DeGlitch(trace, FG->points);
+#endif
+
+
+#ifdef SLOWGLITCH
+			// Glitch detection using median filtering algorithm,
+			// high Accuracy but very slow. Leave code in case we want to make this
+			// an option. If glitch detected (across 7 different frequencies),
+			// then re-run the sweep 7 times and take Median at that one frequency
+
+			for(int m=3; m<FG->points-3; m++)
+			{
+				bool glitch = false;
+				unsigned short filtered;
+
+				filtered = Median7(trace1, m-3);
+				if( abs(trace1[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace2, m-3);
+				if( abs(trace2[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace3, m-3);
+				if( abs(trace3[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace4, m-3);
+				if( abs(trace4[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace6, m-3);
+				if( abs(trace6[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace7, m-3);
+				if( abs(trace7[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace8, m-3);
+				if( abs(trace8[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace9, m-3);
+				if( abs(trace9[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace11, m-3);
+				if( abs(trace11[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace12, m-3);
+				if( abs(trace12[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace13, m-3);
+				if( abs(trace13[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+				filtered = Median7(trace14, m-3);
+				if( abs(trace14[m]-filtered) > GLITCHSIZE)
+					glitch = true;
+
+
+				if(glitch)	// make 7 sweeps at the same frequency, and pick
+							// the median (hopefully all 12 measurements have 
+							// well behaved medians).
+				{
+
+					TxBuf->TxAccum = FG->DDS(FG->Frequency(m)); // program specific frequency
+
+					for (int i=0; i<7; i++)
+					{
+                        VNA->WriteRead(TxBuf, RxBuf);			// take a reading 
+
+						tempSweep1[i] = RxBuf->ReflMI;
+						tempSweep2[i] = RxBuf->ReflMQ;
+						tempSweep3[i] = RxBuf->ReflPI;
+						tempSweep4[i] = RxBuf->ReflPQ;
+
+						tempSweep5[i] = RxBuf->Vref1;
+
+						tempSweep6[i] = RxBuf->TranMI;
+						tempSweep7[i] = RxBuf->TranMQHi;
+						tempSweep8[i] = RxBuf->TranPI;
+						tempSweep9[i] = RxBuf->TranPQ;
+
+						tempSweep10[i] = RxBuf->Vref2;
+						tempSweep11[i] = RxBuf->TranMQLo;
+						tempSweep12[i] = RxBuf->TranMQMid;
+
+						// New 09-30-2007
+						tempSweep13[i] = RxBuf->TranPILow;
+						tempSweep14[i] = RxBuf->TranPQLow;
+
+					}
+
+					trace1[m] = Median7(tempSweep1);
+					trace2[m] = Median7(tempSweep2);
+					trace3[m] = Median7(tempSweep3);
+					trace4[m] = Median7(tempSweep4);
+					trace5[m] = Median7(tempSweep5);
+					trace6[m] = Median7(tempSweep6);
+					trace7[m] = Median7(tempSweep7);
+					trace8[m] = Median7(tempSweep8);
+					trace9[m] = Median7(tempSweep9);
+					trace10[m] = Median7(tempSweep10);
+					trace11[m] = Median7(tempSweep11);
+					trace12[m] = Median7(tempSweep12);
+					trace13[m] = Median7(tempSweep13);	// New 09-30-2007
+					trace14[m] = Median7(tempSweep14);  // New 09-30-2007
+
+				}
+			}
+#endif
+		}
+			
+
+
+		// V1.5 - Integration of readings
+
+		if(PreCharge)							// If we want to Precharge the Integrator, then
+			PreCharge = false;					// don't integrate values, and disable precharge (for next sweep)
+		else
+		{
+			if(IntegrationMenu1x->Checked)
+				Keep = 0, TotalSize = 1;
+			if(IntegrationMenu2x->Checked)
+				Keep = 1, TotalSize = 2;
+			if(IntegrationMenu4x->Checked)
+				Keep = 3, TotalSize = 4;
+			if(IntegrationMenu8x->Checked)
+				Keep = 7, TotalSize = 8;
+			if(IntegrationMenu16x->Checked)
+				Keep = 15, TotalSize = 16;
+
+			for(int i=0; i<FG->points; i++)		// Exponentially Integrate the Current Readings
+			{
+				trace[i]->ReflMI = (unsigned short)(((long)ITrace[i]->ReflMI * Keep + (long)trace[i]->ReflMI ) / TotalSize);
+				trace[i]->ReflMQ = (unsigned short)(((long)ITrace[i]->ReflMQ * Keep + (long)trace[i]->ReflMQ ) / TotalSize);
+				trace[i]->ReflPI = (unsigned short)(((long)ITrace[i]->ReflPI * Keep + (long)trace[i]->ReflPI ) / TotalSize);
+				trace[i]->ReflPQ = (unsigned short)(((long)ITrace[i]->ReflPQ * Keep + (long)trace[i]->ReflPQ ) / TotalSize);
+				trace[i]->TranMI = (unsigned short)(((long)ITrace[i]->TranMI * Keep + (long)trace[i]->TranMI ) / TotalSize);
+				trace[i]->TranMQHi = (unsigned short)(((long)ITrace[i]->TranMQHi * Keep + (long)trace[i]->TranMQHi ) / TotalSize);
+				trace[i]->TranPI = (unsigned short)(((long)ITrace[i]->TranPI * Keep + (long)trace[i]->TranPI ) / TotalSize);
+				trace[i]->TranPQ = (unsigned short)(((long)ITrace[i]->TranPQ * Keep + (long)trace[i]->TranPQ ) / TotalSize);
+				trace[i]->TranMQLo = (unsigned short)(((long)ITrace[i]->TranMQLo * Keep + (long)trace[i]->TranMQLo ) / TotalSize);
+				trace[i]->TranMQMid = (unsigned short)(((long)ITrace[i]->TranMQMid * Keep + (long)trace[i]->TranMQMid) / TotalSize);
+				trace[i]->TranPILow = (unsigned short)(((long)ITrace[i]->TranPILow * Keep + (long)trace[i]->TranPILow) / TotalSize);
+				trace[i]->TranPQLow = (unsigned short)(((long)ITrace[i]->TranPQLow * Keep + (long)trace[i]->TranPQLow) / TotalSize);
+			}
+
+		}
+
+			// if not triggered by a recurrent sweep
+
+		if (String::Compare(RecurrentSweep->Text, "Running") ==0)	// triggered by a recurrent sweep
+				Refresh();
+			else									// triggered by a single sweep
+			{
+				AudioCollect = false;				// thread has completed a single sweep
+				SingleSweep->Enabled = true;		// re-enable the single sweep button
+				Refresh();							// Force a redraw of the screen	
+			}
+		}	//end	while(true)
+
+	}
+
+
+
 		/// Start Frequency Up (increment) button click event handler
 private: System::Void startFup_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
