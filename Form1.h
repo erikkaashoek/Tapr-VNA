@@ -44,9 +44,12 @@ using the .NET style of Event Delegates.
 #include "TDRSetupDialog.h"
 #include "Constants.h"
 #include "Mockup.h"
+#include "SerialPort.h"
+//#include "Serial.h"
+//#include "AudioDevice.h"
 #include <complex>
 
-#define DEBUGAUDIO
+//#define DEBUGAUDIO
 //#define DEBUGRAWTRANMAG		// display 3 raw transmission magnitude (0, -17, -34) ADc counts on rectangular screen
 //#define DEBUGRAWTRANHIPHASE	// display raw transmission phase ADC counts on rectangular screen
 //#define DEBUGRAWTRANLOPHASE	// display raw transmission low level phase ADC counts on rectangular screen
@@ -348,7 +351,11 @@ private: System::Windows::Forms::ToolStripMenuItem^  DisplayMeasured;
 private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
 private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuItem;
 private: Mockup^ MockupBox;
+private: SerialPort^ SerialPortBox;
+//private: AudioDevice^ AudioDeviceBox;
 private: System::IO::Ports::SerialPort^  serialPort1;
+private: System::Windows::Forms::ToolStripMenuItem^  audioDevicesToolStripMenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^  settingsToolStripMenuItem;
 
 
 
@@ -420,6 +427,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->rectItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->polarItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TDRItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->audioDevicesToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->calibrateMenu = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->instrumentCalItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->runItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -536,6 +544,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->RefExtnCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->serialPort1 = (gcnew System::IO::Ports::SerialPort(this->components));
+			this->settingsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -884,9 +893,9 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			// menuStrip1
 			// 
-			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(10) {this->fileMenu, this->viewMenu, 
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(11) {this->fileMenu, this->viewMenu, 
 				this->calibrateMenu, this->traceMenu, this->VertScaleItem, this->markerMenu, this->menuItem5, this->StorageMenu, this->IntegrationMenuItem, 
-				this->HelpItem});
+				this->HelpItem, this->settingsToolStripMenuItem});
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
 			this->menuStrip1->Size = System::Drawing::Size(935, 24);
@@ -1032,8 +1041,8 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			// viewMenu
 			// 
-			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->rectItem, this->polarItem, 
-				this->TDRItem});
+			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->rectItem, this->polarItem, 
+				this->TDRItem, this->audioDevicesToolStripMenuItem});
 			this->viewMenu->Name = L"viewMenu";
 			this->viewMenu->Size = System::Drawing::Size(44, 20);
 			this->viewMenu->Text = L"&View";
@@ -1063,6 +1072,13 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->TDRItem->Size = System::Drawing::Size(239, 22);
 			this->TDRItem->Text = L"&Time Domain Reflection";
 			this->TDRItem->Click += gcnew System::EventHandler(this, &Form1::TDRItem_Click);
+			// 
+			// audioDevicesToolStripMenuItem
+			// 
+			this->audioDevicesToolStripMenuItem->Name = L"audioDevicesToolStripMenuItem";
+			this->audioDevicesToolStripMenuItem->Size = System::Drawing::Size(239, 22);
+			this->audioDevicesToolStripMenuItem->Text = L"Audio Devices";
+			this->audioDevicesToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDevicesToolStripMenuItem_Click);
 			// 
 			// calibrateMenu
 			// 
@@ -1737,7 +1753,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// grid101menu
 			// 
 			this->grid101menu->Name = L"grid101menu";
-			this->grid101menu->Size = System::Drawing::Size(134, 22);
+			this->grid101menu->Size = System::Drawing::Size(152, 22);
 			this->grid101menu->Text = L"100 points";
 			this->grid101menu->Click += gcnew System::EventHandler(this, &Form1::grid101menu_Click);
 			// 
@@ -1746,21 +1762,21 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->grid201menu->Checked = true;
 			this->grid201menu->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->grid201menu->Name = L"grid201menu";
-			this->grid201menu->Size = System::Drawing::Size(134, 22);
+			this->grid201menu->Size = System::Drawing::Size(152, 22);
 			this->grid201menu->Text = L"200 points";
 			this->grid201menu->Click += gcnew System::EventHandler(this, &Form1::grid201menu_Click);
 			// 
 			// grid401menu
 			// 
 			this->grid401menu->Name = L"grid401menu";
-			this->grid401menu->Size = System::Drawing::Size(134, 22);
+			this->grid401menu->Size = System::Drawing::Size(152, 22);
 			this->grid401menu->Text = L"400 points";
 			this->grid401menu->Click += gcnew System::EventHandler(this, &Form1::grid401menu_Click);
 			// 
 			// grid1024menu
 			// 
 			this->grid1024menu->Name = L"grid1024menu";
-			this->grid1024menu->Size = System::Drawing::Size(134, 22);
+			this->grid1024menu->Size = System::Drawing::Size(152, 22);
 			this->grid1024menu->Text = L"1020 points";
 			this->grid1024menu->Click += gcnew System::EventHandler(this, &Form1::grid1024menu_Click);
 			// 
@@ -1829,7 +1845,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->IntegrationMenu1x->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->IntegrationMenu1x->Name = L"IntegrationMenu1x";
 			this->IntegrationMenu1x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D1));
-			this->IntegrationMenu1x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu1x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu1x->Text = L"1x";
 			this->IntegrationMenu1x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu1x_Click);
 			// 
@@ -1837,7 +1853,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			this->IntegrationMenu2x->Name = L"IntegrationMenu2x";
 			this->IntegrationMenu2x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D2));
-			this->IntegrationMenu2x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu2x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu2x->Text = L"2x";
 			this->IntegrationMenu2x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu2x_Click);
 			// 
@@ -1845,7 +1861,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			this->IntegrationMenu4x->Name = L"IntegrationMenu4x";
 			this->IntegrationMenu4x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D4));
-			this->IntegrationMenu4x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu4x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu4x->Text = L"4x";
 			this->IntegrationMenu4x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu4x_Click);
 			// 
@@ -1853,7 +1869,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			this->IntegrationMenu8x->Name = L"IntegrationMenu8x";
 			this->IntegrationMenu8x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D8));
-			this->IntegrationMenu8x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu8x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu8x->Text = L"8x";
 			this->IntegrationMenu8x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu8x_Click);
 			// 
@@ -1861,7 +1877,7 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			// 
 			this->IntegrationMenu16x->Name = L"IntegrationMenu16x";
 			this->IntegrationMenu16x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D6));
-			this->IntegrationMenu16x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu16x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu16x->Text = L"16x";
 			this->IntegrationMenu16x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu16x_Click);
 			// 
@@ -1913,6 +1929,14 @@ private: System::IO::Ports::SerialPort^  serialPort1;
 			this->label6->Text = L"Refl Plane Ext";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			this->label6->Visible = false;
+			// 
+			// settingsToolStripMenuItem
+			// 
+			this->settingsToolStripMenuItem->Name = L"settingsToolStripMenuItem";
+			this->settingsToolStripMenuItem->Size = System::Drawing::Size(61, 20);
+			this->settingsToolStripMenuItem->Text = L"Settings";
+			this->settingsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::settingsToolStripMenuItem_Click);
+
 			// 
 			// Form1
 			// 
@@ -2527,11 +2551,19 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #endif
 
 #ifdef DEBUGAUDIO
+/*
 				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
 				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+0] * scopeDisp.Height / 70000;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+1] * scopeDisp.Height / 70000;
 				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+1] * scopeDisp.Height / 70000;
+				gr->DrawLine(penS11Phs, traceStart, traceStop);
+*/
+				traceStop.Y = scopeDisp.Bottom/2 + decoded[0][i] * scopeDisp.Height / 70000;
+				traceStart.Y = scopeDisp.Bottom/2 + decoded[0][i-1] * scopeDisp.Height / 70000;
+				gr->DrawLine(penS21Mag, traceStart, traceStop);
+				traceStop.Y = scopeDisp.Bottom/2 + decoded[1][i] * scopeDisp.Height / 70000;
+				traceStart.Y = scopeDisp.Bottom/2 + decoded[1][i-1] * scopeDisp.Height / 70000;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 #endif
 
@@ -7639,6 +7671,21 @@ private: System::Void mockupDeviceToolStripMenuItem_Click(System::Object^  sende
 
 			 MockupBox = gcnew Mockup (VNA);
 			 MockupBox->Show();
+
+		 }
+private: System::Void settingsToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+
+//			 Assembly^ _assembly;
+//			 _assembly = Assembly::GetExecutingAssembly();
+			 //MessageBox::Show(_assembly->ToString(),"TAPR VNA Host Program");
+
+			 SerialPortBox = gcnew SerialPort (serialPort1);
+			 SerialPortBox->ShowDialog();
+
+		 }
+private: System::Void audioDevicesToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 //AudioDeviceBox = gcnew AudioDevice();
+			 //AudioDeviceBox->Show();
 
 		 }
 };

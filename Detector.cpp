@@ -581,8 +581,8 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 		x = Math::PI / 2.0 * (double)(I - Imid)/(double)Imag;
 		y = Math::PI / 2.0 * (double)(Q - Qmid)/(double)Qmag;
 
-		x = sin(x);
-		y = -sin(y);
+		//x = sin(x);
+		//y = -sin(y);
 
 		degrees = RAD2DEGR * atan2(y,x);
 		degrees = NormalizePhaseDegr(degrees);
@@ -608,7 +608,7 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 		y = Math::PI / 2.0 * (double)(QLo - Qmid)/(double)Qmag;		 // Q parameters are same as before
 
 		// x = sin(x);  I-phase detector is a sine in the TRAN-LoRef condition, so no need to convert it.
-		y = -sin(y);
+		//y = -sin(y);
 
 		degrees = RAD2DEGR * atan2(y,x);
 		degrees = NormalizePhaseDegr(degrees);

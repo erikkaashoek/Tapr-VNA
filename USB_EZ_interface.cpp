@@ -408,7 +408,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 
 
 	if (mode == M_SHORT) {
-		reflphase = 0;
+		reflphase = -180;
 		reflmag = -5;
 		tranmag = -55;
 		tranphase = 0;
@@ -417,7 +417,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 //		RxBuffer->ReflMQ = Noise(3700, NoiseLevel);
 	}
 	if (mode == M_OPEN) {
-		reflphase = -180;
+		reflphase = 0;
 		reflmag = -5;
 		tranmag = -55;
 		tranphase = 0;

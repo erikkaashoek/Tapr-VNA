@@ -69,6 +69,9 @@
     <ClCompile Include="AudioInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SerialPort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="About.h">
@@ -131,6 +134,9 @@
     <ClInclude Include="AudioInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SerialPort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.ico">
@@ -178,6 +184,9 @@
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
     <EmbeddedResource Include="Mockup.resx">
+      <Filter>Resource Files</Filter>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AudioDevice.resx">
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
   </ItemGroup>
