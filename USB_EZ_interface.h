@@ -39,6 +39,12 @@
 #include "DataDisplay.h"
 #using <mscorlib.dll>
 
+extern volatile float magSig;
+extern volatile float phaseSig;
+extern volatile float volSig;
+
+#define DIR_TRANS	0
+#define DIR_REFL	1
 
 	/// VNA Device wrapper. Holds state and device handle
 public ref class VNADevice
@@ -47,8 +53,11 @@ private:
 	bool Result;					// DeviceIoControl result
 	int state;						// -1=no device +1=device OK
 	int mode;
+	long lastFreq;
+	int lastDir;
 	int cable_before;
 	int cable_after;
+	System::IO::Ports::SerialPort^  serialPort;
 
 	//	long int IICErrorCount;			// Temporary IIC error counter
 
@@ -59,7 +68,7 @@ private:
 	bool ToggleReset(bool hold);
 
 public:
-	VNADevice();					// Constructor: open device, set state
+	VNADevice(System::IO::Ports::SerialPort^  port);					// Constructor: open device, set state
 	~VNADevice();					// Destructor: release __nogc objects and structs
 	bool Init(void);				// Build descriptors, get pipes
 	int State();				// -1 = no device  +1 = device OK
@@ -73,7 +82,7 @@ public:
 									// If 1st byte is 0x01, it's a valid data block
 									// If 2nd byte is not 0x00, there was an I2C error on the 8051
 	bool Write(VNA_TXBUFFER * writebuf);		// Write 64 bytes of data to BULK_OUT_EP2 endpoint
-	bool WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer);	// Write data buffer then retrieve Rx buffer
+	bool WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int direction);	// Write data buffer then retrieve Rx buffer
 	void SetMode(int m);
 	void SetBefore(int l);
 	void SetAfter(int l);

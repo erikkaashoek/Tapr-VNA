@@ -16,9 +16,16 @@ short int waveIn[3][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit
 short int decoded[2][1024];
 int nextDecoded = 0;
 
-int audio_delay=0;
+volatile float magSig;
+volatile float phaseSig;
+volatile float volSig;
 
-//#define DEBUGAUDIO
+double audio_volume;
+double audio_phase;
+bool audio_simulation = false;
+int audio_delay;
+
+#define DEBUGAUDIO
 
 #ifdef DEBUGAUDIO
 short temp_audio[NUMPTS];
@@ -33,6 +40,7 @@ MMRESULT result;
 
  //const 
 	 short sincos_tbl[48][2] = {
+/* 5 khz 48000 s/s
   { 10533,  31029 }, { 27246,  18205 }, { 32698,  -2143 }, { 24636, -21605 },
   {  6393, -32138 }, {-14493, -29389 }, {-29389, -14493 }, {-32138,   6393 },
   {-21605,  24636 }, { -2143,  32698 }, { 18205,  27246 }, { 31029,  10533 },
@@ -45,19 +53,36 @@ MMRESULT result;
   {-31029,  10533 }, {-18205,  27246 }, {  2143,  32698 }, { 21605,  24636 },
   { 32138,   6393 }, { 29389, -14493 }, { 14493, -29389 }, { -6393, -32138 },
   {-24636, -21605 }, {-32698,  -2143 }, {-27246,  18205 }, {-10533,  31029 }
-};
+*/
+/* 5khz 44100 s/s */
+  { 10529, 31029 } ,   { 28251, 16600 } ,  { 32231, -5904 } ,  { 20534, -25536 } ,
+  { -1150, -32749 } ,  { -22276, -24034 } ,  { -32568, -3629 } ,  { -27019, 18540 } ,
+  { -8330, 31691 } ,  { 14411, 29428 } ,  { 30142, 12851 } ,  { 31212, -9977 } ,
+  { 17100, -27953 } ,  { -5329, -32333 } ,  { -25166, -20988 } ,  { -32764, 565 } ,
+  { -24426, 21843 } ,  { -4209, 32496 } ,  { 18056, 27343 } ,  { 31538, 8891 } ,
+  { 29680, -13886 } ,  { 13386, -29910 } ,  { -9420, -31386 } ,  { -27644, -17597 } ,
+  { -32423, 4750 } ,  { -21433, 24787 } ,  { -18, 32767 } ,  { 21404, 24810 } ,
+  { 32416, 4785 } ,  { 27660, -17568 } ,  { 9451, -31376 } ,  { -13356, -29924 } ,
+  { -29667, -13918 } ,  { -31549, 8857 } ,  { -18087, 27324 } ,  { 4172, 32500 } ,
+  { 24401, 21869 } ,  { 32761, 600 } ,  { 25187, -20961 } ,  { 5361, -32327 } ,
+  { -17072, -27971 } ,  { -31203, -10010 } ,  { -30157, 12819 } ,  { -14444, 29412 } ,
+  { 8294, 31700 } ,  { 26997, 18569 } ,  { 32569, -3595 } ,  { 22300, -24010 }
+  };
 
 long acc_samp_s;
 long acc_samp_c;
 long acc_ref_s;
 long acc_ref_c;
 
+volatile float gamma[4];
 
-float gamma[4];
 
-#define PI	3.1415926535897932384626433832795
+#define PI	3.14159265358979
 
 #include "Constants.h"
+
+#define todb(X) (20.0f * log10 ((float(X)/(float)33000)));
+
 
 float max_rr = 0;
 float min_rr = (float)1e+30;
@@ -65,7 +90,8 @@ float factor = 1;
 int reference_signal_level=0;
 int prev_ref_signal = 0;
 
-void calculate_gamma(float gamma[4])
+/*
+void calculate_gamma(volatile float gamma[4])
 {
   float rs = (float) acc_ref_s;
   float rc = (float) acc_ref_c;
@@ -76,7 +102,10 @@ void calculate_gamma(float gamma[4])
   float ss = (float) acc_samp_s;
   float sc = (float) acc_samp_c;
   float sr = ss * ss + sc * sc;
-
+  float rPhase =  atan2(rc,rs);
+  float rMag = sqrt((float)rs*rs + rc*rc);
+  float sPhase =  atan2(sc,ss);
+  float sMag = sqrt((float)ss*ss + sc*sc);
   prev_ref_signal = reference_signal_level;
   if (rr > max_rr) max_rr = rr;
   if (rr < min_rr) min_rr = rr;
@@ -84,9 +113,9 @@ void calculate_gamma(float gamma[4])
   if (factor > 100) { // Signal level found
 		reference_signal_level = (int)(100.0 * rr / max_rr);
   }
-  gamma[0] =  (sc * rc + ss * rs) / rr;
-  gamma[1] =  (ss * rc - sc * rs) / rr;
-  gamma[3] = sqrt(sr)/sqrt(rr);
+  gamma[0] = (sc * rc + ss * rs) / rr;
+  gamma[1] = (ss * rc - sc * rs) / rr;
+  gamma[2] = sqrt(gamma[0]*gamma[0] + gamma[1]*gamma[1]);
 //  gamma[0] * gamma[0] + gamma[1] * gamma[1];
 
 		x = PI / 2.0 * gamma[0];
@@ -95,12 +124,15 @@ void calculate_gamma(float gamma[4])
 		//x = sin(x);
 		//y = -sin(y);
 
-		gamma[4] = (float) (180.0/PI * atan2(y,x));
-		while (gamma[4] > +180.0) gamma[4] -= 360.0;
-		while (gamma[4] < -180.0) gamma[4] += 360.0;
+		gamma[3] = (float) (180.0/PI * atan2(y,x));
+		while (gamma[3] > +180.0) gamma[3] -= 360.0;
+		while (gamma[3] < -180.0) gamma[3] += 360.0;
 
-		decoded[0][nextDecoded] = (short) (gamma[3] * 20000);
-		decoded[1][nextDecoded++] = (short) ( gamma[4] * 30000.0 / 180.0);
+		magSig = gamma[0];
+		phaseSig = gamma[3];
+
+		decoded[0][nextDecoded] = (short) (gamma[2] * 20000);
+		decoded[1][nextDecoded++] = (short) ( gamma[3] * 30000.0 / 180.0);
 		if (nextDecoded >= 1024) nextDecoded = 0;
 
 		if (reference_signal_level > 40 && prev_ref_signal <= 40) {
@@ -112,6 +144,8 @@ void calculate_gamma(float gamma[4])
   return;
 }
 
+*/
+
 void dsp_process(short *capture, long length)
 {
   short *p = capture;
@@ -121,6 +155,10 @@ void dsp_process(short *capture, long length)
   long samp_c = 0;
   long ref_s = 0;
   long ref_c = 0;
+  double ref_mag;
+  double ref_phase;
+  double samp_mag;
+  double samp_phase;
 
   for (i = 0; i < len; i++) {
     short smp = *p++; //  = *p++;
@@ -146,7 +184,23 @@ void dsp_process(short *capture, long length)
   acc_samp_c = samp_c;
   acc_ref_s = ref_s;
   acc_ref_c = ref_c;
-	calculate_gamma(gamma);
+
+  ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+  ref_phase = 360.0f / 2 / PI  * atan2((float)ref_c, (float)ref_s);
+  
+  samp_mag = sqrt((samp_s*(float)samp_s)+samp_c*(float)samp_c);
+  samp_phase = 360.0f / 2 / PI  * atan2((float)samp_c, (float)samp_s);
+
+  gamma[0] = todb((samp_mag / ref_mag)*32000);
+  gamma[1] = (float)ref_phase - (float)samp_phase;
+  while (gamma[1] >= 180.0f) gamma[1] -= 360.0;
+  while (gamma[1] <= -180.0f) gamma[1] += 360.0;
+
+ 		magSig = gamma[0];
+		phaseSig = gamma[1];
+		volSig = todb(ref_mag / 32000); 
+  
+  //calculate_gamma(gamma);
 }
 
 
@@ -171,28 +225,28 @@ void reset_dsp_accumerator(void)
 	if(WHDR_DONE==(WHDR_DONE &pHdr->dwFlags))
 	{
 
-#ifdef DEBUGAUDIO
 		audio = waveIn[0];
-		for (i = 0; i < 48; i++) {
-//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * 4410 / 44100));
-//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * 4410 / 44100));
-		}
-		for (i = 0; i < 1024; i++) {
-			audio [i*2+0] = (short)(32000 * sin(3.1416 * 2 * i * 8820 / 44100));
-			audio [i*2+1] = (short)(16000 * sin(3.1416 * 2 * (i+2.5) * 8820 / 44100));
-		}
-#else
-		audio = (short *)pHdr->lpData;
-
-#endif
+		
+		//for (i = 0; i < 48; i++) {
+//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * 5000 / 44100));
+//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * 5000 / 44100));
+		//}
+		if (audio_simulation) {
+			for (i = 0; i < NUMPTS/2; i++) {
+				audio [i*2+0] = (short)(32000 * audio_volume * sin(PI * 2 * ((i+1) + audio_phase * 9 / 360)  * 5000 / 44100));
+				audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100));
+			}
+		} else
+			audio = (short *)pHdr->lpData;
 
 		i = NUMPTS / 2 / 48;
 		while (i-- > 0) {
-			//if (audio_delay == 1) {
-				dsp_process(audio, 48);
-			//}
+			if (audio_delay == 0) {
+				dsp_process(audio, 48*2);
+			}
 			audio = & (audio[48*2]);
-			if (audio_delay > 0) audio_delay -= 1;
+			if (audio_delay >= 0) 
+				audio_delay -= 1;
 		}
 
 //		mmioWrite(m_hOPFile,pHdr->lpData,pHdr->dwBytesRecorded);
@@ -248,8 +302,8 @@ int OpenAudio (void) {
 //            0L, 0L, WAVE_FORMAT_DIRECT);
  if (result)
  {
-  wchar_t fault[256];
-  waveInGetErrorText(result, fault, 256);
+  // wchar_t fault[256];
+  //waveInGetErrorText(result, fault, 256);
   //Application->MessageBox(fault, "Failed to open waveform input device.",
   //            MB_OK | MB_ICONEXCLAMATION);
   return(result);
@@ -283,5 +337,6 @@ int OpenAudio (void) {
   return(result);
 
  }
+ audio_delay = -1;
 	return(0);
 }

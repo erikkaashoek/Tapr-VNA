@@ -747,7 +747,7 @@ private: System::Void RxPhaseButton_Click(System::Object^  sender, System::Event
 
 				for(int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
 				}
@@ -819,7 +819,7 @@ private: System::Void TxPhaseButton_Click(System::Object^  sender, System::Event
 				// Take 7 readings at the same frequency
 				for(int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 					BufferI[k] = RxBuf->TranPI;
 					BufferQ[k] = RxBuf->TranPQ;
 					BufferILo[k] = RxBuf->TranPILow;
@@ -883,7 +883,7 @@ private: System::Void TxLowAmpButton_Click(System::Object^  sender, System::Even
 
 					for(int k=0; k<7; k++)				// Take 7 readings at each point
 					{
-						VNA->WriteRead(TxBuf, RxBuf);
+						VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 						BufferM[k] = RxBuf->TranMQHi;
 						BufferN[k] = RxBuf->TranMQLo;
 					}
@@ -930,7 +930,7 @@ private: System::Void FrequencyCalButton_Click(System::Object^  sender, System::
 			TxBuf->MeasureDelay = 0;
 			TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
-			VNA->WriteRead(TxBuf, RxBuf);	// write the VNA with CW frequency output
+			VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);	// write the VNA with CW frequency output
 
 		 }
 
@@ -990,7 +990,7 @@ private: System::Void DirectivityCalButton_Click(System::Object^  sender, System
 				// Take 7 readings, use median value
 				for(int k=0; k<7; k++)
 				{
-					VNA->WriteRead(TxBuf, RxBuf);
+					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferM[k] = RxBuf->ReflMQ;
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
@@ -1045,7 +1045,7 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 				// Take 7  magnitude & phase readings, use median value
 				for(int k=0; k<7; k++)
 				{
-					VNA->WriteRead(TxBuf, RxBuf);
+					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferM[k] = RxBuf->ReflMQ;
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
@@ -1074,7 +1074,7 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 
 				for (int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
 					BufferM[k] = RxBuf->ReflMQ;
@@ -1136,7 +1136,7 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 					// Take 7 readings, use median value
 					for(int k=0; k<7; k++)
 					{
-						VNA->WriteRead(TxBuf, RxBuf);
+						VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 						BufferM[k] = RxBuf->ReflMQ;
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
@@ -1172,7 +1172,7 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 
 				for (int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
 					BufferM[k] = RxBuf->ReflMQ;
@@ -1236,7 +1236,7 @@ private: System::Void TxLongCableOpenButton_Click(System::Object^  sender, Syste
 
 				for (int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
 					BufferM[k] = RxBuf->ReflMQ;
@@ -1488,7 +1488,7 @@ private: System::Void TxLongCableShortButton_Click(System::Object^  sender, Syst
 
 				for (int k=0; k<7; k++)
 				{
-                    VNA->WriteRead(TxBuf, RxBuf);
+                    VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 					BufferI[k] = RxBuf->ReflPI;
 					BufferQ[k] = RxBuf->ReflPQ;
 					BufferM[k] = RxBuf->ReflMQ;

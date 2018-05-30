@@ -269,6 +269,7 @@ long long int FrequencyGrid::DDS(int Frequency)
 	// It has to be scaled up to 288 MHz.
 
 	long long int N;
+	//N = Frequency;
 	N = Convert::ToInt64(Frequency) * 4294967296;  // Freq * 2^32
 	N /= (288000000 + (ferror * 288) / 100 );	   // Ferror * 2.88
 	N *= 65536;								       // Freq * 2^16

@@ -212,6 +212,9 @@ namespace VNAR3 {
 #pragma endregion
 	private: System::Void Mockup_Load(System::Object^  sender, System::EventArgs^  e) {
 			 }
+	private: System::Void Mockup_FormClosed(System::Object^  sender, System::EventArgs^  e) {
+			 VNA->SetMode(0);
+			 }
 private: System::Void label1_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
 private: System::Void CableBefore_Scroll(System::Object^  sender, System::EventArgs^  e) {

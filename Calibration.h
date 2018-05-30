@@ -423,7 +423,7 @@ namespace VNAR3
 				double& rmag = fmagnitude;
 				double& rphs = fphase;
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
-				VNA->SetMode(M_SHORT);
+				//VNA->SetMode(M_SHORT);
 
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
@@ -441,7 +441,7 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf);
+                        VNA->WriteRead(TxBuf, RxBuf,DIR_REFL);
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -479,7 +479,7 @@ namespace VNAR3
 				double& rmag = fmagnitude;
 				double& rphs = fphase;
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
-				VNA->SetMode(M_OPEN);
+				//VNA->SetMode(M_OPEN);
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
@@ -499,7 +499,7 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf);
+                        VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -538,7 +538,7 @@ namespace VNAR3
 				double& rphs = fphase;
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 
-				VNA->SetMode(M_LOAD);
+				//VNA->SetMode(M_LOAD);
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
@@ -556,7 +556,7 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf);
+                        VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -564,7 +564,7 @@ namespace VNAR3
 					calPoint->ReflPI = Median7(BufferI);		// filter the raw readings
 					calPoint->ReflPQ = Median7(BufferQ);
 					calPoint->ReflMQ = Median7(BufferM);
-					VNA->WriteRead(TxBuf, RxBuf);
+					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 
 					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
 
@@ -596,7 +596,7 @@ namespace VNAR3
 				double& rphs = fphase;
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 
-				VNA->SetMode(M_THROUGH);
+				//VNA->SetMode(M_THROUGH);
 
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
@@ -623,7 +623,7 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf);
+                        VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 						BufferI[k] = RxBuf->TranPI;
 						BufferQ[k] = RxBuf->TranPQ;
 						BufferM[k] = RxBuf->TranMQHi;

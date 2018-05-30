@@ -42,9 +42,14 @@
 #include "DataDisplay.h"
 #include "Mockup.h"
 #include "Constants.h"
+#include "AudioInput.h"
 #using <mscorlib.dll>
+#include <math.h>
 
 using namespace System;
+
+//volatile float magSig;
+//volatile float phaseSig;
 
 
 extern "C"
@@ -196,11 +201,15 @@ bool VNADevice::ToggleReset(bool hold)
 };
 
 	/// Construct the VNADevice
-VNADevice::VNADevice()							
+VNADevice::VNADevice(System::IO::Ports::SerialPort^  port)							
 {
 	d = new Helper;					// Allocate a Helper to the VNADevice
 	GetHandle();
+	serialPort = port;
 	ReleaseHandle();
+	mode = 0;
+	lastFreq = 0;
+	lastDir = -1;
 };
 	/// Destructor for VNADevice
 VNADevice::~VNADevice()
@@ -378,17 +387,17 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
-#define PhaseToQ(X) (short)( sin((X  + (cable_before + cable_after ) * freq / 1000000 ) * DEGR2RAD) * 1800 + 1850 )
-#define PhaseToI(X) (short)( cos((X  + (cable_before + cable_after ) * freq / 1000000 ) * DEGR2RAD) * 1800 + 1850 )
+#define PhaseToQ(X) (short)( sin((X) * DEGR2RAD) * 1800 + 1850 )
+#define PhaseToI(X) (short)( cos((X) * DEGR2RAD) * 1800 + 1850 )
 #define Noise(X, Y) (short)( X * (1.0 +  Y * ((1.0 * rand() / RAND_MAX) - 0.5) ));
 #define NoiseLevel 0.005
-#define MaxLevel 0
+#define MaxLevel +0
 #define MinLevel -57
 #define MaxDAC	3500
-#define MagDac(X)	((short)(MaxDAC * (X - MinLevel) / (MaxLevel - MinLevel))) 
+#define MagDac(X)	((short)(MaxDAC * (((X) - MinLevel) / (MaxLevel - MinLevel))))
 
 	/// Write TxBuffer to VNA (command),  readback the result to RxBuffer (response)
-bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
+bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int direction)
 {
 	// modifications to test Proto8 target changes
 	bool rxsuccess = true;
@@ -406,83 +415,109 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 			// when ReflPQ is low,  the phase is near  90 degrees
 			// when ReflPQ is high, the phase is near -90 degrees
 
-
+	audio_simulation = false;
 	if (mode == M_SHORT) {
-		reflphase = -180;
-		reflmag = -5;
-		tranmag = -55;
-		tranphase = 0;
-//		RxBuffer->ReflPI = PhaseToI(-180);
-//		RxBuffer->ReflPQ = PhaseToQ(-180) ;
-//		RxBuffer->ReflMQ = Noise(3700, NoiseLevel);
+		if (direction == DIR_TRANS) {
+			audio_volume = 0.0001;
+		} else {
+			audio_phase = -180.0;
+			audio_volume = 0.9;
+		}
+		audio_simulation = true;
 	}
 	if (mode == M_OPEN) {
-		reflphase = 0;
-		reflmag = -5;
-		tranmag = -55;
-		tranphase = 0;
-//		RxBuffer->ReflPI = PhaseToI(0);
-//		RxBuffer->ReflPQ = PhaseToQ(0);
-//		RxBuffer->ReflMQ = Noise(3700, NoiseLevel);
+		if (direction == DIR_TRANS) {
+			audio_volume = 0.0001;
+		} else {
+			audio_phase = 0.0;
+			audio_volume = 0.9;
+		}
+		audio_simulation = true;
 	}
 	if (mode == M_LOAD) {
-		reflphase = 0;
-		reflmag = -55;
-		tranmag = -55;
-		tranphase = 0;
-//		RxBuffer->ReflPI = PhaseToI(0);
-//		RxBuffer->ReflPQ = PhaseToQ(0);
-//		RxBuffer->ReflMQ = Noise(100, NoiseLevel);
+		if (direction == DIR_TRANS) {
+			audio_volume = 0.0001;
+		} else {
+			audio_phase = 0.0;
+			audio_volume = 0.0001;
+		}
+		audio_simulation = true;
 	}
 	if (mode == M_THROUGH) {
-/* 					TxBuf->IDAClevelHi = TxLevLinear(0);	// Set High Tx Level
-					TxBuf->IDAClevelLo = TxLevLinear(0 - TARGETLOMAG);	// Set Low TX Level
-					TxBuf->IDAClevelMid = TxLevLinear(0 - TARGETMIDMAG);	// Set Mid TX Level
-
-					// Set the Lo phase tran measurement level for the target   09-30-2007
-					TxBuf->IDAClevelPhLow = TxLevLinear(0 - TARGETPHLOMAG);	// Set Lo Phase Level
-
-					TxBuf->ReplyType = 0;
-					TxBuf->MeasureDelay = 0;
-					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
-
-
-					for (int k=0; k<7; k++)
-					{
-                        VNA->WriteRead(TxBuf, RxBuf);
-						BufferI[k] = RxBuf->TranPI;
-						BufferQ[k] = RxBuf->TranPQ;
-						BufferM[k] = RxBuf->TranMQHi;
-						BufferN[k] = RxBuf->TranMQLo;
-						BufferP[k] = RxBuf->TranMQMid;
-						BufferR[k] = RxBuf->TranPILow;
-						BufferS[k] = RxBuf->TranPQLow;
-*/
-		reflphase = 0;
-		reflmag = -50;
-		tranmag = -5;
-		tranphase = 0;
-
-
-		RxBuffer->TranPI = 10;
-		RxBuffer->TranPILow = 50;
-		RxBuffer->TranPQ = 1850 ;
-		RxBuffer->TranPQLow = 3800 ;
-		RxBuffer->TranMQHi = 10;
-		RxBuffer->TranMQLo = 3000;
-		RxBuffer->TranMQMid = 3800;
-
+		if (direction == DIR_TRANS) {
+			audio_volume = 0.8;
+			audio_phase = 0.0 + (cable_before + cable_after) * freq / 1000000.;
+			while (audio_phase >= +180.0) audio_phase -= 360.0;
+			while (audio_phase <= -180.0) audio_phase += 360.0;
+		} else {
+			audio_phase = 0.0;
+			audio_volume = 0.0001;
+		}
+		audio_simulation = true;
 	}
+
+
+//		serialPort->WriteLine("1");
+		if (freq != lastFreq || direction != lastDir) {
+			try {
+				if (direction == DIR_TRANS) {
+					if (! audio_simulation) serialPort->WriteLine(String::Format("0 {0} 1 0 ", freq));
+				} else if (direction == DIR_REFL) {
+					if (! audio_simulation) serialPort->WriteLine(String::Format("1 {0} 1 0 ", freq));
+				}
+			}
+			catch (System::Exception^ e) {
+			}
+			if (audio_simulation)
+				audio_delay = 0;
+			else
+				audio_delay = 22;
+			lastFreq = freq;
+			if (lastDir != direction) audio_delay += 20;
+			lastDir = direction;
+		} else {
+			audio_delay = 0;
+		}
+
+//		serialPort->WriteLine("1");
+//		serialPort->WriteLine("0");
+		while (audio_delay >=0) Sleep(50);
+
+		if (direction == DIR_TRANS) {
+			tranmag = gamma[0];
+			tranphase = gamma[1];
+		} else if (direction == DIR_REFL) {
+			reflmag = gamma[0];
+			reflphase = gamma[1];
+		}
+
+		//magSig = gamma[0];
+		//phaseSig = gamma[1];
+
 
 	if (reply == VNA_REPLYTYPE_FULL) {
 		RxBuffer->ReflPI = PhaseToI(reflphase);
 		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
-		RxBuffer->ReflMQ = Noise(MagDac(reflmag), NoiseLevel);
+		if (reflmag > MinLevel)
+			RxBuffer->ReflMQ = MagDac(reflmag); // Noise(MagDac(reflmag), NoiseLevel);
+		else
+			RxBuffer->ReflMQ =0; // Noise(MagDac(reflmag), NoiseLevel);
+
 		RxBuffer->TranPI = PhaseToI(tranphase);
 		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
-		RxBuffer->TranMQHi = 3800;
-		RxBuffer->TranMQLo = Noise(MagDac(tranmag), NoiseLevel);
-		RxBuffer->TranMQMid = 3800;
+		if (tranmag > -57.0) {
+			RxBuffer->TranMQLo = MagDac(tranmag); // Noise(MagDac(tranmag), NoiseLevel);
+			RxBuffer->TranMQMid =  3800;
+			RxBuffer->TranMQHi = 3800;
+		} else if (tranmag > (-57.0 - 17.0)) {
+			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
+			RxBuffer->TranMQMid =  MagDac(tranmag + 17.0);
+			RxBuffer->TranMQHi = 3800;
+		} else {
+			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
+			RxBuffer->TranMQMid =  0;
+			RxBuffer->TranMQHi = MagDac(tranmag + 34.0);
+		}
 
 				RxBuffer->ReflMI = 0;
 				RxBuffer->Vref1 = 3800;
@@ -491,12 +526,12 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer)
 				RxBuffer->Vref2 = 3800;
 
 
-				RxBuffer->TranPILow = 0;
-				RxBuffer->TranPQLow = 0;
+				RxBuffer->TranPILow = 1850;
+				RxBuffer->TranPQLow = 1850;
 
 
 
-	} else {
+	} else { // FAST
 		RxBuffer->ReflPI = PhaseToI(reflphase);
 		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
 		RxBuffer->ReflMQ = Noise(MagDac(reflmag), NoiseLevel);

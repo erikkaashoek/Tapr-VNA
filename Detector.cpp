@@ -576,7 +576,7 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 	double x, y, degrees;
 
 	// If signal is REFL, or if TRANS and less than -20 dB, or ILo or Qlo are not available 
-	if ((MagDb <= -20.0) || (String::Compare(this->name, "REFL") == 0) || (ILo == 0) || (QLo == 0))
+	if ( true || (MagDb <= -20.0) || (String::Compare(this->name, "REFL") == 0) || (ILo == 0) || (QLo == 0))
 	{
 		x = Math::PI / 2.0 * (double)(I - Imid)/(double)Imag;
 		y = Math::PI / 2.0 * (double)(Q - Qmid)/(double)Qmag;
