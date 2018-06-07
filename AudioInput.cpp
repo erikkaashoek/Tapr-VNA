@@ -9,12 +9,23 @@
 #include <iostream>
 
 #include "AudioInput.h"
+/*
+typedef struct measurement {
+	float magnitude;
+	float phase;
+	float reference;
+} measurementType;
+*/
+measurementType measured[1024*100];
+int measurementCount[1024];
+int measurementIndex[1024];
+int lastMeasurement;
 
 int sampleRate = 44100;
 short int waveIn[3][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 
-short int decoded[2][1024];
-int nextDecoded = 0;
+float decoded[1024][2];
+volatile int nextDecoded = 0;
 
 volatile float magSig;
 volatile float phaseSig;
@@ -212,13 +223,91 @@ void reset_dsp_accumerator(void)
   acc_samp_c = 0;
 }
 
+typedef enum audioStates { AS_NOCHANGE, AS_ARMED, AS_STARTED, AS_SIGNAL, AS_SILENCE, AS_STOPPING, AS_FINISHED };
+audioStates audioState = AS_ARMED;
+audioStates nextState = AS_NOCHANGE;
 
+#define UPCOUNT 0
+#define DOWNCOUNT	1
+int maxPoints = 0;
+
+void ArmAudio(int mP)
+{
+	audioState = AS_ARMED;
+//	maxPoints = mP;
+	lastMeasurement = 0;
+	nextDecoded = 0;
+}
+
+int lastI=-1;
+int lastJ=-1;
+bool lastRefl = false;
+
+bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp)
+{
+	if (i < lastMeasurement-1) {
+		if (i != lastI ) {
+			lastI = i;
+			lastJ = 0;
+		}
+		m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
+		p = measured[measurementIndex[i] + 1 + lastJ].phase+180;
+		tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
+		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase + 180;
+//		if (i > 4 && m > -20)
+//			m = m;
+		lastJ++;
+		return true;
+	} 
+	return (false);
+}
+
+#define SIGNAL_THRESHOLD -20
+void StoreMeasurement()
+{
+	int match = 0;
+	if (nextDecoded < 1024*100) {
+		measured[nextDecoded].magnitude = magSig;
+		measured[nextDecoded].phase = phaseSig;
+		measured[nextDecoded++].reference = volSig;
+	}
+	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] < nextDecoded - 20 )) ) {
+		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD - 10 ) match++;
+		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD - 10 ) match++;
+		if ( measured[nextDecoded-7].reference < SIGNAL_THRESHOLD - 10 ) match++;
+		if ( measured[nextDecoded-6].reference < SIGNAL_THRESHOLD - 10 ) match++;
+		if ( measured[nextDecoded-5].reference < SIGNAL_THRESHOLD - 10 ) match++;
+		if ( measured[nextDecoded-4].reference > SIGNAL_THRESHOLD ) match++;
+		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) match++;
+		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) match++;
+		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) match++;
+		if (match > 6) {
+			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 6;
+			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 5;
+			 else if (measured[nextDecoded-4].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 4;
+			 else if (measured[nextDecoded-3].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 3;
+			 else measurementIndex[lastMeasurement++] = nextDecoded - 2;
+		}
+		if ( measured[nextDecoded-9].reference > SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-8].reference > SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-7].reference > SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-6].reference > SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-4].reference < SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-3].reference < SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-2].reference < SIGNAL_THRESHOLD &&
+			 measured[nextDecoded-1].reference < SIGNAL_THRESHOLD   ) {
+			 if (measurementIndex[lastMeasurement-1] + 15 > nextDecoded - 5 )
+				nextDecoded = nextDecoded;
+		}
+	}
+}
 
 
  VOID ProcessHeader(WAVEHDR * pHdr)
 {
 	MMRESULT mRes=0;
 	short *audio;
+	static int state = 0;
 	int i;
 
 //	TRACE("%d",pHdr->dwUser);
@@ -239,15 +328,93 @@ void reset_dsp_accumerator(void)
 		} else
 			audio = (short *)pHdr->lpData;
 
-		i = NUMPTS / 2 / 48;
+		i = NUMPTS / 2 / SAMP;
 		while (i-- > 0) {
-			if (audio_delay == 0) {
-				dsp_process(audio, 48*2);
-			}
-			audio = & (audio[48*2]);
-			if (audio_delay >= 0) 
-				audio_delay -= 1;
+//float measured[1024][100];
+//int measurementCount[1024];
+//int lastMeasurement;
+
+			dsp_process(audio, SAMP*2);
+			StoreMeasurement();
+			audio = & (audio[SAMP*2]);
 		}
+/*
+
+			switch (audioState) {
+			case AS_ARMED:
+				if (volSig < -20)
+					nextState = AS_STARTED;
+				break;
+			case AS_STARTED:
+				if (volSig > -20) {
+					nextState = AS_SIGNAL;
+				}
+				break;
+			case AS_SIGNAL:
+				if (volSig < -20) {
+					if (decoded[nextDecoded][UPCOUNT] == 1) { // Single peak
+						nextState = AS_SILENCE; // back to silence
+						nextDecoded--;
+					} else
+						nextState = AS_STOPPING;
+				} else {
+					decoded[nextDecoded][UPCOUNT]++;
+					StoreMeasurement();
+				}
+				break;
+			case AS_STOPPING:
+				if (volSig > -20) {
+					decoded[nextDecoded][UPCOUNT]++;
+					nextState = AS_SIGNAL;
+				} else {
+					nextState = AS_SILENCE;
+					decoded[nextDecoded][DOWNCOUNT] = 1;
+				}
+			case AS_SILENCE:
+				if (volSig > -20 && decoded[nextDecoded][DOWNCOUNT] > 7) {
+					nextDecoded++;
+					if (nextDecoded < maxPoints) {
+						nextState = AS_SIGNAL;
+					} else
+ 						nextState = AS_FINISHED;
+				} else {
+					decoded[nextDecoded][DOWNCOUNT]++;
+					StoreMeasurement();
+				}
+				break;
+			case AS_FINISHED:
+				break;
+			}
+			if (nextState != AS_NOCHANGE) {
+				switch (nextState) {
+				case AS_STARTED:
+					nextDecoded = 0;
+					measurementCount[nextDecoded] = 0;
+					decoded[nextDecoded][UPCOUNT] = 0;
+					decoded[nextDecoded][DOWNCOUNT] = 0;
+					break;
+				case AS_SIGNAL:
+					measurementCount[nextDecoded] = 0;
+					decoded[nextDecoded][UPCOUNT] = 1;
+					StoreMeasurement();
+					break;
+				case AS_STOPPING:
+					break;
+				case AS_SILENCE:
+					decoded[nextDecoded][DOWNCOUNT] = 1;
+					StoreMeasurement();
+					break;
+				case AS_FINISHED:
+					break;
+				}
+				audioState = nextState;
+			}
+
+		}
+		
+		if (state == AS_SIGNAL || state == AS_STOPPING || state == AS_SILENCE)
+			StoreMeasurement();
+*/
 
 //		mmioWrite(m_hOPFile,pHdr->lpData,pHdr->dwBytesRecorded);
 		mRes=waveInAddBuffer(hWaveIn,pHdr,sizeof(WAVEHDR));

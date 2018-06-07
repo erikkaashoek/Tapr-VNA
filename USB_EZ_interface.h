@@ -53,10 +53,12 @@ private:
 	bool Result;					// DeviceIoControl result
 	int state;						// -1=no device +1=device OK
 	int mode;
+	int mp;
 	long lastFreq;
 	int lastDir;
 	int cable_before;
 	int cable_after;
+	int dur;
 	System::IO::Ports::SerialPort^  serialPort;
 
 	//	long int IICErrorCount;			// Temporary IIC error counter
@@ -74,6 +76,7 @@ public:
 	int State();				// -1 = no device  +1 = device OK
 	bool Start();					// Release reset of the 8051 processor on VNA
 	bool Stop();					// Halt the 8051 processor on VNA
+	void Sweep(long startF, long stepF, int numPoints, int duration);
 	bool Download(array<System::Byte>^ Codebuffer, int CodeSize, unsigned short Address );	// download code to 8051
 	bool Read(VNA_RXBUFFER * readbuf);		// Read 64 bytes of data from BULK_IN_EP2 - it blocks the
 									// calling thread, but the VNA always tries to have a buffer

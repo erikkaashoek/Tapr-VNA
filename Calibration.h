@@ -425,6 +425,7 @@ namespace VNAR3
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 				//VNA->SetMode(M_SHORT);
 
+				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -432,7 +433,7 @@ namespace VNAR3
 					int Fdesired;
 					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
-					TxBuf->TxAccum = FG->DDS(Fdesired);		
+					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 					TxBuf->ReplyType = 0;
 					TxBuf->MeasureDelay = 0;
@@ -441,7 +442,8 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf,DIR_REFL);
+                        if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+							return;
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -482,7 +484,7 @@ namespace VNAR3
 				//VNA->SetMode(M_OPEN);
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
-
+				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -490,7 +492,7 @@ namespace VNAR3
 					int Fdesired;
 					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
-					TxBuf->TxAccum = FG->DDS(Fdesired);		
+					TxBuf->TxAccum = i;  //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 					TxBuf->ReplyType = 0;
 					TxBuf->MeasureDelay = 0;
@@ -541,6 +543,7 @@ namespace VNAR3
 				//VNA->SetMode(M_LOAD);
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
+				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -548,7 +551,7 @@ namespace VNAR3
 					int Fdesired;
 					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
-					TxBuf->TxAccum = FG->DDS(Fdesired);		
+					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 					TxBuf->ReplyType = 0;
 					TxBuf->MeasureDelay = 0;
@@ -564,7 +567,7 @@ namespace VNAR3
 					calPoint->ReflPI = Median7(BufferI);		// filter the raw readings
 					calPoint->ReflPQ = Median7(BufferQ);
 					calPoint->ReflMQ = Median7(BufferM);
-					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+					//VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
 
 					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
 
@@ -600,14 +603,15 @@ namespace VNAR3
 
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
+				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
 					int Fdesired;
-					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
+					Fdesired = (i, LogFreqButton->Checked);
 
-					TxBuf->TxAccum = FG->DDS(Fdesired);
+					TxBuf->TxAccum = i; // FG->DDS(Fdesired);
 
 					TxBuf->IDAClevelHi = TxLevLinear(0);	// Set High Tx Level
 					TxBuf->IDAClevelLo = TxLevLinear(0 - TARGETLOMAG);	// Set Low TX Level

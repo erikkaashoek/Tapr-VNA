@@ -731,13 +731,14 @@ private: System::Void RxPhaseButton_Click(System::Object^  sender, System::Event
 	
 
 			// run a sweep of 1024 points, calibrating Rx phase detector
+			VNA->Sweep(GetFreqFromPhaseCalGrid(0), GetFreqFromPhaseCalGrid(1) - GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10);
 			for (long i=0; i<PHASECALGRIDSIZE; i++)
 			{
 				// Compute spot frequency
 
 				Fdesired = GetFreqFromPhaseCalGrid(i);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);
+				TxBuf->TxAccum = i; //FG->DDS(Fdesired);
 				TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 				TxBuf->ReplyType = 0;
 				TxBuf->MeasureDelay = 0;
@@ -802,13 +803,14 @@ private: System::Void TxPhaseButton_Click(System::Object^  sender, System::Event
 
 			// run a sweep of ~1024 points, calibrating Tx phase detector
 			// skip really low frequencies and really high frequencies
+			VNA->Sweep(GetFreqFromPhaseCalGrid(0), GetFreqFromPhaseCalGrid(1) - GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10);
 			for (long i=0; i<PHASECALGRIDSIZE; i++)
 			{
 				// Compute spot frequency
 
 				Fdesired = GetFreqFromPhaseCalGrid(i);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);	
+				TxBuf->TxAccum = i; //FG->DDS(Fdesired);	
 				TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 				TxBuf->ReplyType = 0;
 				TxBuf->MeasureDelay = 0;
@@ -868,18 +870,19 @@ private: System::Void TxLowAmpButton_Click(System::Object^  sender, System::Even
 			progressBar1->Value = 0;
 
 			// run a sweep of 21 frequencies, calibrating Trans Amplitude detector
+			VNA->Sweep(GetFreqFromDetMagCalGrid(0), GetFreqFromDetMagCalGrid(1) - GetFreqFromDetMagCalGrid(0), 21, 10);
 			for (long FreqIdx=0; FreqIdx<21; FreqIdx++)
 			{
 
 				// Compute spot frequency from DetCalGrid Point
 				Fdesired = GetFreqFromDetMagCalGrid(FreqIdx);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);
+				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
 
-				for (int levelDB=0; levelDB<30; levelDB++)	// Measure over 60 dB range
-				{
- 					TxBuf->IDAClevelHi = TxLevLinear(-levelDB);	// 0 to -29 dbm
-					TxBuf->IDAClevelLo = TxLevLinear(-levelDB-30);	// -30 to -59 dbm
+//				for (int levelDB=0; levelDB<30; levelDB++)	// Measure over 60 dB range
+//				{
+// 					TxBuf->IDAClevelHi = TxLevLinear(-levelDB);	// 0 to -29 dbm
+//					TxBuf->IDAClevelLo = TxLevLinear(-levelDB-30);	// -30 to -59 dbm
 
 					for(int k=0; k<7; k++)				// Take 7 readings at each point
 					{
@@ -887,24 +890,24 @@ private: System::Void TxLowAmpButton_Click(System::Object^  sender, System::Even
 						BufferM[k] = RxBuf->TranMQHi;
 						BufferN[k] = RxBuf->TranMQLo;
 					}
-					TranMag[FreqIdx, levelDB] = Median7(BufferM);		// Filter the readings
-					TranMag[FreqIdx, levelDB+30] = Median7(BufferN);
+//					TranMag[FreqIdx, levelDB] = Median7(BufferM);		// Filter the readings
+//					TranMag[FreqIdx, levelDB+30] = Median7(BufferN);
 
-				}
+//				}
 				progressBar1->Value = FreqIdx * progressBar1->Maximum/20;
 				progressBar1->Update();
 			}
-			if(Cal->TxDet->AmpCal(TranMag))		// AmpCal forms y = mx + b for transmission detector
+//			if(Cal->TxDet->AmpCal(TranMag))		// AmpCal forms y = mx + b for transmission detector
 			{
                 CalStepPass[2] = true;
 				TxLowAmpStat->Image = ICO1Label->Image;
 			}
-			else
-			{
-                CalStepPass[2] = false;
-				TxLowAmpStat->Image = ICO2Label->Image;
-				ShowCalStepFailMessage();
-			}
+//			else
+//			{
+//                CalStepPass[2] = false;
+//				TxLowAmpStat->Image = ICO2Label->Image;
+//				ShowCalStepFailMessage();
+//			}
 
 			TxLowAmpStat->Visible = true;
 
@@ -979,13 +982,14 @@ private: System::Void DirectivityCalButton_Click(System::Object^  sender, System
 			progressBar1->Value = 0;
 
 			// run a sweep of 21 frequencies, measuring residual Refl Amplitude
+			VNA->Sweep(GetFreqFromDetMagCalGrid(0), GetFreqFromDetMagCalGrid(1) - GetFreqFromDetMagCalGrid(0), 21, 10);
 			for (long FreqIdx=0; FreqIdx<21; FreqIdx++)
 			{
 
 				// Compute spot frequency for each DetectorCalGrid Point
 				Fdesired = GetFreqFromDetMagCalGrid(FreqIdx);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);
+				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
 
 				// Take 7 readings, use median value
 				for(int k=0; k<7; k++)
@@ -1031,6 +1035,7 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 			progressBar1->Value = 0;
 
 			// run a sweep of 21 frequencies, calibrating Refl Amplitude detector
+			VNA->Sweep(GetFreqFromDetMagCalGrid(0), GetFreqFromDetMagCalGrid(1) - GetFreqFromDetMagCalGrid(0), 21, 10);
 			for (long FreqIdx=0; FreqIdx<21; FreqIdx++)
 			{
 
@@ -1038,7 +1043,7 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 
 				Fdesired = GetFreqFromDetMagCalGrid(FreqIdx);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);
+				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
 
  				TxBuf->IDAClevelHi = TxLevLinear(0);	// 0  dbm
 
@@ -1060,13 +1065,14 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 
 			// Collect detailed 1024 point sweep for Open Reflection Data
 
+			VNA->Sweep(GetFreqFromPhaseCalGrid(0), GetFreqFromPhaseCalGrid(1) - GetFreqFromPhaseCalGrid(0), 1024, 10);
 			for (i=0; i<1024; i++)
             {
 				// Compute spot frequency
 
 				Fdesired = GetFreqFromPhaseCalGrid(i);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);		
+				TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 				TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 				TxBuf->ReplyType = 0;
 				TxBuf->MeasureDelay = 0;
@@ -1121,17 +1127,18 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 			progressBar1->Value = 0;
 
 			// run a sweep of 21 frequencies, calibrating Refl Amplitude detector
+			VNA->Sweep(GetFreqFromDetMagCalGrid(0), GetFreqFromDetMagCalGrid(1) - GetFreqFromDetMagCalGrid(0), 21, 10);
 			for (FreqIdx=0; FreqIdx<21; FreqIdx++)
 			{
 
 				// Compute spot frequency from DetCalGrid Point
 				Fdesired = GetFreqFromDetMagCalGrid(FreqIdx);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);
+				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
 
-				for (int levelDB=0; levelDB<=59; levelDB++)	// Measure over 60 dB range
-				{
- 					TxBuf->IDAClevelHi = TxLevLinear(-levelDB);	// 0 to -59 dbm
+//				for (int levelDB=0; levelDB<=59; levelDB++)	// Measure over 60 dB range
+//				{
+// 					TxBuf->IDAClevelHi = TxLevLinear(-levelDB);	// 0 to -59 dbm
 
 					// Take 7 readings, use median value
 					for(int k=0; k<7; k++)
@@ -1141,30 +1148,31 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 					}
-					ReflMagRegression[FreqIdx, levelDB] = Median7(BufferM);
+//					ReflMagRegression[FreqIdx, levelDB] = Median7(BufferM);
 
-					if (levelDB == 0)			// Also record Short Mag & Phase just at the zero dbm level.
+//					if (levelDB == 0)			// Also record Short Mag & Phase just at the zero dbm level.
 					{
 						ReflMagPhShort[FreqIdx, MagQ] = Median7(BufferM);
 						ReflMagPhShort[FreqIdx, PhaseI] = Median7(BufferI);
 						ReflMagPhShort[FreqIdx, PhaseQ] = Median7(BufferQ);
 					}
-				}
+//				}
 				progressBar1->Value = FreqIdx * progressBar1->Maximum/40;
 				progressBar1->Update();
 			}
 
-			bool RegressionOK = Cal->RxDet->AmpCal(ReflMagRegression);		// Linear regression - sets y = mx + b
+			bool RegressionOK = true; //Cal->RxDet->AmpCal(ReflMagRegression);		// Linear regression - sets y = mx + b
 
 			// Collect detailed 1024 point sweep for Shorted Reflection Data
 
+			VNA->Sweep(GetFreqFromPhaseCalGrid(0), GetFreqFromPhaseCalGrid(1) - GetFreqFromPhaseCalGrid(0), 1024, 10);
 			for (i=0; i<1024; i++)
             {
 				// Compute spot frequency
 
 				Fdesired = GetFreqFromPhaseCalGrid(i);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);		
+				TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 				TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 				TxBuf->ReplyType = 0;
 				TxBuf->MeasureDelay = 0;
@@ -1222,13 +1230,14 @@ private: System::Void TxLongCableOpenButton_Click(System::Object^  sender, Syste
 
 			// Collect detailed 1024 point sweep for Terminated Reflection Data
 
+			VNA->Sweep(GetFreqFromPhaseCalGrid(0), GetFreqFromPhaseCalGrid(1) - GetFreqFromPhaseCalGrid(0), 1024, 10);
 			for (i=0; i<1024; i++)
             {
 				// Compute spot frequency
 
 				Fdesired = GetFreqFromPhaseCalGrid(i);
 
-				TxBuf->TxAccum = FG->DDS(Fdesired);		
+				TxBuf->TxAccum = i; // FG->DDS(Fdesired);		
 				TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
 				TxBuf->ReplyType = 0;
 				TxBuf->MeasureDelay = 0;

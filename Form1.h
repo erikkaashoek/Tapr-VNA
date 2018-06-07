@@ -1959,8 +1959,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			// rawDataToolStripMenuItem
 			// 
-			this->rawDataToolStripMenuItem->Checked = true;
-			this->rawDataToolStripMenuItem->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->rawDataToolStripMenuItem->Name = L"rawDataToolStripMenuItem";
 			this->rawDataToolStripMenuItem->Size = System::Drawing::Size(124, 22);
 			this->rawDataToolStripMenuItem->Text = L"rawData";
@@ -1970,13 +1968,11 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->RefExtnCheckBox->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->RefExtnCheckBox->AutoSize = true;
-			this->RefExtnCheckBox->Enabled = false;
 			this->RefExtnCheckBox->Location = System::Drawing::Point(914, 342);
 			this->RefExtnCheckBox->Name = L"RefExtnCheckBox";
 			this->RefExtnCheckBox->Size = System::Drawing::Size(15, 14);
 			this->RefExtnCheckBox->TabIndex = 28;
 			this->RefExtnCheckBox->UseVisualStyleBackColor = true;
-			this->RefExtnCheckBox->Visible = false;
 			this->RefExtnCheckBox->CheckedChanged += gcnew System::EventHandler(this, &Form1::RefExtnCheckBox_CheckedChanged);
 			// 
 			// label6
@@ -1990,7 +1986,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->label6->TabIndex = 29;
 			this->label6->Text = L"Refl Plane Ext";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
-			this->label6->Visible = false;
 			// 
 			// magTran
 			// 
@@ -2313,6 +2308,7 @@ private: System::Void PrintAPage(Object^ pSender, PrintPageEventArgs^ pe)
 		Form_Render(pe->Graphics, pe->MarginBounds, printer);
 	}
 
+#define PT 1
 
 	///	Draw screen bounded by rect
 private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		// rect is our clientsize
@@ -2335,35 +2331,35 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		int BotMargin =	(int)(130 * DisplayExpansion);
 
 		// pens that can change color based on user preference
-		Pen^ penS11Phs = gcnew Pen(s11PhsColor, 2);
+		Pen^ penS11Phs = gcnew Pen(s11PhsColor, PT);
 		Pen^ penS11PhsSto = gcnew Pen(s11PhsColor, 1);
-		Pen^ penS11Mag = gcnew Pen(s11MagColor, 2);
+		Pen^ penS11Mag = gcnew Pen(s11MagColor,PT);
 		Pen^ penS11MagSto = gcnew Pen(s11MagColor, 1);
 		Pen^ penS11MagDelta = gcnew Pen(s11MagColor, 3);
 
-		Pen^ penS21Phs = gcnew Pen(s21PhsColor, 2);
+		Pen^ penS21Phs = gcnew Pen(s21PhsColor, PT);
 		Pen^ penS21PhsSto = gcnew Pen(s21PhsColor, 1);
-		Pen^ penS21Mag = gcnew Pen(s21MagColor, 2);
+		Pen^ penS21Mag = gcnew Pen(s21MagColor, PT);
 		Pen^ penS21MagSto = gcnew Pen(s21MagColor, 1);
 		Pen^ penS21MagDelta = gcnew Pen(s21MagColor, 3);
 
-		Pen^ penS21GD = gcnew Pen(s21GroupDelayColor, 2);
+		Pen^ penS21GD = gcnew Pen(s21GroupDelayColor, PT);
 
-		Pen^ penS11VSWR = gcnew Pen(s11VSWRColor, 2);
+		Pen^ penS11VSWR = gcnew Pen(s11VSWRColor, PT);
 		Pen^ penS11VSWRSto = gcnew Pen(s11VSWRColor, 1);
 
-		Pen^ penR = gcnew Pen(s11RColor, 2);
+		Pen^ penR = gcnew Pen(s11RColor, PT);
 		Pen^ penRSto = gcnew Pen(s11RColor, 1);
-		Pen^ penjX = gcnew Pen(s11jXColor, 2);
+		Pen^ penjX = gcnew Pen(s11jXColor, PT);
 		Pen^ penjXSto = gcnew Pen(s11jXColor, 1);
 
 		// pens that don't change color
 		Pen^ penBlack = gcnew Pen(Color::Black);
-		Pen^ penBlack2 = gcnew Pen(Color::Black, 2);
-		Pen^ penBrown2 = gcnew Pen(Color::Brown, 2);
-		Pen^ penDarkCyan = gcnew Pen(Color::DarkCyan, 2);
-		Pen^ penFuchsia = gcnew Pen(Color::Fuchsia, 2);
-		Pen^ penDarkGoldenrod = gcnew Pen(Color::DarkGoldenrod, 2);
+		Pen^ penBlack2 = gcnew Pen(Color::Black, PT);
+		Pen^ penBrown2 = gcnew Pen(Color::Brown, PT);
+		Pen^ penDarkCyan = gcnew Pen(Color::DarkCyan, PT);
+		Pen^ penFuchsia = gcnew Pen(Color::Fuchsia, PT);
+		Pen^ penDarkGoldenrod = gcnew Pen(Color::DarkGoldenrod, PT);
 		Pen^ pengray = gcnew Pen(Color::Gray);
 		Pen^ penbrown = gcnew Pen(Color::Brown);
 		Pen^ pencyan = gcnew Pen(Color::Cyan);
@@ -2691,9 +2687,15 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #ifdef DUMPRAWTRACES			// Dump raw traces to a file for debugging
 			FileStream^ fs;
 			StreamWriter^ sw;
-			fs = new FileStream("VNAdebug.txt", FileMode::Create, FileAccess::Write);
-			sw = new StreamWriter(fs);
+			fs = gcnew FileStream("VNAdebug.txt", FileMode::Create, FileAccess::Write);
+			sw = gcnew StreamWriter(fs);
+			sw->WriteLine("sep=,");
 			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQLo, ReflPI, ReflPQ, ReflMQ");
+#endif
+#ifdef DEBUGAUDIO
+			int mm = 0;
+			int mlevel = 0;
+			int prevmlevel = 0;
 #endif
 
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
@@ -2727,12 +2729,32 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+1] * scopeDisp.Height / 70000;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 */
-				traceStop.Y = scopeDisp.Bottom/2 + decoded[0][i] * scopeDisp.Height / 70000;
-				traceStart.Y = scopeDisp.Bottom/2 + decoded[0][i-1] * scopeDisp.Height / 70000;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom/2 + decoded[1][i] * scopeDisp.Height / 70000;
-				traceStart.Y = scopeDisp.Bottom/2 + decoded[1][i-1] * scopeDisp.Height / 70000;
+				if (i > measurementIndex[mm]+13) {	
+					mm++; 
+					mlevel = 0;
+				} else if  (i > measurementIndex[mm]) {
+					mlevel = 1;
+				} else {
+					mlevel = 0;
+				}
+				traceStop.Y = scopeDisp.Bottom/2 - mlevel * scopeDisp.Height / 3;
+				traceStart.Y = scopeDisp.Bottom/2 - prevmlevel * scopeDisp.Height / 3;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
+				prevmlevel = mlevel;
+
+
+				if (mlevel) {
+					traceStop.Y = scopeDisp.Bottom / 100  - measured[i].reference * scopeDisp.Height / 200.0;
+					traceStart.Y = scopeDisp.Bottom / 100 - measured[i-1].reference * scopeDisp.Height / 200.0;
+					gr->DrawLine(penS11Mag, traceStart, traceStop);
+				}
+
+				if (mlevel) {
+					traceStop.Y = scopeDisp.Bottom /2 - measured[i].magnitude * scopeDisp.Height / 200.0;
+					traceStart.Y = scopeDisp.Bottom /2 - measured[i-1].magnitude * scopeDisp.Height / 200.0;
+					gr->DrawLine(penS21Mag, traceStart, traceStop);
+				}
+
 #endif
 
 
@@ -2769,18 +2791,28 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #endif
 
 #ifdef DEBUGRAWTRANMAG
+				float py;
+				float dummy;
 				//	Transmit Mag0 (MQHi)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQHi * scopeDisp.Height / 4000;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQHi * scopeDisp.Height / 4000;
+				RetreiveData(i, false, py, dummy);
+				traceStop.Y = scopeDisp.Bottom -  ( py + 90) * scopeDisp.Height / 90 ;
+				RetreiveData(i-1, false, py, dummy);
+				traceStart.Y = scopeDisp.Bottom - ( py + 90) * scopeDisp.Height/ 90 ;
+				gr->DrawLine(pengray, traceStart, traceStop);
+/*
+				//	Transmit Mag0 (MQHi)
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQHi * scopeDisp.Height / 12000  - scopeDisp.Height * 2 / 3 ;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQHi * scopeDisp.Height / 12000  - scopeDisp.Height * 2 / 3 ;
 				gr->DrawLine(pengray, traceStart, traceStop);
 				//	Transmit Mag17 (MQMid)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQMid * scopeDisp.Height / 4000;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQMid * scopeDisp.Height / 4000;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQMid * scopeDisp.Height / 12000 - scopeDisp.Height * 1 / 3 ;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQMid * scopeDisp.Height / 12000  - scopeDisp.Height * 1 / 3 ;
 				gr->DrawLine(penbrown, traceStart, traceStop);
 				//	Transmit Mag34 (MQLo)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQLo * scopeDisp.Height / 4000;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQLo * scopeDisp.Height / 4000;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQLo * scopeDisp.Height / 12000  + scopeDisp.Height * 0 / 3 ;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQLo * scopeDisp.Height / 12000  + scopeDisp.Height * 0 / 3 ;
 				gr->DrawLine(pencyan, traceStart, traceStop);
+*/
 #endif
 
 #ifdef DUMPRAWTRACES
@@ -4865,7 +4897,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 
 		// hold temporary sweep results if glitch is detected in slow glitch mode only
-#ifndef FASTGLITCH
+#ifdef SLOWGLITCH
 		int tempSweep1 __gc[], tempSweep2 __gc[], tempSweep3 __gc[], tempSweep4 __gc[];
 		int tempSweep5 __gc[], tempSweep6 __gc[], tempSweep7 __gc[], tempSweep8 __gc[];
         int tempSweep9 __gc[], tempSweep10 __gc[], tempSweep11 __gc[], tempSweep12 __gc[];
@@ -5080,12 +5112,18 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5);
 			for (int m=0; m<FG->points; m++)
 			{
     
 				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+				TxBuf->TxAccum = m; // FG->DDS(FG->Frequency(m));
+				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+					break;
+				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+					break;
+//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+//					break;
 
 				// Test for ADC Write Error - retry if error
 				
@@ -5107,18 +5145,13 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				trace[m]->ReflPQ = RxBuf->ReflPQ;
 				trace[m]->Vref1 = RxBuf->Vref1;
 
+			//}
+			//for (int m=0; m<FG->points; m++)
+			//{
 
-				// Update Sweep Progress
-
-				SweepProgressBar->Value = (m+1)/2;
-			}
-
-			for (int m=0; m<FG->points; m++)
-			{
-    
 				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
+			//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
+			//	VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 
 				// Test for ADC Write Error - retry if error
 				
@@ -5149,7 +5182,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 				// Update Sweep Progress
 
-				SweepProgressBar->Value = (m+1)/2 + FG->points/2;
+				SweepProgressBar->Value = (m+1);
 			}
 
 			// Glitch detection using median filtering algorithm,
@@ -5337,7 +5370,7 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 
 
 		// hold temporary sweep results if glitch is detected in slow glitch mode only
-#ifndef FASTGLITCH
+#ifdef SLOWGLITCH
 		int tempSweep1 __gc[], tempSweep2 __gc[], tempSweep3 __gc[], tempSweep4 __gc[];
 		int tempSweep5 __gc[], tempSweep6 __gc[], tempSweep7 __gc[], tempSweep8 __gc[];
         int tempSweep9 __gc[], tempSweep10 __gc[], tempSweep11 __gc[], tempSweep12 __gc[];
@@ -5500,12 +5533,18 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5);
 			for (int m=0; m<FG->points; m++)
 			{
     
 				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+				TxBuf->TxAccum = m; //FG->DDS(FG->Frequency(m));
+				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+					break;
+				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+					break;
+//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+//					break;
 
 				// Test for ADC Write Error - retry if error
 				
@@ -5527,16 +5566,13 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 				trace[m]->ReflPQ = RxBuf->ReflPQ;
 				trace[m]->Vref1 = RxBuf->Vref1;
 				// Update Sweep Progress
+			//}
+			//for (int m=0; m<FG->points; m++)
+			//{
 
-				SweepProgressBar->Value = m+1;
-			}
-
-			for (int m=0; m<FG->points; m++)
-			{
-    
 				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
+			//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
+			//	VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 
 				// Test for ADC Write Error - retry if error
 				
@@ -5568,7 +5604,7 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 
 				// Update Sweep Progress
 
-				SweepProgressBar->Value = (m+1)/2 + FG->points/2 ;
+				SweepProgressBar->Value = m+1 ;
 			}
 
 			// Glitch detection using median filtering algorithm,
@@ -6173,10 +6209,10 @@ private: System::Void s21groupdelayItem_Click(System::Object^  sender, System::E
 		 /// Calibration Applied button changed event handler
 private: System::Void calCheckBox_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		 {
-			//if (calCheckBox->Checked)
-			//	RefExtnCheckBox->Enabled = true;
-			//else
-			//	RefExtnCheckBox->Enabled = false;
+			if (calCheckBox->Checked)
+				RefExtnCheckBox->Enabled = true;
+			else
+				RefExtnCheckBox->Enabled = false;
 
 			Refresh();	// Force Screen redraw
 		 }
@@ -7270,6 +7306,12 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 
 				bw->Write(this->displayMeasuredMinusStored->Checked);
 
+				if (serialPort1->IsOpen)
+					bw->Write(serialPort1->PortName);
+				else
+					bw->Write("");
+
+
 
 			}
 			catch(System::IO::IOException^ pe)
@@ -7597,12 +7639,15 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				// 13. Background color - New 09-15-2008
 				// Initialized by the property on the Form1 designer
 
-				//this->BackColor = Color::FromArgb(br->ReadInt32());
+				this->BackColor = Color::FromArgb(br->ReadInt32());
 
 				// 14. Display MeasuredMinusStored Magnitude traces - New 07-02-2011
 
 				displayMeasuredMinusStored->Checked = br->ReadBoolean();
 
+				if (serialPort1->IsOpen) serialPort1->Close();
+				serialPort1->PortName = br->ReadString();
+				serialPort1->Open();
 
 
 			}

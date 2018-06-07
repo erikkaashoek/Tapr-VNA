@@ -269,10 +269,10 @@ long long int FrequencyGrid::DDS(int Frequency)
 	// It has to be scaled up to 288 MHz.
 
 	long long int N;
-	//N = Frequency;
-	N = Convert::ToInt64(Frequency) * 4294967296;  // Freq * 2^32
-	N /= (288000000 + (ferror * 288) / 100 );	   // Ferror * 2.88
-	N *= 65536;								       // Freq * 2^16
+	N = Frequency;
+	//N = Convert::ToInt64(Frequency) * 4294967296;  // Freq * 2^32
+	//N /= (288000000 + (ferror * 288) / 100 );	   // Ferror * 2.88
+	//N *= 65536;								       // Freq * 2^16
 	return(N);
 }
 /// Find nearest gridpoint to Frequency
@@ -341,10 +341,12 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 	}
 	catch(System::IO::IOException^ pe)
 	{
+		(void) pe;
+/*
 		MessageBox::Show("Detector Calibration File Not Found.\n\r"
 			"Be sure to run   Calibration->Detector Calibration...   first", pe->Message,
 			MessageBoxButtons::OK, MessageBoxIcon::Exclamation);
-		if (br)
+*/		if (br)
 			br->Close();
 		if (fs)
 			fs->Close();
@@ -527,7 +529,7 @@ void InstrumentCalDataSet::ResolveTranPolar(MeasurementSet^ dataPoint, int Frequ
 	phase = TxDet->IQtoDegrees(dataPoint->TranPI, dataPoint->TranPQ, Frequency, magnitudeDB, dataPoint->TranPILow, dataPoint->TranPQLow);
 
 	// Compensate phase at low frequencies 
-	phase -= HIGHPASSPOLE/Frequency;	
+	//phase -= HIGHPASSPOLE/Frequency;	
 
 	// offset phase by 180 degrees for Trans measurements
 	phase += 180.0;
@@ -1374,7 +1376,7 @@ int ExpectedValue(array<UInt16>^ data, int index, bool mode)
 	Deviation = abs(data[index+3] - LinearPredictor);
 	if (Deviation < (GLITCHSIZE + abs(Delta/5)))
 		return(data[index+3]);			// return measurement if it is close
-
+/*
 	if (mode == true)	// phase measurement saturates about ~120 low and ~3500 high
 	{
 		if (LinearPredictor < 120 && data[index + 3] < 120)
@@ -1382,14 +1384,14 @@ int ExpectedValue(array<UInt16>^ data, int index, bool mode)
 		if (LinearPredictor > 3480 && data[index + 3] > 3480)
 			return(data[index+3]);		// return phase data if it's saturated high
 	}
-
+*/
 	// If that failed, determine Expected value from trailing 2 samples by linear extrapolation
 	Delta = data[index+4] - data[index+5];
 	LinearPredictor = data[index+4] + Delta;
 	Deviation = abs(data[index+3] - LinearPredictor);
 	if (Deviation < (GLITCHSIZE + abs(Delta/5)))
 		return(data[index+3]);			// return measurement if it is close
-
+/*
 	if (mode == true)	// phase measurement saturates about ~120 low and ~3500 high
 	{
 		if (LinearPredictor < 120 && data[index + 3] < 120)
@@ -1397,7 +1399,7 @@ int ExpectedValue(array<UInt16>^ data, int index, bool mode)
 		if (LinearPredictor > 3480 && data[index + 3] > 3480)
 			return(data[index+3]);		// return phase data if it's saturated high
 	}
-
+*/
 	// All reasonableness tests failed, so return the median value (filter it)
 	return(MedianValue);
 }
@@ -1590,10 +1592,12 @@ int MeasureDelayStringToCount(String^ value)
 
 int GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
 		{											/// Grid is 21 points.
-			if (index < 9 && index >= 0)
-				return (Convert::ToInt32((index + 2) * 100000));	// Every 100 KHz from 200 kHz to 1 Mhz.
-			if (index < 21 && index >= 0)
-				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
+//			if (index < 9 && index >= 0)
+//				return (Convert::ToInt32((index + 2) * 100000));	// Every 100 KHz from 200 kHz to 1 Mhz.
+//			if (index < 21 && index >= 0)
+//				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
+			if (index < PHASECALGRIDSIZE && index >= 0)
+				return (Convert::ToInt32(MINCALFREQ + (index * (MAXCALFREQ - MINCALFREQ)/(21-1))));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromDetMagCalGrid: index is invalid ");	// bad index value

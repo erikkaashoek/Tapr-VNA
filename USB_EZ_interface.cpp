@@ -387,6 +387,28 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
+void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
+{
+	String ^ t;
+	ArmAudio(numPoints);
+	if (! audio_simulation){
+
+		//try {
+		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
+		dur = duration;
+//		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
+//		Sleep(200);
+		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 5, stepF, duration));
+		//}
+		//catch (System::Exception^ e) {
+		//		(void) e;
+		//}
+
+	}
+	mp = 0;
+}
+
+
 #define PhaseToQ(X) (short)( sin((X) * DEGR2RAD) * 1800 + 1850 )
 #define PhaseToI(X) (short)( cos((X) * DEGR2RAD) * 1800 + 1850 )
 #define Noise(X, Y) (short)( X * (1.0 +  Y * ((1.0 * rand() / RAND_MAX) - 0.5) ));
@@ -394,21 +416,31 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 #define MaxLevel +0
 #define MinLevel -57
 #define MaxDAC	3500
-#define MagDac(X)	((short)(MaxDAC * (((X) - MinLevel) / (MaxLevel - MinLevel))))
+#define MagDac(X)	((short)(MaxDAC * (( X ) - MinLevel) / (MaxLevel - MinLevel) ) )
 
 	/// Write TxBuffer to VNA (command),  readback the result to RxBuffer (response)
 bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int direction)
 {
 	// modifications to test Proto8 target changes
 	bool rxsuccess = true;
-	long freq;
-	double reflphase,tranphase;
-	double reflmag,tranmag;
+//	long freq;
+	float reflphase,tranphase;
+	float reflmag,tranmag;
 	int reply = TxBuffer->ReplyType;
-
-
+	int retries=0;
+//	return true;
+	
+	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase) && retries < 100) {
+		Sleep(2);
+		retries++;
+	}
+	if (retries >= 100)
+		return (false);
+	mp++;
+#if 0
 //	int level;
-	freq = DDSToFreq(TxBuffer->TxAccum);
+//	freq = DDSToFreq(TxBuffer->TxAccum);
+	freq = (long)TxBuffer->TxAccum;
 
 			// when ReflPI is low,  the phase is near   0 degrees
 			// when ReflPI is high, the phase is near 180 degrees
@@ -418,7 +450,8 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	audio_simulation = false;
 	if (mode == M_SHORT) {
 		if (direction == DIR_TRANS) {
-			audio_volume = 0.0001;
+			audio_volume = 0.000001;
+			audio_phase = 0.0;
 		} else {
 			audio_phase = -180.0;
 			audio_volume = 0.9;
@@ -427,7 +460,8 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	}
 	if (mode == M_OPEN) {
 		if (direction == DIR_TRANS) {
-			audio_volume = 0.0001;
+			audio_volume = 0.000001;
+			audio_phase = 0.0;
 		} else {
 			audio_phase = 0.0;
 			audio_volume = 0.9;
@@ -436,10 +470,11 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	}
 	if (mode == M_LOAD) {
 		if (direction == DIR_TRANS) {
-			audio_volume = 0.0001;
+			audio_volume = 0.00000001;
+			audio_phase = 0.0;
 		} else {
 			audio_phase = 0.0;
-			audio_volume = 0.0001;
+			audio_volume = 0.00000001;
 		}
 		audio_simulation = true;
 	}
@@ -451,7 +486,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 			while (audio_phase <= -180.0) audio_phase += 360.0;
 		} else {
 			audio_phase = 0.0;
-			audio_volume = 0.0001;
+			audio_volume = 0.000001;
 		}
 		audio_simulation = true;
 	}
@@ -467,13 +502,19 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 				}
 			}
 			catch (System::Exception^ e) {
+				(void) e;
 			}
 			if (audio_simulation)
 				audio_delay = 0;
-			else
-				audio_delay = 22;
+			else {
+				if (lastFreq != freq)
+					audio_delay = 50; // 22
+				else if (lastDir != direction)
+					audio_delay = 50; // 4
+				else
+					audio_delay = 0;
+			}
 			lastFreq = freq;
-			if (lastDir != direction) audio_delay += 20;
 			lastDir = direction;
 		} else {
 			audio_delay = 0;
@@ -481,7 +522,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 //		serialPort->WriteLine("1");
 //		serialPort->WriteLine("0");
-		while (audio_delay >=0) Sleep(50);
+		while (audio_delay >=0) Sleep(2);
 
 		if (direction == DIR_TRANS) {
 			tranmag = gamma[0];
@@ -493,9 +534,10 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 		//magSig = gamma[0];
 		//phaseSig = gamma[1];
-
+#endif
 
 	if (reply == VNA_REPLYTYPE_FULL) {
+#if 0
 		RxBuffer->ReflPI = PhaseToI(reflphase);
 		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
 		if (reflmag > MinLevel)
@@ -505,18 +547,23 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 		RxBuffer->TranPI = PhaseToI(tranphase);
 		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
-		if (tranmag > -57.0) {
+
+		if (tranmag > -50.0) {
 			RxBuffer->TranMQLo = MagDac(tranmag); // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid =  3800;
+			RxBuffer->TranMQMid = 3800;
 			RxBuffer->TranMQHi = 3800;
-		} else if (tranmag > (-57.0 - 17.0)) {
+		} 
+	
+		if (tranmag > -20)
+			tranmag = tranmag;
+		else if (tranmag > (-50.0 - 17.0)) {
 			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid =  MagDac(tranmag + 17.0);
+			RxBuffer->TranMQMid = MagDac(tranmag + 17);
 			RxBuffer->TranMQHi = 3800;
 		} else {
 			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid =  0;
-			RxBuffer->TranMQHi = MagDac(tranmag + 34.0);
+			RxBuffer->TranMQMid = 0;
+			RxBuffer->TranMQHi =  MagDac(tranmag + 34);
 		}
 
 				RxBuffer->ReflMI = 0;
@@ -528,7 +575,14 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 				RxBuffer->TranPILow = 1850;
 				RxBuffer->TranPQLow = 1850;
+#endif
+		NormalizePhase(reflphase);
+		RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
+		RxBuffer->ReflMQ = DB2SHORT(reflmag);
 
+		NormalizePhase(tranphase);
+		RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
+		RxBuffer->TranMQLo = DB2SHORT(tranmag);
 
 
 	} else { // FAST

@@ -47,16 +47,16 @@
 
 //	Constants related to the actual numeric VNA instrument readings
 //  These are used until the Detector Calibration is run or loaded from a file.
-#define MAXREFLMAGNITUDE 2100			// temporary until Detector Calibration is run,
+//#define MAXREFLMAGNITUDE 2100			// temporary until Detector Calibration is run,
 										// observed on S/N 1
 #define MAXTRANMAGNITUDE 3800			// temporary until Detector Calibration is run,
 										// observed on S/N 1
 
 // Constants related to calibration grid (both instrument calibration and fixture calibration)
 ///\def Maximum Calibration Frequency
-#define MAXCALFREQ 200000000.0
+#define MAXCALFREQ 200000000
 ///\def Minimum Calibration Frequency
-#define MINCALFREQ 200000.0
+#define MINCALFREQ 200000
 ///\def Number of Calibration Points
 #define NUMCALPTS 1024.0
 ///\def Size of Phase Calibration Grid
@@ -98,13 +98,25 @@
 #define	PHASEMODE		true
 #define AMPLMODE		false
 // Should normally only define one of either FASTGLITCH or SLOWGLITCH as true
-#define	FASTGLITCH							// use FAST glitch correction algorithm
+//#define	FASTGLITCH							// use FAST glitch correction algorithm
 //#define	SLOWGLITCH							// use SLOW glitch correction algorithm
 
 /// Array index enumeration for ReflectionMeasurements (in InstrumentCal and DisplayRoutines)
 enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection measurements
 
-#define HIGHPASSPOLE (6.2 * 200000.0)		// Phase lead caused by 2 highpass
+#define HIGHPASSPOLE (0)		// Phase lead caused by 2 highpass
 											// poles of AC coupling capacitors in the ModAmp.
 											// 6.2 degrees at 200 Khz.
 
+#define SHORT_RANGE 3800
+
+#define MAX_PHASE	180.0
+#define MIN_PHASE   -180.0
+#define NormalizePhase(X) { while ((X) > 180.0) (X) -= 360.; while ((X) < -180.0) (X) += 360.0; }
+#define PHASE2SHORT(X) (short)(((X) - MIN_PHASE) * SHORT_RANGE / (MAX_PHASE - MIN_PHASE))
+#define SHORT2PHASE(X) (((double)(X) * (MAX_PHASE - MIN_PHASE) / SHORT_RANGE ) + MIN_PHASE )
+
+#define MAX_DB	+10.0
+#define MIN_DB   -100.0
+#define DB2SHORT(X) (short)(((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB))
+#define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )

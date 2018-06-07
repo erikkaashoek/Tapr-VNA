@@ -573,8 +573,10 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 {
 	// New method - use Max, Min, Sin(), Arctan()   06-16-2007
 
-	double x, y, degrees;
+//	double x, y, degrees;
 
+	return (SHORT2PHASE(Q));
+#if 0
 	// If signal is REFL, or if TRANS and less than -20 dB, or ILo or Qlo are not available 
 	if ( true || (MagDb <= -20.0) || (String::Compare(this->name, "REFL") == 0) || (ILo == 0) || (QLo == 0))
 	{
@@ -632,7 +634,7 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 	if (Double::IsNaN(degrees))
 		throw gcnew System::ArithmeticException(" Detector::IQtoDegrees   degrees is not_a_number ");
 	return (degrees);
-
+#endif
 
 }/// Convert detector magnitude count to dB. via piecewise linear fit
 /// Convert magnitude reading to dB of detector response
@@ -640,6 +642,8 @@ double Detector::IQtoDegrees(int I, int Q, int Freq, double MagDb, int ILo, int 
 /// Does not model the directional coupler.
 double Detector::MagTodBRefl(int Freq, int Mag)
 	{
+		return(SHORT2DB(Mag));
+#if 0
 		double result;
 		int FreqBase, FreqBaseNext;		// Two adjacent cal frequency points
 		double FreqRemainder;			// remainder of freq between cal points
@@ -700,11 +704,14 @@ double Detector::MagTodBRefl(int Freq, int Mag)
 		}
 		else									// uncalibrated measurement
 			return(((Mag-MAXTRANMAGNITUDE)/57.0));			// roughly 57 counts per dB
+#endif
 	}
 
 /// Convert detector magnitude count to dB. via table lookup
 double Detector::MagTodBTran(int Freq, int Mag0, int Mag34, int Mag17)
 	{
+		return(SHORT2DB(Mag34));
+#if 0
 		double result;
 		int FreqBase, FreqBaseNext;		// Two adjacent cal frequency points
 		double FreqRemainder;			// remainder of freq between cal points
@@ -808,9 +815,15 @@ double Detector::MagTodBTran(int Freq, int Mag0, int Mag34, int Mag17)
 		return(result-6.0);
 
 		}
-		else												// uncalibrated measurement
-			return(((Mag34-MAXTRANMAGNITUDE)/57.0) + 8.0);			// roughly 57 counts per dB
-
+		else {
+			// uncalibrated measurement
+			if (Mag0 < 3500)
+				return(((Mag0-MAXTRANMAGNITUDE)/57.0)+0-34);			// roughly 57 counts per dB
+			if (Mag17 < 3500)
+				return(((Mag17-MAXTRANMAGNITUDE)/57.0)+0-17);			// roughly 57 counts per dB
+			return(((Mag34-MAXTRANMAGNITUDE)/57.0)+0);			// roughly 57 counts per dB
+		}
+#endif
 	}
 
 /// Compensate for Q-reference time delay compared to I-reference
