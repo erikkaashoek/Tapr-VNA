@@ -76,7 +76,7 @@ using namespace System::Windows::Forms;
 
 #include <float.h>
 
-#define DIRECTCAL		// enable compensation of coupler directivity to magnitude
+// #define DIRECTCAL		// enable compensation of coupler directivity to magnitude
 
 	// Convert Mag and Phase to X,Y screen display coordinates in polar display mode
 void ToDisplayPolar(double magnitude, double phase, int polarRad, int xoffset, int yoffset, int& X, int& Y)
@@ -304,17 +304,18 @@ void FrequencyGrid::Build(void)
 		FrequencyIndex[i] = startFreq + (int)((double)i * delta);
 }
 
+
 // InstrumentCalDataSet Constructor - allocate memory for Calibration Data
 //   Also holds specific fixture calibration data - if any. 
 InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)	
 {
-	RxDet = gcnew Detector();		// construct AD8702 objects
-	RxDet->name = "REFL";
+//	RxDet = gcnew Detector();		// construct AD8702 objects
+//	RxDet->name = "REFL";
 
-	TxDet = gcnew Detector();
-	TxDet->name = "TRAN";
+//	TxDet = gcnew Detector();
+//	TxDet->name = "TRAN";
 
-	DirCoupler = gcnew DirectionalCoupler();		/// Holds Directional coupler error model
+//	DirCoupler = gcnew DirectionalCoupler();		/// Holds Directional coupler error model
 
 	EdReal = gcnew array<Double>(1024); EdImag = gcnew array<Double>(1024);
 	EsReal = gcnew array<Double>(1024); EsImag = gcnew array<Double>(1024);
@@ -371,9 +372,9 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 	}
 
 	// read in the AD8302 Phase Detector constants, error tables, and DirCoupler tables
-
 	try
 	{
+#if 0
 		RxDet->Qmid = br->ReadInt32();
 		RxDet->Qmag = br->ReadInt32();
 		RxDet->Imid = br->ReadInt32();
@@ -411,13 +412,13 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 			TxDet->r[FreqIdx] = br->ReadDouble();
 			TxDet->flat[FreqIdx] = br->ReadDouble();
 		}
-
+#endif
 		// Read in the Internal Crystal Frequency Error
 		// Test the value to make sure it's within reasonable range.
 		FreqError = br->ReadInt32();
 		if (Math::Abs(FreqError) > 3000000)
 			FreqError = 0;
-
+#if 0
 		// Read in the directivity calibration raw values   10-18-2005
 		// Moved from RxDet to DirCoupler					05-27-2007
 		for (int i=0; i<21; i++)
@@ -446,7 +447,7 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 		// 10-01-2007 - read the Iphase-low-ref-level values for TRAN
 		TxDet->ImidLo = br->ReadInt32();
 		TxDet->ImagLo = br->ReadInt32();
-
+#endif
 		//RxDet->ImidLo = 0;		// these are not meaningful for REFL
 		//RxDet->ImagLo = 0;		// and should be initialized to zero by constructor
 
@@ -470,11 +471,12 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 			fs->Close();
 	}
 
-	RxDet->phaseCalibrated = true;		// loaded a valid detector calibration
-	TxDet->phaseCalibrated = true;
-	DirCoupler->DirCalibrated = true;
-	DirCoupler->RippleCalibrated = true;
+//	RxDet->phaseCalibrated = true;		// loaded a valid detector calibration
+//	TxDet->phaseCalibrated = true;
+//	DirCoupler->DirCalibrated = true;
+//	DirCoupler->RippleCalibrated = true;
 };
+
 
 // Resolve reflected measured data set to Linear Magnitude and Phase in Degrees
 void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequency, double& rmagLin, double& rphsDegr,
@@ -486,17 +488,17 @@ void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequ
 
 	// translate raw readings to phaseDegr, magLin and magDB values from RxDet
 
-	magnitudeDB = RxDet->MagTodBRefl(Frequency, dataPoint->ReflMQ);
+	magnitudeDB = SHORT2DB(dataPoint->ReflMQ); // RxDet->MagTodBRefl(Frequency, dataPoint->ReflMQ);
     magnitudeLin = pow(10.0, (magnitudeDB/20.0));	
 
-	phase = RxDet->IQtoDegrees(dataPoint->ReflPI, dataPoint->ReflPQ, Frequency, 0, 0, 0);
+	phase = SHORT2PHASE(dataPoint->ReflPQ); // RxDet->IQtoDegrees(dataPoint->ReflPI, dataPoint->ReflPQ, Frequency, 0, 0, 0);
 
 	// Adjust the reflected Magnitude and Phase by the Directivity Cal
 
 #ifdef DIRECTCAL
 	DirCoupler->CompensateDirectivity(this, rmagnitudeLin, rphase, Frequency);
 #endif
-
+#if 0
 	if(CouplerComp)
 	{
 
@@ -512,6 +514,7 @@ void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequ
 			magnitudeLin += magnitudeLin * magCorr;
 		}
 	}
+#endif
 
 	rphsDegr = NormalizePhaseDegr(phase);	// return phase in degrees (-180..+180)
 	rmagLin = magnitudeLin;				// return linear magnitude (0..1)
@@ -524,9 +527,13 @@ void InstrumentCalDataSet::ResolveTranPolar(MeasurementSet^ dataPoint, int Frequ
 {
 	double magnitudeDB, phase, magnitudeLin;
 
-	magnitudeDB = TxDet->MagTodBTran(Frequency, dataPoint->TranMQHi, dataPoint->TranMQLo, dataPoint->TranMQMid);
 
-	phase = TxDet->IQtoDegrees(dataPoint->TranPI, dataPoint->TranPQ, Frequency, magnitudeDB, dataPoint->TranPILow, dataPoint->TranPQLow);
+	magnitudeDB = SHORT2DB(dataPoint->TranMQLo);
+	phase = SHORT2PHASE(dataPoint->TranPQ);
+	
+	//magnitudeDB = TxDet->MagTodBTran(Frequency, dataPoint->TranMQHi, dataPoint->TranMQLo, dataPoint->TranMQMid);
+
+	//phase = TxDet->IQtoDegrees(dataPoint->TranPI, dataPoint->TranPQ, Frequency, magnitudeDB, dataPoint->TranPILow, dataPoint->TranPQLow);
 
 	// Compensate phase at low frequencies 
 	//phase -= HIGHPASSPOLE/Frequency;	

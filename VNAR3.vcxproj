@@ -135,12 +135,9 @@
     <ClCompile Include="AudioInput.cpp" />
     <ClCompile Include="Calibration.cpp" />
     <ClCompile Include="CursorStatus.cpp" />
-    <ClCompile Include="Detector.cpp" />
-    <ClCompile Include="DirectionalCoupler.cpp" />
     <ClCompile Include="DisplayRoutines.cpp" />
     <ClCompile Include="Form1.cpp" />
     <ClCompile Include="Fourier.cpp" />
-    <ClCompile Include="InstrumentCal.cpp" />
     <ClCompile Include="MarkerEntry.cpp" />
     <ClCompile Include="Mockup.cpp" />
     <ClCompile Include="NumEntBox.cpp" />
@@ -166,16 +163,11 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="DataDisplay.h" />
-    <ClInclude Include="Detector.h" />
-    <ClInclude Include="DirectionalCoupler.h" />
     <ClInclude Include="DisplayRoutines.h" />
     <ClInclude Include="Form1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="Fourier.h" />
-    <ClInclude Include="InstrumentCal.h">
-      <FileType>CppForm</FileType>
-    </ClInclude>
     <ClInclude Include="MarkerEntry.h">
       <FileType>CppForm</FileType>
     </ClInclude>
@@ -222,10 +214,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resX">
       <DependentUpon>Form1.h</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="InstrumentCal.resX">
-      <DependentUpon>InstrumentCal.h</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="MarkerEntry.resX">

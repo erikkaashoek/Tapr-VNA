@@ -34,7 +34,7 @@ using the .NET style of Event Delegates.
 #include "DisplayRoutines.h"
 #include "Calibration.h"
 #include "DataDisplay.h"
-#include "InstrumentCal.h"
+//#include "InstrumentCal.h"
 #include "MarkerEntry.h"
 #include "About.h"
 #include "CursorStatus.h"
@@ -2657,10 +2657,11 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
 			// or when in Fast sweep mode.
+#if 0
 			if((CalData->RxDet->phaseCalibrated == false) || (CalData->TxDet->phaseCalibrated == false)
 				|| (txLevel < 0) || String::Compare(SweepSpd->Text, "Fast") == 0)
 				gr->DrawString("Uncalibrated", Warningfont, brGray, unCalText);
-
+#endif
 			if(!calCheckBox->Checked)
 				gr->DrawString("Fixture Uncompensated", Warningfont, brGray, unFixComp);
 
@@ -3799,10 +3800,11 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
 			// or when in Fast sweep mode.
+#if 0
 			if((CalData->RxDet->phaseCalibrated == false) || (CalData->TxDet->phaseCalibrated == false)
 				|| (txLevel < 0) || String::Compare(SweepSpd->Text, "Fast") == 0)
 				gr->DrawString("Uncalibrated", Warningfont, brGray, unCalText);
-
+#endif
 			// build and set circular clipping region for subsequent drawing
 			GraphicsPath^ gpUnit = gcnew GraphicsPath();		// Holds just the unit circle
 			GraphicsPath^ gpLarger = gcnew GraphicsPath();	// Holds more that unit circle
@@ -4195,10 +4197,11 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
 			// or when in Fast sweep mode.
+#if 0
 			if((CalData->RxDet->phaseCalibrated == false) || (CalData->TxDet->phaseCalibrated == false)
 				|| (txLevel < 0) || String::Compare(SweepSpd->Text, "Fast") == 0)
 				gr->DrawString("Uncalibrated", Warningfont, brGray, unCalText);
-
+#endif
 			// Gather polar reflection data into Real[], Imag[] arrays.
 			// Take Inverse FFT. This yields time response. Plot time and distance.
 			// Distance requires knowing the cable velocity factor.
@@ -6518,8 +6521,8 @@ private: System::Void grid1024menu_Click(System::Object^  sender, System::EventA
 		 /// Run Instrument Calibration menu item click handler
 private: System::Void instrumentCalItem_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
-			InstrumentCal^ Ical = gcnew InstrumentCal(CalData, VNA, FG, AllUsersDataPath);
-			Ical->ShowDialog();
+//			InstrumentCal^ Ical = gcnew InstrumentCal(CalData, VNA, FG, AllUsersDataPath);
+//			Ical->ShowDialog();
 			Refresh();
 		 }
 		 /// Help menu item click handler
@@ -7090,11 +7093,12 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 				bw->Write(id);
 
 			 // 1. Whether or not a detector.ica file was loaded.
+#if 0
 				if(CalData->RxDet->phaseCalibrated || CalData->TxDet->phaseCalibrated)
 					bw->Write(true);
 				else
 					bw->Write(false);
-
+#endif
              // 2. Current fixture calibration filename & applied state.
 				if(calCheckBox->Enabled && FixtureCalFileName)
 				{

@@ -25,8 +25,8 @@
 
 
 #include "stdafx.h"
-#include "DirectionalCoupler.h"
-#include "Detector.h"
+//#include "DirectionalCoupler.h"
+//#include "Detector.h"
 #include "DataDisplay.h"
 #using <mscorlib.dll>
 #using <System.dll>
@@ -91,8 +91,8 @@ public ref class InstrumentCalDataSet
 {
 public:
 
-	Detector^ RxDet, ^TxDet;		///< Holds detector constants
-	DirectionalCoupler^ DirCoupler;		///< Holds Directional coupler error model
+//	Detector^ RxDet, ^TxDet;		///< Holds detector constants
+//	DirectionalCoupler^ DirCoupler;		///< Holds Directional coupler error model
 
 	// Fixture Cal data (may not be any)
 	array<Double>^ EdReal, ^EdImag, ^EsReal, ^EsImag;

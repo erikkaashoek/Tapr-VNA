@@ -27,12 +27,6 @@
     <ClCompile Include="CursorStatus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Detector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectionalCoupler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DisplayRoutines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,9 +34,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Fourier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InstrumentCal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MarkerEntry.cpp">
@@ -89,12 +80,6 @@
     <ClInclude Include="DataDisplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Detector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DirectionalCoupler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DisplayRoutines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -102,9 +87,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Fourier.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InstrumentCal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MarkerEntry.h">
@@ -186,7 +168,7 @@
     <EmbeddedResource Include="Mockup.resx">
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
-    <EmbeddedResource Include="AudioDevice.resx">
+    <EmbeddedResource Include="SerialPort.resx">
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
   </ItemGroup>
