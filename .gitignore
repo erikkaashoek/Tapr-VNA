@@ -29,3 +29,5 @@ release
 *.chw
 VNAR3.opensdf
 serial_src.zip
+VNAdebug.txt
+VNACalDebug.txt
