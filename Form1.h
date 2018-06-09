@@ -244,7 +244,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  exitItem;
 private: System::Windows::Forms::ToolStripMenuItem^  rectItem;
 private: System::Windows::Forms::ToolStripMenuItem^  polarItem;
 private: System::Windows::Forms::ToolStripMenuItem^  TDRItem;
-private: System::Windows::Forms::ToolStripMenuItem^  instrumentCalItem;
+
 private: System::Windows::Forms::ToolStripMenuItem^  runItem;
 private: System::Windows::Forms::ToolStripMenuItem^  loadItem;
 private: System::Windows::Forms::ToolStripMenuItem^  s11magItem;
@@ -452,7 +452,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->TDRItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->audioDevicesToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->calibrateMenu = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->instrumentCalItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->runItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->loadItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->mockupDeviceToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -1119,18 +1118,11 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			// calibrateMenu
 			// 
-			this->calibrateMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->instrumentCalItem, 
-				this->runItem, this->loadItem, this->mockupDeviceToolStripMenuItem});
+			this->calibrateMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->runItem, 
+				this->loadItem, this->mockupDeviceToolStripMenuItem});
 			this->calibrateMenu->Name = L"calibrateMenu";
 			this->calibrateMenu->Size = System::Drawing::Size(77, 20);
 			this->calibrateMenu->Text = L"&Calibration";
-			// 
-			// instrumentCalItem
-			// 
-			this->instrumentCalItem->Name = L"instrumentCalItem";
-			this->instrumentCalItem->Size = System::Drawing::Size(229, 22);
-			this->instrumentCalItem->Text = L"&Detector Calibration";
-			this->instrumentCalItem->Click += gcnew System::EventHandler(this, &Form1::instrumentCalItem_Click);
 			// 
 			// runItem
 			// 
@@ -1790,7 +1782,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// grid101menu
 			// 
 			this->grid101menu->Name = L"grid101menu";
-			this->grid101menu->Size = System::Drawing::Size(134, 22);
+			this->grid101menu->Size = System::Drawing::Size(152, 22);
 			this->grid101menu->Text = L"100 points";
 			this->grid101menu->Click += gcnew System::EventHandler(this, &Form1::grid101menu_Click);
 			// 
@@ -1799,21 +1791,21 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->grid201menu->Checked = true;
 			this->grid201menu->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->grid201menu->Name = L"grid201menu";
-			this->grid201menu->Size = System::Drawing::Size(134, 22);
+			this->grid201menu->Size = System::Drawing::Size(152, 22);
 			this->grid201menu->Text = L"200 points";
 			this->grid201menu->Click += gcnew System::EventHandler(this, &Form1::grid201menu_Click);
 			// 
 			// grid401menu
 			// 
 			this->grid401menu->Name = L"grid401menu";
-			this->grid401menu->Size = System::Drawing::Size(134, 22);
+			this->grid401menu->Size = System::Drawing::Size(152, 22);
 			this->grid401menu->Text = L"400 points";
 			this->grid401menu->Click += gcnew System::EventHandler(this, &Form1::grid401menu_Click);
 			// 
 			// grid1024menu
 			// 
 			this->grid1024menu->Name = L"grid1024menu";
-			this->grid1024menu->Size = System::Drawing::Size(134, 22);
+			this->grid1024menu->Size = System::Drawing::Size(152, 22);
 			this->grid1024menu->Text = L"1020 points";
 			this->grid1024menu->Click += gcnew System::EventHandler(this, &Form1::grid1024menu_Click);
 			// 
@@ -1882,7 +1874,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->IntegrationMenu1x->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->IntegrationMenu1x->Name = L"IntegrationMenu1x";
 			this->IntegrationMenu1x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D1));
-			this->IntegrationMenu1x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu1x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu1x->Text = L"1x";
 			this->IntegrationMenu1x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu1x_Click);
 			// 
@@ -1890,7 +1882,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu2x->Name = L"IntegrationMenu2x";
 			this->IntegrationMenu2x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D2));
-			this->IntegrationMenu2x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu2x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu2x->Text = L"2x";
 			this->IntegrationMenu2x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu2x_Click);
 			// 
@@ -1898,7 +1890,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu4x->Name = L"IntegrationMenu4x";
 			this->IntegrationMenu4x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D4));
-			this->IntegrationMenu4x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu4x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu4x->Text = L"4x";
 			this->IntegrationMenu4x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu4x_Click);
 			// 
@@ -1906,7 +1898,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu8x->Name = L"IntegrationMenu8x";
 			this->IntegrationMenu8x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D8));
-			this->IntegrationMenu8x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu8x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu8x->Text = L"8x";
 			this->IntegrationMenu8x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu8x_Click);
 			// 
@@ -1914,7 +1906,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu16x->Name = L"IntegrationMenu16x";
 			this->IntegrationMenu16x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D6));
-			this->IntegrationMenu16x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu16x->Size = System::Drawing::Size(152, 22);
 			this->IntegrationMenu16x->Text = L"16x";
 			this->IntegrationMenu16x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu16x_Click);
 			// 
@@ -1953,14 +1945,14 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// serialPortToolStripMenuItem
 			// 
 			this->serialPortToolStripMenuItem->Name = L"serialPortToolStripMenuItem";
-			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(124, 22);
+			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->serialPortToolStripMenuItem->Text = L"SerialPort";
 			this->serialPortToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::serialPortToolStripMenuItem_Click);
 			// 
 			// rawDataToolStripMenuItem
 			// 
 			this->rawDataToolStripMenuItem->Name = L"rawDataToolStripMenuItem";
-			this->rawDataToolStripMenuItem->Size = System::Drawing::Size(124, 22);
+			this->rawDataToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->rawDataToolStripMenuItem->Text = L"rawData";
 			this->rawDataToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::rawDataToolStripMenuItem_Click);
 			// 
@@ -7381,7 +7373,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 
 			 // 1. Whether or not a detector.ica file was loaded.
 
-				bool CalSetPresent = br->ReadBoolean();
+//				bool CalSetPresent = br->ReadBoolean();
 
              // 2. Current fixture calibration filename & applied state.
 				calCheckBox->Enabled = br->ReadBoolean();
@@ -7650,9 +7642,16 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				displayMeasuredMinusStored->Checked = br->ReadBoolean();
 
 				if (serialPort1->IsOpen) serialPort1->Close();
-				serialPort1->PortName = br->ReadString();
-				serialPort1->Open();
-
+				try 
+				{
+					serialPort1->PortName = br->ReadString();
+					serialPort1->Open();
+				}
+				catch( Exception^ /* e */ )	// Don't bother warning the user ...
+				{											// They probably don't care anyway
+					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
+									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+				}
 
 			}
 			catch(System::IO::IOException^ /* pe */)	// Don't bother warning the user ...
