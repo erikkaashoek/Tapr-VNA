@@ -17,9 +17,11 @@ typedef struct measurement {
 } measurementType;
 */
 measurementType measured[1024*100];
-int measurementCount[1024];
-int measurementIndex[1024];
+volatile measurementType actualMeasurement;
+int measurementCount[1100];
+int measurementIndex[1100];
 int lastMeasurement;
+int maxMeasurement;
 
 int sampleRate = 44100;
 short int waveIn[3][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
@@ -27,9 +29,9 @@ short int waveIn[3][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit
 float decoded[1024][2];
 volatile int nextDecoded = 0;
 
-volatile float magSig;
-volatile float phaseSig;
-volatile float volSig;
+//volatile float magSig;
+//volatile float phaseSig;
+//volatile float volSig;
 
 double audio_volume;
 double audio_phase;
@@ -202,14 +204,19 @@ void dsp_process(short *capture, long length)
   samp_mag = sqrt((samp_s*(float)samp_s)+samp_c*(float)samp_c);
   samp_phase = 360.0f / 2 / PI  * atan2((float)samp_c, (float)samp_s);
 
-  gamma[0] = todb((samp_mag / ref_mag)*32000);
-  gamma[1] = (float)ref_phase - (float)samp_phase;
-  while (gamma[1] >= 180.0f) gamma[1] -= 360.0;
-  while (gamma[1] <= -180.0f) gamma[1] += 360.0;
+  actualMeasurement.magnitude = todb((samp_mag / ref_mag)*32000);
+  actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
+  while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
+  while (actualMeasurement.phase <= -180.0f) actualMeasurement.phase += 360.0;
+  actualMeasurement.reference =  todb(ref_mag / 32000);
 
- 		magSig = gamma[0];
-		phaseSig = gamma[1];
-		volSig = todb(ref_mag / 32000); 
+
+//		actualMeasured.magnitude = gamma[0];
+//		actualMeasured.phase = gamma[1];
+
+// 		magSig = gamma[0];
+//		phaseSig = gamma[1];
+//		volSig = todb(ref_mag / 32000); 
   
   //calculate_gamma(gamma);
 }
@@ -234,7 +241,7 @@ int maxPoints = 0;
 void ArmAudio(int mP)
 {
 	audioState = AS_ARMED;
-//	maxPoints = mP;
+	maxMeasurement = mP;
 	lastMeasurement = 0;
 	nextDecoded = 0;
 }
@@ -245,7 +252,7 @@ bool lastRefl = false;
 
 bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp)
 {
-	if (i < lastMeasurement-1) {
+	if (i < lastMeasurement-1 && i < maxMeasurement) {
 		if (i != lastI ) {
 			lastI = i;
 			lastJ = 0;
@@ -265,28 +272,42 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp)
 #define SIGNAL_THRESHOLD -20
 void StoreMeasurement()
 {
-	int match = 0;
+	int lowmatch = 0;
+	int highmatch = 0;
+//	if (lastMeasurement >= maxMeasurement)
+//		return;
 	if (nextDecoded < 1024*100) {
-		measured[nextDecoded].magnitude = magSig;
-		measured[nextDecoded].phase = phaseSig;
-		measured[nextDecoded++].reference = volSig;
+		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
+		measured[nextDecoded].phase = actualMeasurement.phase;
+		measured[nextDecoded++].reference = actualMeasurement.reference;
 	}
-	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] < nextDecoded - 20 )) ) {
-		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD - 10 ) match++;
-		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD - 10 ) match++;
-		if ( measured[nextDecoded-7].reference < SIGNAL_THRESHOLD - 10 ) match++;
-		if ( measured[nextDecoded-6].reference < SIGNAL_THRESHOLD - 10 ) match++;
-		if ( measured[nextDecoded-5].reference < SIGNAL_THRESHOLD - 10 ) match++;
-		if ( measured[nextDecoded-4].reference > SIGNAL_THRESHOLD ) match++;
-		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) match++;
-		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) match++;
-		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) match++;
-		if (match > 6) {
-			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 6;
-			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 5;
-			 else if (measured[nextDecoded-4].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 4;
-			 else if (measured[nextDecoded-3].reference > SIGNAL_THRESHOLD) measurementIndex[lastMeasurement++] = nextDecoded - 3;
-			 else measurementIndex[lastMeasurement++] = nextDecoded - 2;
+	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) ) {
+		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-7].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-6].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-5].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-4].reference > SIGNAL_THRESHOLD ) highmatch++;
+		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) highmatch++;
+		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) highmatch++;
+		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) highmatch++;
+		if (lowmatch > 3 && highmatch > 2) {
+			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) 
+				 measurementIndex[lastMeasurement++] = nextDecoded - 6;
+			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) 
+				 measurementIndex[lastMeasurement++] = nextDecoded - 5;
+			 else if (measured[nextDecoded-4].reference > SIGNAL_THRESHOLD) 
+				 measurementIndex[lastMeasurement++] = nextDecoded - 4;
+			 else if (measured[nextDecoded-3].reference > SIGNAL_THRESHOLD) 
+				 measurementIndex[lastMeasurement++] = nextDecoded - 3;
+			 else 
+				 measurementIndex[lastMeasurement++] = nextDecoded - 2;
+			if (lastMeasurement > 5 &&
+				(measurementIndex[lastMeasurement-1] - measurementIndex[lastMeasurement - 2]) * 2 > 
+					(measurementIndex[lastMeasurement-2] - measurementIndex[lastMeasurement - 3]) * 3
+				) {
+					 lowmatch = lastMeasurement; // probably skipped one measurement
+			}
 		}
 		if ( measured[nextDecoded-9].reference > SIGNAL_THRESHOLD &&
 			 measured[nextDecoded-8].reference > SIGNAL_THRESHOLD &&

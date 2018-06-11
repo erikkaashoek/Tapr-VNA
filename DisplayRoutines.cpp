@@ -605,6 +605,8 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 		delta = (MAXCALFREQ - MINCALFREQ)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
 
 		i = (int)(((double)Frequency - MINCALFREQ) / delta);	// Cal frequency directly below ours
+		if (i >= (int)NUMCALPTS)
+			i = (int)NUMCALPTS - 1;
 		j = i+1;												// Cal frequency directly above ours
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequnecy
@@ -715,6 +717,8 @@ void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double
 		delta = (MAXCALFREQ - MINCALFREQ)/ (NUMCALPTS - 1);		// frequency separation of cal points
 
 		i = (int)(((double)Frequency - MINCALFREQ) / delta);	// Cal frequency directly below ours
+		if (i >= (int)NUMCALPTS)
+			i = (int)NUMCALPTS - 1;
 		j = i+1;												// Cal frequency directly above ours
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequnecy

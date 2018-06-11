@@ -54,7 +54,7 @@
 
 // Constants related to calibration grid (both instrument calibration and fixture calibration)
 ///\def Maximum Calibration Frequency
-#define MAXCALFREQ 200000000
+#define MAXCALFREQ 150000000
 ///\def Minimum Calibration Frequency
 #define MINCALFREQ 200000
 ///\def Number of Calibration Points

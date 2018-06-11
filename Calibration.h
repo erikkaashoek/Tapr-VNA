@@ -443,7 +443,7 @@ namespace VNAR3
 					for (int k=0; k<7; k++)
 					{
                         if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
-							return;
+							goto done;
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -465,6 +465,7 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
+			done:
 				statShort->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
@@ -501,7 +502,8 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+							goto done;
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -523,6 +525,7 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
+			done:
 				statOpen->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
@@ -559,7 +562,8 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+							goto done;
 						BufferI[k] = RxBuf->ReflPI;
 						BufferQ[k] = RxBuf->ReflPQ;
 						BufferM[k] = RxBuf->ReflMQ;
@@ -582,6 +586,7 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
+			done:
 				statTerm->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
@@ -627,7 +632,9 @@ namespace VNAR3
 
 					for (int k=0; k<7; k++)
 					{
-                        VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
+                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS))
+							goto done;
+//                        VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
 						BufferI[k] = RxBuf->TranPI;
 						BufferQ[k] = RxBuf->TranPQ;
 						BufferM[k] = RxBuf->TranMQHi;
@@ -658,6 +665,7 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
+			done:
 				statThru->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;

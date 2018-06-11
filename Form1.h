@@ -45,11 +45,14 @@ using the .NET style of Event Delegates.
 #include "Constants.h"
 #include "Mockup.h"
 #include "SerialPort.h"
+#include "SignalGenerator.h"
 //#include "AudioInput.h"
 //#include "Serial.h"
 //#include "AudioDevice.h"
 #include <complex>
 
+//#define DEBUGAUDIOLEVELS		// Display pareto of reference signal measured during a sweep
+//#define DEBUGAUDIODISTANCE
 //#define DEBUGAUDIO
 //#define DEBUGRAWTRANMAG		// display 3 raw transmission magnitude (0, -17, -34) ADc counts on rectangular screen
 //#define DEBUGRAWTRANHIPHASE	// display raw transmission phase ADC counts on rectangular screen
@@ -60,7 +63,7 @@ using the .NET style of Event Delegates.
 
 extern  int audio_delay;
 
-#define SOFTWARE_VERSION		"TAPR VNA 3.3"
+#define SOFTWARE_VERSION		"TAPR VNA 4.0"
 
 namespace VNAR3
 {
@@ -354,30 +357,32 @@ private: System::Windows::Forms::ToolStripMenuItem^  DisplayMeasured;
 private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
 private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuItem;
 private: Mockup^ MockupBox;
+private: SignalGenerator^ SignalGeneratorBox;
 private: SerialPort^ SerialPortBox;
-//private: AudioDevice^ AudioDeviceBox;
+		 //private: AudioDevice^ AudioDeviceBox;
 private: System::IO::Ports::SerialPort^  serialPort1;
 private: System::Windows::Forms::ToolStripMenuItem^  audioDevicesToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  settingsToolStripMenuItem;
-private: System::Windows::Forms::TextBox^  magTran;
-private: System::Windows::Forms::TextBox^  phaseTran;
 
 
-private: System::Windows::Forms::Label^  label7;
-private: System::Windows::Forms::Label^  label8;
+
+
+
+
 private: System::Windows::Forms::ToolStripMenuItem^  serialPortToolStripMenuItem;
-private: System::Windows::Forms::ToolStripMenuItem^  rawDataToolStripMenuItem;
-private: System::Windows::Forms::Label^  label9;
-private: System::Windows::Forms::TextBox^  volTran;
-private: System::Windows::Forms::TextBox^  volRefl;
 
 
-private: System::Windows::Forms::Label^  label10;
-private: System::Windows::Forms::Label^  label11;
-private: System::Windows::Forms::Label^  label12;
-private: System::Windows::Forms::TextBox^  phaseRefl;
 
-private: System::Windows::Forms::TextBox^  magRefl;
+
+
+
+
+
+
+
+
+
+private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMenuItem;
 
 
 
@@ -451,6 +456,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->polarItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TDRItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->audioDevicesToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->signalGeneratorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->calibrateMenu = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->runItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->loadItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -564,23 +570,10 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->AboutMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->settingsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->serialPortToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->rawDataToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorDialog1 = (gcnew System::Windows::Forms::ColorDialog());
 			this->RefExtnCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->serialPort1 = (gcnew System::IO::Ports::SerialPort(this->components));
-			this->magTran = (gcnew System::Windows::Forms::TextBox());
-			this->phaseTran = (gcnew System::Windows::Forms::TextBox());
-			this->label7 = (gcnew System::Windows::Forms::Label());
-			this->label8 = (gcnew System::Windows::Forms::Label());
-			this->label9 = (gcnew System::Windows::Forms::Label());
-			this->volTran = (gcnew System::Windows::Forms::TextBox());
-			this->volRefl = (gcnew System::Windows::Forms::TextBox());
-			this->label10 = (gcnew System::Windows::Forms::Label());
-			this->label11 = (gcnew System::Windows::Forms::Label());
-			this->label12 = (gcnew System::Windows::Forms::Label());
-			this->phaseRefl = (gcnew System::Windows::Forms::TextBox());
-			this->magRefl = (gcnew System::Windows::Forms::TextBox());
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -1077,8 +1070,8 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			// viewMenu
 			// 
-			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->rectItem, this->polarItem, 
-				this->TDRItem, this->audioDevicesToolStripMenuItem});
+			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->rectItem, this->polarItem, 
+				this->TDRItem, this->audioDevicesToolStripMenuItem, this->signalGeneratorToolStripMenuItem});
 			this->viewMenu->Name = L"viewMenu";
 			this->viewMenu->Size = System::Drawing::Size(44, 20);
 			this->viewMenu->Text = L"&View";
@@ -1115,6 +1108,13 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->audioDevicesToolStripMenuItem->Size = System::Drawing::Size(239, 22);
 			this->audioDevicesToolStripMenuItem->Text = L"Audio Devices";
 			this->audioDevicesToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDevicesToolStripMenuItem_Click);
+			// 
+			// signalGeneratorToolStripMenuItem
+			// 
+			this->signalGeneratorToolStripMenuItem->Name = L"signalGeneratorToolStripMenuItem";
+			this->signalGeneratorToolStripMenuItem->Size = System::Drawing::Size(239, 22);
+			this->signalGeneratorToolStripMenuItem->Text = L"Signal generator";
+			this->signalGeneratorToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::signalGeneratorToolStripMenuItem_Click);
 			// 
 			// calibrateMenu
 			// 
@@ -1782,7 +1782,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// grid101menu
 			// 
 			this->grid101menu->Name = L"grid101menu";
-			this->grid101menu->Size = System::Drawing::Size(152, 22);
+			this->grid101menu->Size = System::Drawing::Size(134, 22);
 			this->grid101menu->Text = L"100 points";
 			this->grid101menu->Click += gcnew System::EventHandler(this, &Form1::grid101menu_Click);
 			// 
@@ -1791,21 +1791,21 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->grid201menu->Checked = true;
 			this->grid201menu->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->grid201menu->Name = L"grid201menu";
-			this->grid201menu->Size = System::Drawing::Size(152, 22);
+			this->grid201menu->Size = System::Drawing::Size(134, 22);
 			this->grid201menu->Text = L"200 points";
 			this->grid201menu->Click += gcnew System::EventHandler(this, &Form1::grid201menu_Click);
 			// 
 			// grid401menu
 			// 
 			this->grid401menu->Name = L"grid401menu";
-			this->grid401menu->Size = System::Drawing::Size(152, 22);
+			this->grid401menu->Size = System::Drawing::Size(134, 22);
 			this->grid401menu->Text = L"400 points";
 			this->grid401menu->Click += gcnew System::EventHandler(this, &Form1::grid401menu_Click);
 			// 
 			// grid1024menu
 			// 
 			this->grid1024menu->Name = L"grid1024menu";
-			this->grid1024menu->Size = System::Drawing::Size(152, 22);
+			this->grid1024menu->Size = System::Drawing::Size(134, 22);
 			this->grid1024menu->Text = L"1020 points";
 			this->grid1024menu->Click += gcnew System::EventHandler(this, &Form1::grid1024menu_Click);
 			// 
@@ -1874,7 +1874,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->IntegrationMenu1x->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->IntegrationMenu1x->Name = L"IntegrationMenu1x";
 			this->IntegrationMenu1x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D1));
-			this->IntegrationMenu1x->Size = System::Drawing::Size(152, 22);
+			this->IntegrationMenu1x->Size = System::Drawing::Size(131, 22);
 			this->IntegrationMenu1x->Text = L"1x";
 			this->IntegrationMenu1x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu1x_Click);
 			// 
@@ -1882,7 +1882,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu2x->Name = L"IntegrationMenu2x";
 			this->IntegrationMenu2x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D2));
-			this->IntegrationMenu2x->Size = System::Drawing::Size(152, 22);
+			this->IntegrationMenu2x->Size = System::Drawing::Size(131, 22);
 			this->IntegrationMenu2x->Text = L"2x";
 			this->IntegrationMenu2x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu2x_Click);
 			// 
@@ -1890,7 +1890,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu4x->Name = L"IntegrationMenu4x";
 			this->IntegrationMenu4x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D4));
-			this->IntegrationMenu4x->Size = System::Drawing::Size(152, 22);
+			this->IntegrationMenu4x->Size = System::Drawing::Size(131, 22);
 			this->IntegrationMenu4x->Text = L"4x";
 			this->IntegrationMenu4x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu4x_Click);
 			// 
@@ -1898,7 +1898,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu8x->Name = L"IntegrationMenu8x";
 			this->IntegrationMenu8x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D8));
-			this->IntegrationMenu8x->Size = System::Drawing::Size(152, 22);
+			this->IntegrationMenu8x->Size = System::Drawing::Size(131, 22);
 			this->IntegrationMenu8x->Text = L"8x";
 			this->IntegrationMenu8x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu8x_Click);
 			// 
@@ -1906,7 +1906,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			this->IntegrationMenu16x->Name = L"IntegrationMenu16x";
 			this->IntegrationMenu16x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D6));
-			this->IntegrationMenu16x->Size = System::Drawing::Size(152, 22);
+			this->IntegrationMenu16x->Size = System::Drawing::Size(131, 22);
 			this->IntegrationMenu16x->Text = L"16x";
 			this->IntegrationMenu16x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu16x_Click);
 			// 
@@ -1935,8 +1935,7 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			// 
 			// settingsToolStripMenuItem
 			// 
-			this->settingsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->serialPortToolStripMenuItem, 
-				this->rawDataToolStripMenuItem});
+			this->settingsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->serialPortToolStripMenuItem});
 			this->settingsToolStripMenuItem->Name = L"settingsToolStripMenuItem";
 			this->settingsToolStripMenuItem->Size = System::Drawing::Size(61, 20);
 			this->settingsToolStripMenuItem->Text = L"Settings";
@@ -1948,13 +1947,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->serialPortToolStripMenuItem->Text = L"SerialPort";
 			this->serialPortToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::serialPortToolStripMenuItem_Click);
-			// 
-			// rawDataToolStripMenuItem
-			// 
-			this->rawDataToolStripMenuItem->Name = L"rawDataToolStripMenuItem";
-			this->rawDataToolStripMenuItem->Size = System::Drawing::Size(152, 22);
-			this->rawDataToolStripMenuItem->Text = L"rawData";
-			this->rawDataToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::rawDataToolStripMenuItem_Click);
 			// 
 			// RefExtnCheckBox
 			// 
@@ -1979,108 +1971,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->label6->Text = L"Refl Plane Ext";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			// 
-			// magTran
-			// 
-			this->magTran->Location = System::Drawing::Point(64, 231);
-			this->magTran->Name = L"magTran";
-			this->magTran->Size = System::Drawing::Size(67, 20);
-			this->magTran->TabIndex = 30;
-			// 
-			// phaseTran
-			// 
-			this->phaseTran->Location = System::Drawing::Point(64, 257);
-			this->phaseTran->Name = L"phaseTran";
-			this->phaseTran->Size = System::Drawing::Size(67, 20);
-			this->phaseTran->TabIndex = 31;
-			// 
-			// label7
-			// 
-			this->label7->AutoSize = true;
-			this->label7->Location = System::Drawing::Point(4, 234);
-			this->label7->Name = L"label7";
-			this->label7->Size = System::Drawing::Size(46, 13);
-			this->label7->TabIndex = 32;
-			this->label7->Text = L"tranMag";
-			// 
-			// label8
-			// 
-			this->label8->AutoSize = true;
-			this->label8->Location = System::Drawing::Point(4, 260);
-			this->label8->Name = L"label8";
-			this->label8->Size = System::Drawing::Size(55, 13);
-			this->label8->TabIndex = 33;
-			this->label8->Text = L"tranPhase";
-			// 
-			// label9
-			// 
-			this->label9->AutoSize = true;
-			this->label9->Location = System::Drawing::Point(4, 210);
-			this->label9->Name = L"label9";
-			this->label9->Size = System::Drawing::Size(40, 13);
-			this->label9->TabIndex = 34;
-			this->label9->Text = L"tranVol";
-			// 
-			// volTran
-			// 
-			this->volTran->Location = System::Drawing::Point(64, 203);
-			this->volTran->Name = L"volTran";
-			this->volTran->Size = System::Drawing::Size(67, 20);
-			this->volTran->TabIndex = 35;
-			// 
-			// volRefl
-			// 
-			this->volRefl->Location = System::Drawing::Point(64, 101);
-			this->volRefl->Name = L"volRefl";
-			this->volRefl->Size = System::Drawing::Size(67, 20);
-			this->volRefl->TabIndex = 41;
-			this->volRefl->TextChanged += gcnew System::EventHandler(this, &Form1::textBox1_TextChanged);
-			// 
-			// label10
-			// 
-			this->label10->AutoSize = true;
-			this->label10->Location = System::Drawing::Point(4, 108);
-			this->label10->Name = L"label10";
-			this->label10->Size = System::Drawing::Size(36, 13);
-			this->label10->TabIndex = 40;
-			this->label10->Text = L"reflVol";
-			this->label10->Click += gcnew System::EventHandler(this, &Form1::label10_Click);
-			// 
-			// label11
-			// 
-			this->label11->AutoSize = true;
-			this->label11->Location = System::Drawing::Point(4, 158);
-			this->label11->Name = L"label11";
-			this->label11->Size = System::Drawing::Size(51, 13);
-			this->label11->TabIndex = 39;
-			this->label11->Text = L"reflPhase";
-			this->label11->Click += gcnew System::EventHandler(this, &Form1::label11_Click);
-			// 
-			// label12
-			// 
-			this->label12->AutoSize = true;
-			this->label12->Location = System::Drawing::Point(4, 132);
-			this->label12->Name = L"label12";
-			this->label12->Size = System::Drawing::Size(42, 13);
-			this->label12->TabIndex = 38;
-			this->label12->Text = L"reflMag";
-			this->label12->Click += gcnew System::EventHandler(this, &Form1::label12_Click);
-			// 
-			// phaseRefl
-			// 
-			this->phaseRefl->Location = System::Drawing::Point(64, 155);
-			this->phaseRefl->Name = L"phaseRefl";
-			this->phaseRefl->Size = System::Drawing::Size(67, 20);
-			this->phaseRefl->TabIndex = 37;
-			this->phaseRefl->TextChanged += gcnew System::EventHandler(this, &Form1::textBox2_TextChanged);
-			// 
-			// magRefl
-			// 
-			this->magRefl->Location = System::Drawing::Point(64, 129);
-			this->magRefl->Name = L"magRefl";
-			this->magRefl->Size = System::Drawing::Size(67, 20);
-			this->magRefl->TabIndex = 36;
-			this->magRefl->TextChanged += gcnew System::EventHandler(this, &Form1::textBox3_TextChanged);
-			// 
 			// Form1
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -2088,18 +1978,6 @@ private: System::Windows::Forms::TextBox^  magRefl;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 376);
-			this->Controls->Add(this->volRefl);
-			this->Controls->Add(this->label10);
-			this->Controls->Add(this->label11);
-			this->Controls->Add(this->label12);
-			this->Controls->Add(this->phaseRefl);
-			this->Controls->Add(this->magRefl);
-			this->Controls->Add(this->volTran);
-			this->Controls->Add(this->label9);
-			this->Controls->Add(this->label8);
-			this->Controls->Add(this->label7);
-			this->Controls->Add(this->phaseTran);
-			this->Controls->Add(this->magTran);
 			this->Controls->Add(this->stopF);
 			this->Controls->Add(this->startF);
 			this->Controls->Add(this->label6);
@@ -2690,6 +2568,50 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 			int mlevel = 0;
 			int prevmlevel = 0;
 #endif
+#ifdef DEBUGAUDIOLEVELS
+			int bucket[1024];
+			int audioLevel;
+			for (int i=0; i < 1024; i++)
+				bucket[i] = 0;
+			if (nextDecoded > 0) {
+				for (int i = 0; i< nextDecoded; i++) {
+					audioLevel =(int)(- measured[i].reference * FG->points / 100 );
+					if (audioLevel < 0) audioLevel = 0;
+					if (audioLevel >= FG->points ) audioLevel =  FG->points - 1;
+					bucket[audioLevel]++;
+				}
+				audioLevel = 0;
+				for (int i=0; i < 1024; i++)
+				{
+					if (audioLevel < bucket[i])
+						audioLevel = bucket[i];
+				}
+				for (int i=0; i < 1024; i++)
+					bucket[i] = bucket[i] * 3800 / audioLevel;
+			}
+#endif
+#ifdef DEBUGAUDIODISTANCE
+			int bucket[1024];
+			int audioLevel;
+			for (int i=0; i < 1024; i++)
+				bucket[i] = 0;
+			if (lastMeasurement > 0) {
+				for (int i = 0; i< lastMeasurement-1; i++) {
+					bucket[i] = measurementIndex[i+1] - measurementIndex[i];
+				}
+				audioLevel = 0;
+				for (int i=0; i < 1024; i++)
+				{
+					if (audioLevel < bucket[i])
+						audioLevel = bucket[i];
+				}
+				if (audioLevel > 0) {
+					for (int i=0; i < 1024; i++)
+						bucket[i] = bucket[i] * 3800 / audioLevel;
+				}
+			}
+#endif
+
 
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
 			{
@@ -2712,16 +2634,26 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflMQ * scopeDisp.Height / 3800;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 #endif
-
+#ifdef DEBUGAUDIOLEVELS
+				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / 3800;
+				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / 3800;
+				gr->DrawLine(penS21Mag, traceStart, traceStop);
+				
+#endif
+#ifdef DEBUGAUDIODISTANCE
+				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / 3800;
+				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / 3800;
+				gr->DrawLine(penS21Mag, traceStart, traceStop);
+#endif
 #ifdef DEBUGAUDIO
-/*
+#if 1
 				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
 				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+0] * scopeDisp.Height / 70000;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+1] * scopeDisp.Height / 70000;
 				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+1] * scopeDisp.Height / 70000;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
-*/
+#else
 				if (i > measurementIndex[mm]+13) {	
 					mm++; 
 					mlevel = 0;
@@ -2747,7 +2679,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					traceStart.Y = scopeDisp.Bottom /2 - measured[i-1].magnitude * scopeDisp.Height / 200.0;
 					gr->DrawLine(penS21Mag, traceStart, traceStop);
 				}
-
+#endif
 #endif
 
 
@@ -4925,59 +4857,6 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					menuItem5->Enabled = true;		// allow freq grid to be changed
 					calibrateMenu->Enabled = true;	// enable calibration menu launch while collecting data
 				}
-				if (rawDataToolStripMenuItem->Checked) {
-					magTran->Show();
-					phaseTran->Show();
-					volTran->Show();
-					magRefl->Show();
-					phaseRefl->Show();
-					volRefl->Show();
-					label7->Show();
-					label8->Show();
-					label9->Show();
-					label10->Show();
-					label11->Show();
-					label12->Show();
-					
-					TxBuf->ReplyType = VNA_REPLYTYPE_FULL;
-					TxBuf->MeasureDelay = 0;
-					TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
-					// Set the Lo magnitude and Mid magnitude generator levels for the target
-					// (Hi level is always 0 db.)
-					TxBuf->IDAClevelHi = TxLevLinear(txLevel);					// High Tx Level
-					TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Low TX Level
-					TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Mid TX Level
-					// Set the Lo phase tran measurement level for the target   09-30-2007
-					TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Lo Phase TX Level
-					// calculate linear frequency spot for each sweep
-					TxBuf->TxAccum = FG->DDS(FG->StartF());
-				/*
-					VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
-					magTran->Text = String::Format("{0}",magSig);
-					phaseTran->Text = String::Format("{0}",phaseSig);
-					volTran->Text = String::Format("{0}",volSig);
-
-				*/	VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
-					magRefl->Text = String::Format("{0}",magSig);
-					phaseRefl->Text = String::Format("{0}",phaseSig);
-					volRefl->Text = String::Format("{0}",volSig);
-
-
-				} else {
-					magTran->Hide();
-					phaseTran->Hide();
-					volTran->Hide();
-
-					magRefl->Hide();
-					phaseRefl->Hide();
-					volRefl->Hide();
-					label7->Hide();
-					label8->Hide();
-					label9->Hide();
-					label10->Hide();
-					label11->Hide();
-					label12->Hide();
-				}
 				VNAWorkerThread->Sleep(500);	// go to sleep for 500 milliseconds (since nothing to do)
 			}
 	
@@ -7072,7 +6951,7 @@ private: System::Void SaveConfigurationMenu_Click(System::Object^  sender, Syste
 
 private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 		{
-			String^ id = "TAPR VNA Configuration File Version 1.0.5";
+			String^ id = "TAPR VNA Configuration File Version 2.0.1";
 			FileStream^ fs;
 			BinaryWriter^ bw;
 
@@ -7344,8 +7223,8 @@ private: System::Void LoadConfigurationMenu_Click(System::Object^  sender, Syste
 		};
 private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 		 {
-			String^ id105 = "TAPR VNA Configuration File Version 1.0.5";
-			String^ id104 = "TAPR VNA Configuration File Version 1.0.4";
+			String^ id201 = "TAPR VNA Configuration File Version 2.0.1";
+			//String^ id104 = "TAPR VNA Configuration File Version 1.0.4";
 			String^ idread;
 			FileStream^ fs;
 			BinaryReader^ br;
@@ -7359,14 +7238,14 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 			 // 0. File identifier and version
 				idread = br->ReadString();
 				
-				if(String::Compare(id105, idread) == 0)
-					fileversion = 105;
-				else if(String::Compare(id104, idread) == 0)
-					fileversion = 104;
+				if(String::Compare(id201, idread) == 0)
+					fileversion = 201;
+//				else if(String::Compare(id104, idread) == 0)
+//					fileversion = 104;
 				else
 				{
 					MessageBox::Show("Configuration File Version no longer compatible"
-						"\n\rExpecting version 1.0.4 or 1.0.5","Version Mismatch", MessageBoxButtons::OK,
+						"\n\rExpecting version 2.0.1","Version Mismatch", MessageBoxButtons::OK,
 						MessageBoxIcon::Asterisk);
 					return;
 				}
@@ -7441,18 +7320,18 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				calSopen->Checked = br->ReadBoolean();
 				calSterm->Checked = br->ReadBoolean();
 
-				if (fileversion == 105)
+//				if (fileversion == 105)
 					Scale05dB->Checked = br->ReadBoolean();
-				else Scale05dB->Checked = false;
+//				else Scale05dB->Checked = false;
 				
 				Scale1dB->Checked = br->ReadBoolean();
 				Scale2dB->Checked = br->ReadBoolean();
 				Scale5dB->Checked = br->ReadBoolean();
 				Scale10dB->Checked = br->ReadBoolean();
 
-				if (fileversion == 105)
+//				if (fileversion == 105)
 					RectVertScaledB = br->ReadSingle();
-				else RectVertScaledB = (float)br->ReadInt32();
+//				else RectVertScaledB = (float)br->ReadInt32();
 					
 
 				ScaleSWR1->Checked = br->ReadBoolean();
@@ -8010,12 +7889,6 @@ private: System::Void audioDevicesToolStripMenuItem_Click(System::Object^  sende
 private: System::Void serialPortToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 			 SerialPortBox = gcnew SerialPort (serialPort1);
 			 SerialPortBox->ShowDialog();
-
-
-		 }
-private: System::Void rawDataToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-			 rawDataToolStripMenuItem->Checked = ! rawDataToolStripMenuItem->Checked;
-
 		 }
 private: System::Void label10_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
@@ -8028,6 +7901,10 @@ private: System::Void label12_Click(System::Object^  sender, System::EventArgs^ 
 private: System::Void textBox2_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 		 }
 private: System::Void textBox3_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void signalGeneratorToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 SignalGeneratorBox = gcnew SignalGenerator (VNA);
+			 SignalGeneratorBox->ShowDialog();
 		 }
 };
 }

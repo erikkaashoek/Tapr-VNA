@@ -387,6 +387,8 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
+
+
 void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 {
 	String ^ t;
@@ -398,7 +400,8 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 		dur = duration;
 //		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
 //		Sleep(200);
-		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 5, stepF, duration));
+		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, duration));
+		Sleep(100);
 		//}
 		//catch (System::Exception^ e) {
 		//		(void) e;
@@ -407,6 +410,13 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 	}
 	mp = 0;
 }
+
+void VNADevice::SetFreq(long startF, int direction)
+{
+	serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
+}
+
+
 
 
 #define PhaseToQ(X) (short)( sin((X) * DEGR2RAD) * 1800 + 1850 )
@@ -430,11 +440,11 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	int retries=0;
 //	return true;
 	
-	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase) && retries < 100) {
+	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase) && retries < 400) {
 		Sleep(2);
 		retries++;
 	}
-	if (retries >= 100)
+	if (retries >= 400)
 		return (false);
 	mp++;
 #if 0
