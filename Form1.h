@@ -54,7 +54,6 @@ using the .NET style of Event Delegates.
 //#define DEBUGAUDIOLEVELS		// Display pareto of reference signal measured during a sweep
 //#define DEBUGAUDIODISTANCE
 //#define DEBUGAUDIO
-//#define DEBUGRAWTRANMAG		// display 3 raw transmission magnitude (0, -17, -34) ADc counts on rectangular screen
 //#define DEBUGRAWTRANHIPHASE	// display raw transmission phase ADC counts on rectangular screen
 //#define DEBUGRAWTRANLOPHASE	// display raw transmission low level phase ADC counts on rectangular screen
 //#define DEBUGRAWREFL			// display raw reflection detector ADC counts on rectangular screen
@@ -383,6 +382,9 @@ private: System::Windows::Forms::ToolStripMenuItem^  serialPortToolStripMenuItem
 
 
 private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMenuItem;
+private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator4;
+private: System::Windows::Forms::ToolStripMenuItem^  rawDetectorDataToolStripMenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuItem;
 
 
 
@@ -491,6 +493,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			this->s11AsRColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->s11AsJXColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->backgroundColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolStripSeparator4 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->rawDetectorDataToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->VertScaleItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->Scale10dB = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->Scale5dB = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -574,6 +578,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			this->RefExtnCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->serialPort1 = (gcnew System::IO::Ports::SerialPort(this->components));
+			this->audioDistanceToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -1148,10 +1153,11 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			// 
 			// traceMenu
 			// 
-			this->traceMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(20) {this->s11magItem, 
+			this->traceMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(23) {this->s11magItem, 
 				this->s11phsItem, this->s21magItem, this->s21phsItem, this->s21groupdelayItem, this->VSWRdisplay, this->RDisplay, this->jXDisplay, 
 				this->menuItem6, this->calSthru, this->menuItem1, this->EtTrace, this->EsTrace, this->EdTrace, this->menuItem2, this->calSshort, 
-				this->calSopen, this->calSterm, this->toolStripSeparator1, this->pickTraceColorToolStripMenuItem});
+				this->calSopen, this->calSterm, this->toolStripSeparator1, this->pickTraceColorToolStripMenuItem, this->toolStripSeparator4, 
+				this->rawDetectorDataToolStripMenuItem, this->audioDistanceToolStripMenuItem});
 			this->traceMenu->Name = L"traceMenu";
 			this->traceMenu->Size = System::Drawing::Size(47, 20);
 			this->traceMenu->Text = L"&Trace";
@@ -1364,6 +1370,18 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			this->backgroundColorToolStripMenuItem->Size = System::Drawing::Size(192, 22);
 			this->backgroundColorToolStripMenuItem->Text = L"Background Color";
 			this->backgroundColorToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::backgroundColorToolStripMenuItem_Click);
+			// 
+			// toolStripSeparator4
+			// 
+			this->toolStripSeparator4->Name = L"toolStripSeparator4";
+			this->toolStripSeparator4->Size = System::Drawing::Size(303, 6);
+			// 
+			// rawDetectorDataToolStripMenuItem
+			// 
+			this->rawDetectorDataToolStripMenuItem->Name = L"rawDetectorDataToolStripMenuItem";
+			this->rawDetectorDataToolStripMenuItem->Size = System::Drawing::Size(306, 22);
+			this->rawDetectorDataToolStripMenuItem->Text = L"Raw Detector Data";
+			this->rawDetectorDataToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::rawDetectorDataToolStripMenuItem_Click);
 			// 
 			// VertScaleItem
 			// 
@@ -1944,7 +1962,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			// serialPortToolStripMenuItem
 			// 
 			this->serialPortToolStripMenuItem->Name = L"serialPortToolStripMenuItem";
-			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(124, 22);
 			this->serialPortToolStripMenuItem->Text = L"SerialPort";
 			this->serialPortToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::serialPortToolStripMenuItem_Click);
 			// 
@@ -1970,6 +1988,13 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 			this->label6->TabIndex = 29;
 			this->label6->Text = L"Refl Plane Ext";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+			// 
+			// audioDistanceToolStripMenuItem
+			// 
+			this->audioDistanceToolStripMenuItem->Name = L"audioDistanceToolStripMenuItem";
+			this->audioDistanceToolStripMenuItem->Size = System::Drawing::Size(306, 22);
+			this->audioDistanceToolStripMenuItem->Text = L"Audio Distance";
+			this->audioDistanceToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDistanceToolStripMenuItem_Click);
 			// 
 			// Form1
 			// 
@@ -2587,30 +2612,31 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 						audioLevel = bucket[i];
 				}
 				for (int i=0; i < 1024; i++)
-					bucket[i] = bucket[i] * 3800 / audioLevel;
+					bucket[i] = bucket[i] * SHORT_RANGE / audioLevel;
 			}
 #endif
-#ifdef DEBUGAUDIODISTANCE
-			int bucket[1024];
-			int audioLevel;
+
+			int distance[1024];
+		if (audioDistanceToolStripMenuItem->Checked) {
+			int maximum;
 			for (int i=0; i < 1024; i++)
-				bucket[i] = 0;
+				distance[i] = 0;
 			if (lastMeasurement > 0) {
 				for (int i = 0; i< lastMeasurement-1; i++) {
-					bucket[i] = measurementIndex[i+1] - measurementIndex[i];
+					distance[i] = measurementIndex[i+1] - measurementIndex[i];
 				}
-				audioLevel = 0;
+				maximum = 0;
 				for (int i=0; i < 1024; i++)
 				{
-					if (audioLevel < bucket[i])
-						audioLevel = bucket[i];
+					if (maximum < distance[i])
+						maximum = distance[i];
 				}
-				if (audioLevel > 0) {
+				if (maximum > 0) {
 					for (int i=0; i < 1024; i++)
-						bucket[i] = bucket[i] * 3800 / audioLevel;
+						distance[i] = distance[i] * SHORT_RANGE / maximum;
 				}
 			}
-#endif
+		}
 
 
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
@@ -2623,28 +2649,29 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #ifdef	DEBUGRAWREFL		
 // *********************** debugging code to display raw data  ***************************
 				//	Reflected Phase
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPI * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPI * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPI * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPI * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPQ * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPQ * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPQ * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPQ * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 				//	Reflected Magnitude
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflMQ * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflMQ * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflMQ * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflMQ * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 #endif
 #ifdef DEBUGAUDIOLEVELS
-				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
 				
 #endif
-#ifdef DEBUGAUDIODISTANCE
-				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / 3800;
+
+				if (audioDistanceToolStripMenuItem->Checked) {
+				traceStop.Y = scopeDisp.Bottom - distance[i] * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - distance[i-1]* scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
-#endif
+				}
 #ifdef DEBUGAUDIO
 #if 1
 				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
@@ -2686,59 +2713,35 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 #ifdef DEBUGRAWREFV
 				//	Reference Voltages
-				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21GD, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref2 * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref2 * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penBrown2, traceStart, traceStop);
 #endif
 
 
 #ifdef DEBUGRAWTRANHIPHASE
 				//	Transmit Phase
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPI * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPI * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPI * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPI * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQ * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQ * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQ * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQ * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 #endif
 
 #ifdef DEBUGRAWTRANLOPHASE
 				//	Transmit Phase using Lo excitation level
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPILow * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPILow * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPILow * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPILow * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQLow * scopeDisp.Height / 3800;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQLow * scopeDisp.Height / 3800;
+				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQLow * scopeDisp.Height / SHORT_RANGE;
+				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQLow * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 #endif
 
-#ifdef DEBUGRAWTRANMAG
-				float py;
-				float dummy;
-				//	Transmit Mag0 (MQHi)
-				RetreiveData(i, false, py, dummy);
-				traceStop.Y = scopeDisp.Bottom -  ( py + 90) * scopeDisp.Height / 90 ;
-				RetreiveData(i-1, false, py, dummy);
-				traceStart.Y = scopeDisp.Bottom - ( py + 90) * scopeDisp.Height/ 90 ;
-				gr->DrawLine(pengray, traceStart, traceStop);
-/*
-				//	Transmit Mag0 (MQHi)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQHi * scopeDisp.Height / 12000  - scopeDisp.Height * 2 / 3 ;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQHi * scopeDisp.Height / 12000  - scopeDisp.Height * 2 / 3 ;
-				gr->DrawLine(pengray, traceStart, traceStop);
-				//	Transmit Mag17 (MQMid)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQMid * scopeDisp.Height / 12000 - scopeDisp.Height * 1 / 3 ;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQMid * scopeDisp.Height / 12000  - scopeDisp.Height * 1 / 3 ;
-				gr->DrawLine(penbrown, traceStart, traceStop);
-				//	Transmit Mag34 (MQLo)
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranMQLo * scopeDisp.Height / 12000  + scopeDisp.Height * 0 / 3 ;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranMQLo * scopeDisp.Height / 12000  + scopeDisp.Height * 0 / 3 ;
-				gr->DrawLine(pencyan, traceStart, traceStop);
-*/
-#endif
 
 #ifdef DUMPRAWTRACES
 				//// code to dump raw data to file
@@ -3615,7 +3618,12 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 					DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
 				}
-
+				if (rawDetectorDataToolStripMenuItem->Checked) {
+					//	Reference level
+					traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / SHORT_RANGE;
+					traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / SHORT_RANGE;
+					gr->DrawLine(penBrown2, traceStart, traceStop);
+				}
 #ifdef DEBUGLONGCAL
 				if (true)
 				{
@@ -7906,5 +7914,24 @@ private: System::Void signalGeneratorToolStripMenuItem_Click(System::Object^  se
 			 SignalGeneratorBox = gcnew SignalGenerator (VNA);
 			 SignalGeneratorBox->ShowDialog();
 		 }
-};
+private: System::Void rawDetectorDataToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 if (rawDetectorDataToolStripMenuItem->Checked == false)
+				 rawDetectorDataToolStripMenuItem->Checked = true;
+			 else
+				 rawDetectorDataToolStripMenuItem->Checked = false;
+			 
+			 Refresh();
+		 }
+
+		 private: System::Void audioDistanceToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 if (audioDistanceToolStripMenuItem->Checked == false)
+				 audioDistanceToolStripMenuItem->Checked = true;
+			 else
+				 audioDistanceToolStripMenuItem->Checked = false;
+			 
+			 Refresh();
+
+		  }
 }
+;};
+

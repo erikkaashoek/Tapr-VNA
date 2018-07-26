@@ -393,11 +393,11 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 {
 	String ^ t;
 	ArmAudio(numPoints);
-	if (! audio_simulation){
+	dur = duration;
+	if (! mode){
 
 		//try {
 		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
-		dur = duration;
 //		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
 //		Sleep(200);
 		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, duration));
@@ -407,6 +407,8 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 		//		(void) e;
 		//}
 
+	} else {
+		StartAudioSimulation(mode, numPoints + 10, duration, startF, stepF, cable_before, cable_after);
 	}
 	mp = 0;
 }
@@ -436,11 +438,12 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 //	long freq;
 	float reflphase,tranphase;
 	float reflmag,tranmag;
+	float reflevel;
 	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
 	
-	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase) && retries < 400) {
+	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase, reflevel) && retries < 400) {
 		Sleep(2);
 		retries++;
 	}
@@ -459,45 +462,33 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 	audio_simulation = false;
 	if (mode == M_SHORT) {
-		if (direction == DIR_TRANS) {
-			audio_volume = 0.000001;
-			audio_phase = 0.0;
-		} else {
-			audio_phase = -180.0;
-			audio_volume = 0.9;
-		}
+			audio_volume_transmission = 0.000001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = -180.0;
+			audio_volume_reflection = 0.9;
 		audio_simulation = true;
 	}
 	if (mode == M_OPEN) {
-		if (direction == DIR_TRANS) {
-			audio_volume = 0.000001;
-			audio_phase = 0.0;
-		} else {
-			audio_phase = 0.0;
-			audio_volume = 0.9;
-		}
+			audio_volume_transmission = 0.000001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.9;
 		audio_simulation = true;
 	}
 	if (mode == M_LOAD) {
-		if (direction == DIR_TRANS) {
-			audio_volume = 0.00000001;
-			audio_phase = 0.0;
-		} else {
-			audio_phase = 0.0;
-			audio_volume = 0.00000001;
-		}
+			audio_volum_transmissione = 0.00000001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.00000001;
 		audio_simulation = true;
 	}
 	if (mode == M_THROUGH) {
-		if (direction == DIR_TRANS) {
-			audio_volume = 0.8;
-			audio_phase = 0.0 + (cable_before + cable_after) * freq / 1000000.;
-			while (audio_phase >= +180.0) audio_phase -= 360.0;
-			while (audio_phase <= -180.0) audio_phase += 360.0;
-		} else {
-			audio_phase = 0.0;
-			audio_volume = 0.000001;
-		}
+			audio_volume_transmission = 0.8;
+			audio_phase_transmission = 0.0 + (cable_before + cable_after) * freq / 1000000.;
+			while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
+			while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.000001;
 		audio_simulation = true;
 	}
 
@@ -545,47 +536,8 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 		//magSig = gamma[0];
 		//phaseSig = gamma[1];
 #endif
-
-	if (reply == VNA_REPLYTYPE_FULL) {
-#if 0
-		RxBuffer->ReflPI = PhaseToI(reflphase);
-		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
-		if (reflmag > MinLevel)
-			RxBuffer->ReflMQ = MagDac(reflmag); // Noise(MagDac(reflmag), NoiseLevel);
-		else
-			RxBuffer->ReflMQ =0; // Noise(MagDac(reflmag), NoiseLevel);
-
-		RxBuffer->TranPI = PhaseToI(tranphase);
-		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
-
-		if (tranmag > -50.0) {
-			RxBuffer->TranMQLo = MagDac(tranmag); // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid = 3800;
-			RxBuffer->TranMQHi = 3800;
-		} 
-	
-		if (tranmag > -20)
-			tranmag = tranmag;
-		else if (tranmag > (-50.0 - 17.0)) {
-			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid = MagDac(tranmag + 17);
-			RxBuffer->TranMQHi = 3800;
-		} else {
-			RxBuffer->TranMQLo = 0; // Noise(MagDac(tranmag), NoiseLevel);
-			RxBuffer->TranMQMid = 0;
-			RxBuffer->TranMQHi =  MagDac(tranmag + 34);
-		}
-
-				RxBuffer->ReflMI = 0;
-				RxBuffer->Vref1 = 3800;
-
-				RxBuffer->TranMI = 0;
-				RxBuffer->Vref2 = 3800;
-
-
-				RxBuffer->TranPILow = 1850;
-				RxBuffer->TranPQLow = 1850;
-#endif
+		RxBuffer->Vref1 = DB2SHORT(reflevel);
+		
 		NormalizePhase(reflphase);
 		RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
 		RxBuffer->ReflMQ = DB2SHORT(reflmag);
@@ -594,116 +546,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 		RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
 		RxBuffer->TranMQLo = DB2SHORT(tranmag);
 
-
-	} else { // FAST
-		RxBuffer->ReflPI = PhaseToI(reflphase);
-		RxBuffer->ReflPQ = PhaseToQ(reflphase) ;
-		RxBuffer->ReflMQ = Noise(MagDac(reflmag), NoiseLevel);
-		RxBuffer->TranPI = PhaseToI(tranphase);
-		RxBuffer->TranPQ = PhaseToQ(tranphase) ;
-		RxBuffer->TranMQHi = 3800;
-		RxBuffer->TranMQLo = Noise(MagDac(tranmag), NoiseLevel);
-		RxBuffer->TranMQMid = 3800;
-				RxBuffer->ReflMI = 0;
-				RxBuffer->Vref1 = 3800;
-
-				RxBuffer->TranMI = 0;
-				RxBuffer->Vref2 = 3800;
-
-				RxBuffer->TranMQLo = 3800;
-				RxBuffer->TranMQMid = 3800;
-
-				RxBuffer->TranPILow = 0;
-				RxBuffer->TranPQLow = 0;
-
-	}
-
-
-#if 0
-	bool rxsuccess = false;
-
-	Write(TxBuffer);		// send TxBuf to trigger a reading
-//	for (int k=0; k<1000; k++)		
-//	{
-//		for (int l=0; l<100; l++)	// see if there's a valid RxBuffer
-//		{
-//			Read(RxBuffer);
-//			if (RxBuffer->Header == 1)
-//			{
-//				rxsuccess = true;
-//				break;
-//			}
-//
-//			// temporary debugging code
-//			if (RxBuffer->Header > 0xFE)	// IIC Error on Target
-//			{
-//				int temp = RxBuffer->Header;
-//				IICErrorCount++;
-//			}
-//			// end temporary code
-//
-//		}
-//		if (rxsuccess)
-//			break;
-//		else
-//		{
-//			Write(TxBuffer);
-//			Read(RxBuffer);		// then consume a buffer
-//		}
-//	}
-
-	Read(RxBuffer);
-
-	// Verify the packet checksum - located in dummy2
-
-	//unsigned checksum = 0x01AA;	// seed value for checksum
-	//checksum += RxBuffer->Header;
-	//checksum += RxBuffer->ReflMI;		
-	//checksum += RxBuffer->ReflPI;		 
-	//checksum += RxBuffer->Vref1;		
-	//checksum += RxBuffer->TranMI;		
-	//checksum += RxBuffer->TranPI;		
-	//checksum += RxBuffer->Vref2;	
-	//checksum += RxBuffer->FwdMI;	
-	//checksum += RxBuffer->FwdPI;		
-	//checksum += RxBuffer->ReflMQ;	
-	//checksum += RxBuffer->ReflPQ;		
-	//checksum += RxBuffer->Vref1a;	
-	//checksum += RxBuffer->TranMQHi;	
-	//checksum += RxBuffer->TranPQ;	
-	//checksum += RxBuffer->Vref2a;		
-	//checksum += RxBuffer->FwdMQ;		
-	//checksum += RxBuffer->FwdPQ;		
-	//checksum += RxBuffer->TranMQLo;	
-	//checksum += RxBuffer->fill1;		
-	//checksum += RxBuffer->fill2;		
-	//checksum += RxBuffer->fill3;
-	//checksum += RxBuffer->fill4;
-	//checksum += RxBuffer->fill5;
-	//checksum += RxBuffer->fill6;
-	//checksum += RxBuffer->fill7;
-	//checksum += RxBuffer->fill8;
-	//checksum += RxBuffer->fill9;
-	//checksum += RxBuffer->fill10;
-	//checksum += RxBuffer->fill11;
-	//checksum += RxBuffer->fill12;
-	//checksum += RxBuffer->fill13;	
-
-	//checksum &= 0xFFFF;					// only keep lower 16 bits
-
-	//if (checksum != RxBuffer->check)	// verify checksum
-	//{
-	//	unsigned temp = RxBuffer->check;
-	//	IICErrorCount++;
-	//}
-	//if (RxBuffer->Header != 0x01)		// Got a IIC read or write error
-	//{
-	//	unsigned error = RxBuffer->Header;
-	//	IICErrorCount++;
-	//}
-
-#endif
-	return(rxsuccess);
+		return(rxsuccess);
 }
 
 

@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <MMSystem.h>
 #include <iostream>
+#include "Mockup.h"
 
 #include "AudioInput.h"
 /*
@@ -23,8 +24,6 @@ int measurementIndex[1100];
 int lastMeasurement;
 int maxMeasurement;
 
-int sampleRate = 44100;
-short int waveIn[3][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 
 float decoded[1024][2];
 volatile int nextDecoded = 0;
@@ -33,10 +32,22 @@ volatile int nextDecoded = 0;
 //volatile float phaseSig;
 //volatile float volSig;
 
-double audio_volume;
-double audio_phase;
+double audio_volume_reflection;
+double audio_phase_reflection;
+double audio_volume_transmission;
+double audio_phase_transmission;
 bool audio_simulation = false;
 int audio_delay;
+
+int simMode = 0;
+int	simPoint = 0;
+int	simMaxPoint = 0;
+int	simDuration = 3;
+int	simStep = 0;
+long simStartF;
+long simStepF;
+int simBefore;
+int simAfter;
 
 #define DEBUGAUDIO
 
@@ -44,7 +55,10 @@ int audio_delay;
 short temp_audio[NUMPTS];
 #endif
 HWAVEIN      hWaveIn;
-WAVEHDR      WaveInHdr[2];
+
+int sampleRate = 44100;
+short int waveIn[WAVEHDRBUFFER][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
+WAVEHDR      WaveInHdr[WAVEHDRBUFFER];
 MMRESULT result;
 
  // Specify recording parameters
@@ -67,7 +81,7 @@ MMRESULT result;
   { 32138,   6393 }, { 29389, -14493 }, { 14493, -29389 }, { -6393, -32138 },
   {-24636, -21605 }, {-32698,  -2143 }, {-27246,  18205 }, {-10533,  31029 }
 */
-/* 5khz 44100 s/s */
+/* 5khz 44100 s/s
   { 10529, 31029 } ,   { 28251, 16600 } ,  { 32231, -5904 } ,  { 20534, -25536 } ,
   { -1150, -32749 } ,  { -22276, -24034 } ,  { -32568, -3629 } ,  { -27019, 18540 } ,
   { -8330, 31691 } ,  { 14411, 29428 } ,  { 30142, 12851 } ,  { 31212, -9977 } ,
@@ -80,14 +94,29 @@ MMRESULT result;
   { 24401, 21869 } ,  { 32761, 600 } ,  { 25187, -20961 } ,  { 5361, -32327 } ,
   { -17072, -27971 } ,  { -31203, -10010 } ,  { -30157, 12819 } ,  { -14444, 29412 } ,
   { 8294, 31700 } ,  { 26997, 18569 } ,  { 32569, -3595 } ,  { 22300, -24010 }
-  };
+*/
+  // 5khz 44100 s/s scale by div 16
+  { 658, 1939 } ,   { 1766, 1038 } ,  { 2014, -369 } ,  { 1283, -1596 } ,
+  { -72, -2047 } ,  { -1392, -1502 } ,  { -2035, -227 } ,  { -1689, 1159 } ,
+  { -521, 1981 } ,  { 901, 1839 } ,  { 1884, 803 } ,  { 1951, -623 } ,
+  { 1069, -1747 } ,  { -333, -2021 } ,  { -1573, -1312 } ,  { -2048, 35 } ,
+  { -1527, 1365 } ,  { -263, 2031 } ,  { 1129, 1709 } ,  { 1971, 556 } ,
+  { 1855, -868 } ,  { 837, -1869 } ,  { -589, -1962 } ,  { -1728, -1100 } ,
+  { -2026, 297 } ,  { -1339, 1549 } ,  { -1, 2048 } ,  { 1338, 1551 } ,
+  { 2026, 299 } ,  { 1729, -1098 } ,  { 591, -1961 } ,  { -835, -1870 } ,
+  { -1854, -870 } ,  { -1972, 554 } ,  { -1130, 1708 } ,  { 261, 2031 } ,
+  { 1525, 1367 } ,  { 2048, 38 } ,  { 1574, -1310 } ,  { 335, -2020 } ,
+  { -1067, -1748 } ,  { -1950, -626 } ,  { -1885, 801 } ,  { -903, 1838 } ,
+  { 518, 1981 } ,  { 1687, 1161 } ,  { 2036, -225 } ,  { 1394, -1501 }
+
+};
 
 long acc_samp_s;
 long acc_samp_c;
 long acc_ref_s;
 long acc_ref_c;
 
-volatile float gamma[4];
+//volatile float gamma[4];
 
 
 #define PI	3.14159265358979
@@ -159,6 +188,8 @@ void calculate_gamma(volatile float gamma[4])
 
 */
 
+//#pragma STDC FP_CONTRACT ON
+
 void dsp_process(short *capture, long length)
 {
   short *p = capture;
@@ -174,24 +205,15 @@ void dsp_process(short *capture, long length)
   double samp_phase;
 
   for (i = 0; i < len; i++) {
-    short smp = *p++; //  = *p++;
-    short ref = *p++;
-	
-//    ref_buf[i] = ref;
-//    samp_buf[i] = smp;
+    short smp = (*p++ );
+    short ref = (*p++ );
     short s = sincos_tbl[i][0];
     short c = sincos_tbl[i][1];
-    samp_s += smp * s / 16;
-    samp_c += smp * c / 16;
-    ref_s += ref * s / 16;
-    ref_c += ref * c / 16;
-#if 0
-    uint32_t sc = *(uint32_t)&sincos_tbl[i];
-    samp_s = __SMLABB(sr, sc, samp_s);
-    samp_c = __SMLABT(sr, sc, samp_c);
-    ref_s = __SMLATB(sr, sc, ref_s);
-    ref_c = __SMLATT(sr, sc, ref_c);
-#endif
+
+	samp_s += smp * s;
+    samp_c += smp * c;
+    ref_s += ref * s;
+    ref_c += ref * c;
   }
   acc_samp_s = samp_s;
   acc_samp_c = samp_c;
@@ -250,13 +272,14 @@ int lastI=-1;
 int lastJ=-1;
 bool lastRefl = false;
 
-bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp)
+bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r)
 {
 	if (i < lastMeasurement-1 && i < maxMeasurement) {
 		if (i != lastI ) {
 			lastI = i;
 			lastJ = 0;
 		}
+		r = measured[measurementIndex[i] + 1 + lastJ].reference;
 		m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
 		p = measured[measurementIndex[i] + 1 + lastJ].phase+180;
 		tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
@@ -282,16 +305,17 @@ void StoreMeasurement()
 		measured[nextDecoded++].reference = actualMeasurement.reference;
 	}
 	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) ) {
+		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-7].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-6].reference < SIGNAL_THRESHOLD ) lowmatch++;
-		if ( measured[nextDecoded-5].reference < SIGNAL_THRESHOLD ) lowmatch++;
+		if ( measured[nextDecoded-5].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-4].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) highmatch++;
-		if (lowmatch > 3 && highmatch > 2) {
+		if (lowmatch > 3 && highmatch > 3) {
 			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) 
 				 measurementIndex[lastMeasurement++] = nextDecoded - 6;
 			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) 
@@ -306,7 +330,7 @@ void StoreMeasurement()
 				(measurementIndex[lastMeasurement-1] - measurementIndex[lastMeasurement - 2]) * 2 > 
 					(measurementIndex[lastMeasurement-2] - measurementIndex[lastMeasurement - 3]) * 3
 				) {
-					 lowmatch = lastMeasurement; // probably skipped one measurement
+					 lowmatch = lastMeasurement; // probably skipped one measurement, just for having a breakpoint location for debugging
 			}
 		}
 		if ( measured[nextDecoded-9].reference > SIGNAL_THRESHOLD &&
@@ -318,151 +342,208 @@ void StoreMeasurement()
 			 measured[nextDecoded-2].reference < SIGNAL_THRESHOLD &&
 			 measured[nextDecoded-1].reference < SIGNAL_THRESHOLD   ) {
 			 if (measurementIndex[lastMeasurement-1] + 15 > nextDecoded - 5 )
-				nextDecoded = nextDecoded;
+				nextDecoded = nextDecoded; // probably skipped one measurement, just for having a breakpoint location for debugging
 		}
 	}
 }
 
 
- VOID ProcessHeader(WAVEHDR * pHdr)
+VOID ProcessHeader(WAVEHDR * pHdr)
 {
 	MMRESULT mRes=0;
 	short *audio;
 	static int state = 0;
 	int i;
 
-//	TRACE("%d",pHdr->dwUser);
+	//	TRACE("%d",pHdr->dwUser);
 	if(WHDR_DONE==(WHDR_DONE &pHdr->dwFlags))
 	{
 
 		audio = waveIn[0];
-		
+
 		//for (i = 0; i < 48; i++) {
-//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * 5000 / 44100));
-//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * 5000 / 44100));
+		//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * 5000 / 44100));
+		//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * 5000 / 44100));
 		//}
-		if (audio_simulation) {
-			for (i = 0; i < NUMPTS/2; i++) {
-				audio [i*2+0] = (short)(32000 * audio_volume * sin(PI * 2 * ((i+1) + audio_phase * 9 / 360)  * 5000 / 44100));
-				audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100));
+		if (simMode) {
+			if (simPoint < simMaxPoint ) {
+
+					audio_simulation = false;
+	if (simMode == M_SHORT) {
+			audio_volume_transmission = 0.0001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = -180.0;
+			audio_volume_reflection = 0.9;
+		audio_simulation = true;
+	}
+	if (simMode == M_OPEN) {
+			audio_volume_transmission = 0.0001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.9;
+		audio_simulation = true;
+	}
+	if (simMode == M_LOAD) {
+			audio_volume_transmission = 0.0001;
+			audio_phase_transmission = 0.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.0001;
+		audio_simulation = true;
+	}
+	if (simMode == M_THROUGH) {
+			audio_volume_transmission = 0.9;
+			audio_phase_transmission = 0.0 + (simBefore + simAfter) * simStartF / 1000000.;
+			while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
+			while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
+			audio_phase_reflection = 0.0;
+			audio_volume_reflection = 0.0001;
+		audio_simulation = true;
+	}
+
+#define SILENCE_GAP	5
+
+				if (simStep >= SILENCE_GAP + simDuration*2 ) {
+					simStep = -1;
+					simPoint += 1;
+					simStartF += simStepF;
+				}
+				if (simStep < SILENCE_GAP ) { // Initial silence
+					for (i = 0; i < NUMPTS/2; i++) {
+						audio [i*2+0] = (short)(32000 * 0.0000000000000000000001 * sin(PI * 2 * ((i+1) + audio_phase_reflection * 9 / 360)  * 5000 / 44100));
+						audio [i*2+1] = (short)(32000 * 0.0000000000000000000001 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+					}
+				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
+					for (i = 0; i < NUMPTS/2; i++) {
+						audio [i*2+0] = (short)(32000 * audio_volume_reflection * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_reflection * 9 / 360)  * 5000 / 44100));
+						audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+					}
+				} else { // Transmission
+					for (i = 0; i < NUMPTS/2; i++) {
+						audio [i*2+0] = (short)(32000 * audio_volume_transmission * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_transmission * 9 / 360)  * 5000 / 44100));
+						audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+					}
+				}
+				simStep += 1;
 			}
 		} else
 			audio = (short *)pHdr->lpData;
 
 		i = NUMPTS / 2 / SAMP;
 		while (i-- > 0) {
-//float measured[1024][100];
-//int measurementCount[1024];
-//int lastMeasurement;
+			//float measured[1024][100];
+			//int measurementCount[1024];
+			//int lastMeasurement;
 
-			dsp_process(audio, SAMP*2);
-			StoreMeasurement();
-			audio = & (audio[SAMP*2]);
-		}
-/*
-
-			switch (audioState) {
-			case AS_ARMED:
-				if (volSig < -20)
-					nextState = AS_STARTED;
-				break;
-			case AS_STARTED:
-				if (volSig > -20) {
-					nextState = AS_SIGNAL;
-				}
-				break;
-			case AS_SIGNAL:
-				if (volSig < -20) {
-					if (decoded[nextDecoded][UPCOUNT] == 1) { // Single peak
-						nextState = AS_SILENCE; // back to silence
-						nextDecoded--;
-					} else
-						nextState = AS_STOPPING;
-				} else {
-					decoded[nextDecoded][UPCOUNT]++;
-					StoreMeasurement();
-				}
-				break;
-			case AS_STOPPING:
-				if (volSig > -20) {
-					decoded[nextDecoded][UPCOUNT]++;
-					nextState = AS_SIGNAL;
-				} else {
-					nextState = AS_SILENCE;
-					decoded[nextDecoded][DOWNCOUNT] = 1;
-				}
-			case AS_SILENCE:
-				if (volSig > -20 && decoded[nextDecoded][DOWNCOUNT] > 7) {
-					nextDecoded++;
-					if (nextDecoded < maxPoints) {
-						nextState = AS_SIGNAL;
-					} else
- 						nextState = AS_FINISHED;
-				} else {
-					decoded[nextDecoded][DOWNCOUNT]++;
-					StoreMeasurement();
-				}
-				break;
-			case AS_FINISHED:
-				break;
+			if (!simMode || simPoint < simMaxPoint ) {
+				dsp_process(audio, SAMP*2);
+				StoreMeasurement();
+				audio = & (audio[SAMP*2]);
 			}
-			if (nextState != AS_NOCHANGE) {
-				switch (nextState) {
-				case AS_STARTED:
-					nextDecoded = 0;
-					measurementCount[nextDecoded] = 0;
-					decoded[nextDecoded][UPCOUNT] = 0;
-					decoded[nextDecoded][DOWNCOUNT] = 0;
-					break;
-				case AS_SIGNAL:
-					measurementCount[nextDecoded] = 0;
-					decoded[nextDecoded][UPCOUNT] = 1;
-					StoreMeasurement();
-					break;
-				case AS_STOPPING:
-					break;
-				case AS_SILENCE:
-					decoded[nextDecoded][DOWNCOUNT] = 1;
-					StoreMeasurement();
-					break;
-				case AS_FINISHED:
-					break;
-				}
-				audioState = nextState;
-			}
+		}
+		/*
+
+		switch (audioState) {
+		case AS_ARMED:
+		if (volSig < -20)
+		nextState = AS_STARTED;
+		break;
+		case AS_STARTED:
+		if (volSig > -20) {
+		nextState = AS_SIGNAL;
+		}
+		break;
+		case AS_SIGNAL:
+		if (volSig < -20) {
+		if (decoded[nextDecoded][UPCOUNT] == 1) { // Single peak
+		nextState = AS_SILENCE; // back to silence
+		nextDecoded--;
+		} else
+		nextState = AS_STOPPING;
+		} else {
+		decoded[nextDecoded][UPCOUNT]++;
+		StoreMeasurement();
+		}
+		break;
+		case AS_STOPPING:
+		if (volSig > -20) {
+		decoded[nextDecoded][UPCOUNT]++;
+		nextState = AS_SIGNAL;
+		} else {
+		nextState = AS_SILENCE;
+		decoded[nextDecoded][DOWNCOUNT] = 1;
+		}
+		case AS_SILENCE:
+		if (volSig > -20 && decoded[nextDecoded][DOWNCOUNT] > 7) {
+		nextDecoded++;
+		if (nextDecoded < maxPoints) {
+		nextState = AS_SIGNAL;
+		} else
+		nextState = AS_FINISHED;
+		} else {
+		decoded[nextDecoded][DOWNCOUNT]++;
+		StoreMeasurement();
+		}
+		break;
+		case AS_FINISHED:
+		break;
+		}
+		if (nextState != AS_NOCHANGE) {
+		switch (nextState) {
+		case AS_STARTED:
+		nextDecoded = 0;
+		measurementCount[nextDecoded] = 0;
+		decoded[nextDecoded][UPCOUNT] = 0;
+		decoded[nextDecoded][DOWNCOUNT] = 0;
+		break;
+		case AS_SIGNAL:
+		measurementCount[nextDecoded] = 0;
+		decoded[nextDecoded][UPCOUNT] = 1;
+		StoreMeasurement();
+		break;
+		case AS_STOPPING:
+		break;
+		case AS_SILENCE:
+		decoded[nextDecoded][DOWNCOUNT] = 1;
+		StoreMeasurement();
+		break;
+		case AS_FINISHED:
+		break;
+		}
+		audioState = nextState;
+		}
 
 		}
-		
+
 		if (state == AS_SIGNAL || state == AS_STOPPING || state == AS_SILENCE)
-			StoreMeasurement();
-*/
+		StoreMeasurement();
+		*/
 
-//		mmioWrite(m_hOPFile,pHdr->lpData,pHdr->dwBytesRecorded);
+		//		mmioWrite(m_hOPFile,pHdr->lpData,pHdr->dwBytesRecorded);
 		mRes=waveInAddBuffer(hWaveIn,pHdr,sizeof(WAVEHDR));
-//		if(mRes!=0)
-//			StoreError(mRes,TRUE,"File: %s ,Line Number:%d",__FILE__,__LINE__);
+		//		if(mRes!=0)
+		//			StoreError(mRes,TRUE,"File: %s ,Line Number:%d",__FILE__,__LINE__);
 	}
 }
 
- void CALLBACK waveInProc(HWAVEIN hwi,UINT uMsg,DWORD dwInstance,DWORD dwParam1,DWORD dwParam2)
+void CALLBACK waveInProc(HWAVEIN hwi,UINT uMsg,DWORD dwInstance,DWORD dwParam1,DWORD dwParam2)
 {
 	WAVEHDR *pHdr=NULL;
 	switch(uMsg)
 	{
-		case WIM_CLOSE:
-			break;
+	case WIM_CLOSE:
+		break;
 
-		case WIM_DATA:
-			{
-				ProcessHeader((WAVEHDR *)dwParam1);
-			}
-			break;
+	case WIM_DATA:
+		{
+			ProcessHeader((WAVEHDR *)dwParam1);
+		}
+		break;
 
-		case WIM_OPEN:
-			break;
+	case WIM_OPEN:
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 }
 
@@ -470,61 +551,74 @@ void StoreMeasurement()
 
 int OpenAudio (void) {
 	int i;
- pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
- pFormat.nChannels=2;                    //  1=mono, 2=stereo
- pFormat.nSamplesPerSec=sampleRate;      // 44100
- pFormat.nAvgBytesPerSec=sampleRate*4;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
- pFormat.nBlockAlign=4;                  // = n.Channels * wBitsPerSample/8
- pFormat.wBitsPerSample=16;              //  16 for high quality, 8 for telephone-grade
- pFormat.cbSize=0;
- /*
- 	WAVEINCAPS stWIC={0};
+	pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
+	pFormat.nChannels=2;                    //  1=mono, 2=stereo
+	pFormat.nSamplesPerSec=sampleRate;      // 44100
+	pFormat.nAvgBytesPerSec=sampleRate*4;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
+	pFormat.nBlockAlign=4;                  // = n.Channels * wBitsPerSample/8
+	pFormat.wBitsPerSample=16;              //  16 for high quality, 8 for telephone-grade
+	pFormat.cbSize=0;
+	/*
+	WAVEINCAPS stWIC={0};
 	MMRESULT mRes;
 
-		ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
-		mRes=waveInGetDevCaps(nSel,&stWIC,sizeof(WAVEINCAPS));
-*/
+	ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
+	mRes=waveInGetDevCaps(nSel,&stWIC,sizeof(WAVEINCAPS));
+	*/
 
- result = waveInOpen(&hWaveIn, WAVE_MAPPER,&pFormat,
-			 (DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
-//            0L, 0L, WAVE_FORMAT_DIRECT);
- if (result)
- {
-  // wchar_t fault[256];
-  //waveInGetErrorText(result, fault, 256);
-  //Application->MessageBox(fault, "Failed to open waveform input device.",
-  //            MB_OK | MB_ICONEXCLAMATION);
-  return(result);
- }
+	result = waveInOpen(&hWaveIn, WAVE_MAPPER,&pFormat,
+		(DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
+	//            0L, 0L, WAVE_FORMAT_DIRECT);
+	if (result)
+	{
+		// wchar_t fault[256];
+		//waveInGetErrorText(result, fault, 256);
+		//Application->MessageBox(fault, "Failed to open waveform input device.",
+		//            MB_OK | MB_ICONEXCLAMATION);
+		return(result);
+	}
 
- for (i=0; i<2 ; i++) {
- // Set up and prepare header for input
- WaveInHdr[i].lpData = (LPSTR)(waveIn[i]);
- WaveInHdr[i].dwBufferLength = NUMPTS*2;
- WaveInHdr[i].dwBytesRecorded=0;
- WaveInHdr[i].dwUser = 0L;
- WaveInHdr[i].dwFlags = 0L;
- WaveInHdr[i].dwLoops = 0L;
- waveInPrepareHeader(hWaveIn, &WaveInHdr[i], sizeof(WAVEHDR));
-  // Insert a wave input buffer
- result = waveInAddBuffer(hWaveIn, &WaveInHdr[i], sizeof(WAVEHDR));
- if (result)
- {
-//  MessageBox(Application->Handle, "Failed to read block from device",
-//                   NULL, MB_OK | MB_ICONEXCLAMATION);
-  return(result);
- }
- }
+	for (i=0; i<WAVEHDRBUFFER ; i++) {
+		// Set up and prepare header for input
+		WaveInHdr[i].lpData = (LPSTR)(waveIn[i]);
+		WaveInHdr[i].dwBufferLength = NUMPTS*2;
+		WaveInHdr[i].dwBytesRecorded=0;
+		WaveInHdr[i].dwUser = 0L;
+		WaveInHdr[i].dwFlags = 0L;
+		WaveInHdr[i].dwLoops = 0L;
+		waveInPrepareHeader(hWaveIn, &WaveInHdr[i], sizeof(WAVEHDR));
+		// Insert a wave input buffer
+		result = waveInAddBuffer(hWaveIn, &WaveInHdr[i], sizeof(WAVEHDR));
+		if (result)
+		{
+			//  MessageBox(Application->Handle, "Failed to read block from device",
+			//                   NULL, MB_OK | MB_ICONEXCLAMATION);
+			return(result);
+		}
+	}
 
- // Commence sampling input
- result = waveInStart(hWaveIn);
- if (result)
- {
-//  MessageBox(Application->Handle, "Failed to start recording",
-//                   NULL, MB_OK | MB_ICONEXCLAMATION);
-  return(result);
+	// Commence sampling input
+	result = waveInStart(hWaveIn);
+	if (result)
+	{
+		//  MessageBox(Application->Handle, "Failed to start recording",
+		//                   NULL, MB_OK | MB_ICONEXCLAMATION);
+		return(result);
 
- }
- audio_delay = -1;
+	}
+	audio_delay = -1;
 	return(0);
+}
+
+void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF, int cable_before, int cable_after)
+{
+	simMode = mode;
+	simPoint = 0;
+	simMaxPoint = numPoints;
+	simDuration = duration;
+	simStep = 0;
+	simStartF = startF;
+	simStepF = stepF;
+	simBefore = cable_before;
+	simAfter = cable_after;
 }
