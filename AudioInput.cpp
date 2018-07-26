@@ -415,15 +415,15 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
 					for (i = 0; i < NUMPTS/2; i++) {
 						audio [i*2+0] = (short)(32000 * audio_volume_reflection * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_reflection * 9 / 360)  * 5000 / 44100));
-						audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+						audio [i*2+1] = (short)(32000 * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
 					}
 				} else { // Transmission
 					for (i = 0; i < NUMPTS/2; i++) {
 						audio [i*2+0] = (short)(32000 * audio_volume_transmission * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_transmission * 9 / 360)  * 5000 / 44100));
-						audio [i*2+1] = (short)(32000 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+						audio [i*2+1] = (short)(32000 * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
 					}
 				}
-				simStep += 1;
+				if ((rand() % 20) < 19) simStep += 1;
 			}
 		} else
 			audio = (short *)pHdr->lpData;
