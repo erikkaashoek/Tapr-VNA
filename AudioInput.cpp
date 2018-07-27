@@ -111,12 +111,10 @@ MMRESULT result;
 
 };
 
-long acc_samp_s;
-long acc_samp_c;
-long acc_ref_s;
-long acc_ref_c;
-
-//volatile float gamma[4];
+//long acc_samp_s;
+//long acc_samp_c;
+//long acc_ref_s;
+//long acc_ref_c;
 
 
 #define PI	3.14159265358979
@@ -132,61 +130,6 @@ float factor = 1;
 int reference_signal_level=0;
 int prev_ref_signal = 0;
 
-/*
-void calculate_gamma(volatile float gamma[4])
-{
-  float rs = (float) acc_ref_s;
-  float rc = (float) acc_ref_c;
-  float rr = rs * rs + rc * rc;
-  double x;
-  double y;
-  //rr = sqrtf(rr) * 1e8;
-  float ss = (float) acc_samp_s;
-  float sc = (float) acc_samp_c;
-  float sr = ss * ss + sc * sc;
-  float rPhase =  atan2(rc,rs);
-  float rMag = sqrt((float)rs*rs + rc*rc);
-  float sPhase =  atan2(sc,ss);
-  float sMag = sqrt((float)ss*ss + sc*sc);
-  prev_ref_signal = reference_signal_level;
-  if (rr > max_rr) max_rr = rr;
-  if (rr < min_rr) min_rr = rr;
-  factor = max_rr / min_rr;
-  if (factor > 100) { // Signal level found
-		reference_signal_level = (int)(100.0 * rr / max_rr);
-  }
-  gamma[0] = (sc * rc + ss * rs) / rr;
-  gamma[1] = (ss * rc - sc * rs) / rr;
-  gamma[2] = sqrt(gamma[0]*gamma[0] + gamma[1]*gamma[1]);
-//  gamma[0] * gamma[0] + gamma[1] * gamma[1];
-
-		x = PI / 2.0 * gamma[0];
-		y = PI / 2.0 * gamma[1];
-
-		//x = sin(x);
-		//y = -sin(y);
-
-		gamma[3] = (float) (180.0/PI * atan2(y,x));
-		while (gamma[3] > +180.0) gamma[3] -= 360.0;
-		while (gamma[3] < -180.0) gamma[3] += 360.0;
-
-		magSig = gamma[0];
-		phaseSig = gamma[3];
-
-		decoded[0][nextDecoded] = (short) (gamma[2] * 20000);
-		decoded[1][nextDecoded++] = (short) ( gamma[3] * 30000.0 / 180.0);
-		if (nextDecoded >= 1024) nextDecoded = 0;
-
-		if (reference_signal_level > 40 && prev_ref_signal <= 40) {
-		reference_signal_level = reference_signal_level;
-		return;
-
-	}
-
-  return;
-}
-
-*/
 
 //#pragma STDC FP_CONTRACT ON
 
@@ -215,10 +158,10 @@ void dsp_process(short *capture, long length)
     ref_s += ref * s;
     ref_c += ref * c;
   }
-  acc_samp_s = samp_s;
-  acc_samp_c = samp_c;
-  acc_ref_s = ref_s;
-  acc_ref_c = ref_c;
+//  acc_samp_s = samp_s;
+//  acc_samp_c = samp_c;
+//  acc_ref_s = ref_s;
+//  acc_ref_c = ref_c;
 
   ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
   ref_phase = 360.0f / 2 / PI  * atan2((float)ref_c, (float)ref_s);
@@ -231,19 +174,10 @@ void dsp_process(short *capture, long length)
   while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
   while (actualMeasurement.phase <= -180.0f) actualMeasurement.phase += 360.0;
   actualMeasurement.reference =  todb(ref_mag / 32000);
-
-
-//		actualMeasured.magnitude = gamma[0];
-//		actualMeasured.phase = gamma[1];
-
-// 		magSig = gamma[0];
-//		phaseSig = gamma[1];
-//		volSig = todb(ref_mag / 32000); 
-  
-  //calculate_gamma(gamma);
 }
 
 
+/*
 void reset_dsp_accumerator(void)
 {
   acc_ref_s = 0;
@@ -251,6 +185,7 @@ void reset_dsp_accumerator(void)
   acc_samp_s = 0;
   acc_samp_c = 0;
 }
+*/
 
 typedef enum audioStates { AS_NOCHANGE, AS_ARMED, AS_STARTED, AS_SIGNAL, AS_SILENCE, AS_STOPPING, AS_FINISHED };
 audioStates audioState = AS_ARMED;
@@ -440,88 +375,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				audio = & (audio[SAMP*2]);
 			}
 		}
-		/*
-
-		switch (audioState) {
-		case AS_ARMED:
-		if (volSig < -20)
-		nextState = AS_STARTED;
-		break;
-		case AS_STARTED:
-		if (volSig > -20) {
-		nextState = AS_SIGNAL;
-		}
-		break;
-		case AS_SIGNAL:
-		if (volSig < -20) {
-		if (decoded[nextDecoded][UPCOUNT] == 1) { // Single peak
-		nextState = AS_SILENCE; // back to silence
-		nextDecoded--;
-		} else
-		nextState = AS_STOPPING;
-		} else {
-		decoded[nextDecoded][UPCOUNT]++;
-		StoreMeasurement();
-		}
-		break;
-		case AS_STOPPING:
-		if (volSig > -20) {
-		decoded[nextDecoded][UPCOUNT]++;
-		nextState = AS_SIGNAL;
-		} else {
-		nextState = AS_SILENCE;
-		decoded[nextDecoded][DOWNCOUNT] = 1;
-		}
-		case AS_SILENCE:
-		if (volSig > -20 && decoded[nextDecoded][DOWNCOUNT] > 7) {
-		nextDecoded++;
-		if (nextDecoded < maxPoints) {
-		nextState = AS_SIGNAL;
-		} else
-		nextState = AS_FINISHED;
-		} else {
-		decoded[nextDecoded][DOWNCOUNT]++;
-		StoreMeasurement();
-		}
-		break;
-		case AS_FINISHED:
-		break;
-		}
-		if (nextState != AS_NOCHANGE) {
-		switch (nextState) {
-		case AS_STARTED:
-		nextDecoded = 0;
-		measurementCount[nextDecoded] = 0;
-		decoded[nextDecoded][UPCOUNT] = 0;
-		decoded[nextDecoded][DOWNCOUNT] = 0;
-		break;
-		case AS_SIGNAL:
-		measurementCount[nextDecoded] = 0;
-		decoded[nextDecoded][UPCOUNT] = 1;
-		StoreMeasurement();
-		break;
-		case AS_STOPPING:
-		break;
-		case AS_SILENCE:
-		decoded[nextDecoded][DOWNCOUNT] = 1;
-		StoreMeasurement();
-		break;
-		case AS_FINISHED:
-		break;
-		}
-		audioState = nextState;
-		}
-
-		}
-
-		if (state == AS_SIGNAL || state == AS_STOPPING || state == AS_SILENCE)
-		StoreMeasurement();
-		*/
-
-		//		mmioWrite(m_hOPFile,pHdr->lpData,pHdr->dwBytesRecorded);
 		mRes=waveInAddBuffer(hWaveIn,pHdr,sizeof(WAVEHDR));
-		//		if(mRes!=0)
-		//			StoreError(mRes,TRUE,"File: %s ,Line Number:%d",__FILE__,__LINE__);
 	}
 }
 

@@ -5739,7 +5739,7 @@ private: System::Void startF_DoubleClick(System::Object^  sender, System::EventA
 				{
 					int tempF = nb->get_NumericValue();
 					// check for legitimate values for startF
-					if (tempF >= 200000 && tempF <= 120000000)
+					if (tempF >= 200000 && tempF <= 220000000)
 					{
 						FG->SetStartF(tempF);
 						startF->Text = FG->StartF().ToString("N0");
@@ -5758,7 +5758,7 @@ private: System::Void stopF_DoubleClick(System::Object^  sender, System::EventAr
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
 					int tempF = nb->get_NumericValue();
-					if (tempF >= 200000 && tempF <= 120000000)
+					if (tempF >= 200000 && tempF <= 220000000)
 					{
 						FG->SetStopF(tempF);
 						stopF->Text = FG->StopF().ToString("N0");
