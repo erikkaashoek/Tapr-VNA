@@ -1,7 +1,7 @@
 This project is a continuation of the TAPR VNA 3.1.
 It combines SW and HW designs from various VNA projects to come with to cheap and simple design.
 
-Main changes are:
+Main changes are (see Schematic.jpg in Doc folder):
 - Using SI5351 to generate both test signal and 5kHz offset mixing signal. Both can be square wave as the mixing removes all harmonics
 - No USB interface to a complex VNA modules using multiple phase/magnitude detectors but a serial interface to set the SI5351 sweep and PC audio IF (5 kHz) used to compute the phase/magnitude of reflection and transmission. 
 - Added DSP processing to extract the phase/magnitude from the audio. Using 16 bit audio processing delivers over 100dB dynamic range and full 360 degrees phase detection
