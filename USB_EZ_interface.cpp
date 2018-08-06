@@ -387,13 +387,17 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
-
-
 void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
+{
+	Sweep(startF, stepF, numPoints, duration, false);
+}
+
+void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int power)
 {
 	String ^ t;
 	ArmAudio(numPoints);
 	dur = duration;
+	SetAudioPower(power);
 	if (! mode){
 
 		//try {
@@ -408,14 +412,18 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 		//}
 
 	} else {
-		StartAudioSimulation(mode, numPoints + 10, duration, startF, stepF, cable_before, cable_after);
+		StartAudioSimulation(mode, numPoints + 10, duration, startF, stepF, cable_before, cable_after, 0);
 	}
 	mp = 0;
 }
 
 void VNADevice::SetFreq(long startF, int direction)
 {
-	serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
+	if (! mode){
+		serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
+	} else {
+		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction);
+	}
 }
 
 

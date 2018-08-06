@@ -76,6 +76,7 @@ public:
 	int State();				// -1 = no device  +1 = device OK
 	bool Start();					// Release reset of the 8051 processor on VNA
 	bool Stop();					// Halt the 8051 processor on VNA
+	void Sweep(long startF, long stepF, int numPoints, int duration, int power);
 	void Sweep(long startF, long stepF, int numPoints, int duration);
 	void SetFreq(long startF, int direction);
 	bool Download(array<System::Byte>^ Codebuffer, int CodeSize, unsigned short Address );	// download code to 8051

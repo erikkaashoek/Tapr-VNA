@@ -93,6 +93,8 @@ namespace VNAR3
 	private: System::Windows::Forms::GroupBox^  LinLogBox;
 	private: System::Windows::Forms::RadioButton^  LogFreqButton;
 	private: System::Windows::Forms::RadioButton^  LinearFreqButton;
+	private: System::Windows::Forms::Label^  label7;
+	private: System::Windows::Forms::TextBox^  maxFreq;
 
 
 
@@ -130,6 +132,8 @@ namespace VNAR3
 			this->LinLogBox = (gcnew System::Windows::Forms::GroupBox());
 			this->LogFreqButton = (gcnew System::Windows::Forms::RadioButton());
 			this->LinearFreqButton = (gcnew System::Windows::Forms::RadioButton());
+			this->label7 = (gcnew System::Windows::Forms::Label());
+			this->maxFreq = (gcnew System::Windows::Forms::TextBox());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -138,7 +142,7 @@ namespace VNAR3
 			this->shortCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->shortCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->shortCal->Location = System::Drawing::Point(410, 156);
+			this->shortCal->Location = System::Drawing::Point(408, 189);
 			this->shortCal->Name = L"shortCal";
 			this->shortCal->Size = System::Drawing::Size(184, 40);
 			this->shortCal->TabIndex = 0;
@@ -150,7 +154,7 @@ namespace VNAR3
 			this->openCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->openCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->openCal->Location = System::Drawing::Point(410, 212);
+			this->openCal->Location = System::Drawing::Point(408, 245);
 			this->openCal->Name = L"openCal";
 			this->openCal->Size = System::Drawing::Size(184, 40);
 			this->openCal->TabIndex = 1;
@@ -162,7 +166,7 @@ namespace VNAR3
 			this->termCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->termCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->termCal->Location = System::Drawing::Point(410, 268);
+			this->termCal->Location = System::Drawing::Point(408, 301);
 			this->termCal->Name = L"termCal";
 			this->termCal->Size = System::Drawing::Size(184, 40);
 			this->termCal->TabIndex = 2;
@@ -174,7 +178,7 @@ namespace VNAR3
 			this->thruCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->thruCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->thruCal->Location = System::Drawing::Point(410, 324);
+			this->thruCal->Location = System::Drawing::Point(408, 357);
 			this->thruCal->Name = L"thruCal";
 			this->thruCal->Size = System::Drawing::Size(184, 40);
 			this->thruCal->TabIndex = 3;
@@ -199,7 +203,7 @@ namespace VNAR3
 			this->CancelButton->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->CancelButton->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->CancelButton->Location = System::Drawing::Point(386, 396);
+			this->CancelButton->Location = System::Drawing::Point(384, 411);
 			this->CancelButton->Name = L"CancelButton";
 			this->CancelButton->Size = System::Drawing::Size(96, 23);
 			this->CancelButton->TabIndex = 6;
@@ -211,7 +215,7 @@ namespace VNAR3
 			this->label2->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label2->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label2->Location = System::Drawing::Point(114, 164);
+			this->label2->Location = System::Drawing::Point(112, 197);
 			this->label2->Name = L"label2";
 			this->label2->Size = System::Drawing::Size(272, 32);
 			this->label2->TabIndex = 7;
@@ -223,7 +227,7 @@ namespace VNAR3
 			this->label3->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label3->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label3->Location = System::Drawing::Point(114, 220);
+			this->label3->Location = System::Drawing::Point(112, 253);
 			this->label3->Name = L"label3";
 			this->label3->Size = System::Drawing::Size(272, 32);
 			this->label3->TabIndex = 8;
@@ -235,7 +239,7 @@ namespace VNAR3
 			this->label4->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label4->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label4->Location = System::Drawing::Point(114, 276);
+			this->label4->Location = System::Drawing::Point(112, 309);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(272, 32);
 			this->label4->TabIndex = 9;
@@ -246,7 +250,7 @@ namespace VNAR3
 			this->label5->BackColor = System::Drawing::Color::Transparent;
 			this->label5->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->label5->Location = System::Drawing::Point(114, 332);
+			this->label5->Location = System::Drawing::Point(112, 365);
 			this->label5->Name = L"label5";
 			this->label5->Size = System::Drawing::Size(280, 32);
 			this->label5->TabIndex = 10;
@@ -256,7 +260,7 @@ namespace VNAR3
 			// 
 			this->statShort->BackColor = System::Drawing::Color::Transparent;
 			this->statShort->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statShort.Image")));
-			this->statShort->Location = System::Drawing::Point(34, 164);
+			this->statShort->Location = System::Drawing::Point(32, 197);
 			this->statShort->Name = L"statShort";
 			this->statShort->Size = System::Drawing::Size(32, 32);
 			this->statShort->TabIndex = 11;
@@ -267,7 +271,7 @@ namespace VNAR3
 			this->calSave->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->calSave->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->calSave->Location = System::Drawing::Point(186, 396);
+			this->calSave->Location = System::Drawing::Point(184, 411);
 			this->calSave->Name = L"calSave";
 			this->calSave->Size = System::Drawing::Size(152, 24);
 			this->calSave->TabIndex = 15;
@@ -279,7 +283,7 @@ namespace VNAR3
 			this->label6->BackColor = System::Drawing::Color::Transparent;
 			this->label6->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Underline, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->label6->Location = System::Drawing::Point(26, 132);
+			this->label6->Location = System::Drawing::Point(24, 165);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(56, 23);
 			this->label6->TabIndex = 16;
@@ -289,7 +293,7 @@ namespace VNAR3
 			// 
 			this->statOpen->BackColor = System::Drawing::Color::Transparent;
 			this->statOpen->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statOpen.Image")));
-			this->statOpen->Location = System::Drawing::Point(34, 220);
+			this->statOpen->Location = System::Drawing::Point(32, 253);
 			this->statOpen->Name = L"statOpen";
 			this->statOpen->Size = System::Drawing::Size(32, 32);
 			this->statOpen->TabIndex = 17;
@@ -299,7 +303,7 @@ namespace VNAR3
 			// 
 			this->statTerm->BackColor = System::Drawing::Color::Transparent;
 			this->statTerm->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statTerm.Image")));
-			this->statTerm->Location = System::Drawing::Point(34, 276);
+			this->statTerm->Location = System::Drawing::Point(32, 309);
 			this->statTerm->Name = L"statTerm";
 			this->statTerm->Size = System::Drawing::Size(32, 32);
 			this->statTerm->TabIndex = 18;
@@ -309,7 +313,7 @@ namespace VNAR3
 			// 
 			this->statThru->BackColor = System::Drawing::Color::Transparent;
 			this->statThru->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statThru.Image")));
-			this->statThru->Location = System::Drawing::Point(34, 332);
+			this->statThru->Location = System::Drawing::Point(32, 365);
 			this->statThru->Name = L"statThru";
 			this->statThru->Size = System::Drawing::Size(32, 32);
 			this->statThru->TabIndex = 19;
@@ -317,7 +321,7 @@ namespace VNAR3
 			// 
 			// calProgressBar
 			// 
-			this->calProgressBar->Location = System::Drawing::Point(114, 444);
+			this->calProgressBar->Location = System::Drawing::Point(112, 459);
 			this->calProgressBar->Maximum = 1024;
 			this->calProgressBar->Name = L"calProgressBar";
 			this->calProgressBar->Size = System::Drawing::Size(472, 16);
@@ -330,7 +334,7 @@ namespace VNAR3
 			this->LinLogBox->Controls->Add(this->LinearFreqButton);
 			this->LinLogBox->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->LinLogBox->Location = System::Drawing::Point(108, 64);
+			this->LinLogBox->Location = System::Drawing::Point(112, 61);
 			this->LinLogBox->Name = L"LinLogBox";
 			this->LinLogBox->Size = System::Drawing::Size(443, 73);
 			this->LinLogBox->TabIndex = 21;
@@ -366,6 +370,25 @@ namespace VNAR3
 			this->LinearFreqButton->UseVisualStyleBackColor = true;
 			this->LinearFreqButton->CheckedChanged += gcnew System::EventHandler(this, &Calibration::FreqModeChanged);
 			// 
+			// label7
+			// 
+			this->label7->AutoSize = true;
+			this->label7->BackColor = System::Drawing::Color::Transparent;
+			this->label7->Location = System::Drawing::Point(112, 153);
+			this->label7->Name = L"label7";
+			this->label7->Size = System::Drawing::Size(156, 13);
+			this->label7->TabIndex = 22;
+			this->label7->Text = L"Maximum Calibration Frequency";
+			// 
+			// maxFreq
+			// 
+			this->maxFreq->Location = System::Drawing::Point(408, 150);
+			this->maxFreq->Name = L"maxFreq";
+			this->maxFreq->Size = System::Drawing::Size(184, 20);
+			this->maxFreq->TabIndex = 23;
+			this->maxFreq->TextChanged += gcnew System::EventHandler(this, &Calibration::maxFreq_TextChanged);
+			this->maxFreq->Leave += gcnew System::EventHandler(this, &Calibration::maxFreq_Leave);
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -373,6 +396,8 @@ namespace VNAR3
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
 			this->ClientSize = System::Drawing::Size(640, 492);
+			this->Controls->Add(this->maxFreq);
+			this->Controls->Add(this->label7);
 			this->Controls->Add(this->LinLogBox);
 			this->Controls->Add(this->calProgressBar);
 			this->Controls->Add(this->statThru);
@@ -394,9 +419,11 @@ namespace VNAR3
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::Fixed3D;
 			this->Name = L"Calibration";
 			this->Text = L"Calibration";
+			this->Load += gcnew System::EventHandler(this, &Calibration::Calibration_Load);
 			this->LinLogBox->ResumeLayout(false);
 			this->LinLogBox->PerformLayout();
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}		
 
@@ -425,13 +452,13 @@ namespace VNAR3
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 				//VNA->SetMode(M_SHORT);
 
-				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
 					int Fdesired;
-					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
+					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
@@ -485,13 +512,13 @@ namespace VNAR3
 				//VNA->SetMode(M_OPEN);
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
-				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
 					int Fdesired;
-					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
+					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i;  //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
@@ -546,13 +573,13 @@ namespace VNAR3
 				//VNA->SetMode(M_LOAD);
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
-				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
 					int Fdesired;
-					Fdesired = GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
+					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
 					TxBuf->IDAClevelHi = MAX_DDS_LEVEL;		// Max transmit level
@@ -608,7 +635,7 @@ namespace VNAR3
 
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
-				VNA->Sweep(GetFreqFromFixtureCalGrid(0, false), GetFreqFromFixtureCalGrid(1, false) - GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -706,6 +733,35 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 			 statShort->Visible = false;
 
 			 Refresh();
+		 }
+
+private: System::Void maxFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void Calibration_Load(System::Object^  sender, System::EventArgs^  e) {
+			 maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
+		 }
+private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
+			int freq;
+			 try										// make sure it's an integer number
+			{
+				freq = Convert::ToInt32(maxFreq->Text);
+				if (freq < MINCALFREQ) 
+					MessageBox::Show("Frequency too low", "Error");
+				else if (freq > MAXCALFREQ*5)
+					MessageBox::Show("Frequency too high", "Error");
+				else {
+					Cal->maxCalFreq = freq;
+				}
+			}
+			catch (System::FormatException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
+			catch (System::OverflowException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
+
 		 }
 };
 }

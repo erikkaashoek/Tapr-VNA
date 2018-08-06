@@ -144,6 +144,7 @@ namespace VNAR3 {
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
+
 				if (this->Port->IsOpen) this->Port->Close();
 				Port->PortName = this->comboBox1->Text;
 				Port->BaudRate = 115200;
@@ -152,9 +153,16 @@ namespace VNAR3 {
 //        this->Port->StopBits = SetPortStopBits(_serialPort->StopBits);
 //        this->Port->Handshake = SetPortHandshake(_serialPort->Handshake);
 				try {
-				this->Port->Open();
+					this->Port->Open();
+					System::Threading::Thread::Sleep(2000);
+					String ^reply = this->Port->ReadExisting();
+					if (!reply->StartsWith("TAPR VNA v4")) {
+						MessageBox::Show("No VNA connected to this port", "Error",
+						 MessageBoxButtons::OK, MessageBoxIcon::Error);
+					    this->DialogResult = System::Windows::Forms::DialogResult::None;
+					}
 				}
-				catch (System::Exception^ e)
+				catch (Exception^)
 				{
 					MessageBox::Show(e->ToString(),"Open port Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);

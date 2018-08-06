@@ -325,6 +325,7 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 	S11openReal = gcnew array<Double>(1024); S11openImag = gcnew array<Double>(1024);
 	S11termReal = gcnew array<Double>(1024); S11termImag = gcnew array<Double>(1024);
 	FixtureCalLogFreqMode = false;					// Default to Linear Frequency mode for Fixture Cal
+	maxCalFreq = 224000000;
 
 // Try to read in the detector.ica file to pre-load the Detector calibration constants
 // If the file does not exist, warn user to run detector cal first
@@ -478,6 +479,34 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 };
 
 
+/// Compute Frequency of grid point for linear(f) and log(f) fixture cal points
+int InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibration Grid index to Frequency.
+{
+
+	// Note: linear mode is the default, and provides backwards-compatibility with older Fixture Cal files
+
+	if(LogMode)								// Compute fixture calibration log frequency point
+		{											/// Grid is 1024 points.
+			double FreqIncrement;
+			FreqIncrement = Math::Pow(10,Math::Log10(maxCalFreq/MINCALFREQ)/(NUMCALPTS-1));
+
+			if (index < PHASECALGRIDSIZE && index >= 0)
+				return (Convert::ToInt32(MINCALFREQ * Math::Pow(FreqIncrement, index)));
+			else
+				throw gcnew System::ArgumentOutOfRangeException(
+				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
+		}
+	else									// Compute fixture calibration linear frequency point
+		{											/// Grid is 1024 points.
+			if (index < PHASECALGRIDSIZE && index >= 0)
+				return (Convert::ToInt32(MINCALFREQ + (index * (maxCalFreq - MINCALFREQ)/(NUMCALPTS-1))));
+			else
+				throw gcnew System::ArgumentOutOfRangeException(
+				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
+		}												
+};
+
+
 // Resolve reflected measured data set to Linear Magnitude and Phase in Degrees
 void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequency, double& rmagLin, double& rphsDegr,
 			bool CouplerComp)
@@ -602,7 +631,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 		// There are 1024 fixture calibration frequencies linearly spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 		
-		delta = (MAXCALFREQ - MINCALFREQ)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
+		delta = (Cal->maxCalFreq - MINCALFREQ)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
 
 		i = (int)(((double)Frequency - MINCALFREQ) / delta);	// Cal frequency directly below ours
 		if (i >= (int)NUMCALPTS)
@@ -618,7 +647,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 		// There are 1024 fixture calibration frequencies, logrithmically spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 
-		double LogFreqIncrement = Math::Log10(MAXCALFREQ/MINCALFREQ)/(NUMCALPTS-1);
+		double LogFreqIncrement = Math::Log10(Cal->maxCalFreq/MINCALFREQ)/(NUMCALPTS-1);
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
@@ -714,7 +743,7 @@ void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double
 		// There are 1024 fixture calibration frequencies linearly spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 
-		delta = (MAXCALFREQ - MINCALFREQ)/ (NUMCALPTS - 1);		// frequency separation of cal points
+		delta = (Cal->maxCalFreq - MINCALFREQ)/ (NUMCALPTS - 1);		// frequency separation of cal points
 
 		i = (int)(((double)Frequency - MINCALFREQ) / delta);	// Cal frequency directly below ours
 		if (i >= (int)NUMCALPTS)
@@ -730,7 +759,7 @@ void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double
 		// There are 1024 fixture calibration frequencies, logrithmically spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 
-		double LogFreqIncrement = Math::Log10(MAXCALFREQ/MINCALFREQ)/(NUMCALPTS-1);
+		double LogFreqIncrement = Math::Log10(Cal->maxCalFreq/MINCALFREQ)/(NUMCALPTS-1);
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
@@ -832,6 +861,16 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 			Cal->S11termImag[i] = br->ReadDouble();
 		}
 
+		try 
+		{
+			Cal->maxCalFreq = (long) br->ReadDouble();
+		}
+		catch( Exception^ /* e */ )	// Don't bother warning the user ...
+		{											// They probably don't care anyway
+//					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
+//									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+		}
+
 		// Compute equivalent time delay of the cal fixture (as though it were linear)
 		// This is used for Reference Plane Extension compensation mode.
 		// The phase component of Et is ~ the phase of the fixture.
@@ -847,8 +886,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 
 		// time delay is the total running deltaphase over the frequency range.
 
-		int freq2 = GetFreqFromPhaseCalGrid(1000);
-		int freq1 = GetFreqFromPhaseCalGrid(20);
+		int freq2 = Cal->GetFreqFromFixtureCalGrid(1000, false);
+		int freq1 = Cal->GetFreqFromFixtureCalGrid(20,  false);
 		int freqd = freq2-freq1;
 		Cal->reflTimeDelayEquivalent = -sumDeltaPhase / (360.0 * (double)freqd);
 
@@ -924,8 +963,8 @@ void SaveCalDataSet(SaveFileDialog^ outfile, InstrumentCalDataSet^ Cal)
 			bw->Write(Cal->S11termReal[i]);
 			bw->Write(Cal->S11termImag[i]);
 		}
+		bw->Write((double)(Cal->maxCalFreq));
     }
-
 	catch(System::IO::IOException^ pe)
 	{
 		MessageBox::Show("Error", pe->Message);
@@ -1601,6 +1640,7 @@ int MeasureDelayStringToCount(String^ value)
 	return 0;	// no delay if unexpected string 
 };
 
+#if 0
 int GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
 		{											/// Grid is 21 points.
 //			if (index < 9 && index >= 0)
@@ -1608,7 +1648,7 @@ int GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibrat
 //			if (index < 21 && index >= 0)
 //				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(MINCALFREQ + (index * (MAXCALFREQ - MINCALFREQ)/(21-1))));
+				return (Convert::ToInt32(MINCALFREQ + (index * (Cal->maxCalFreq - MINCALFREQ)/(21-1))));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromDetMagCalGrid: index is invalid ");	// bad index value
@@ -1617,12 +1657,13 @@ int GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibrat
 int GetFreqFromPhaseCalGrid(long index)	/// Convert Phase Calibration Grid index to Frequency.
 {
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(MINCALFREQ + (index * (MAXCALFREQ - MINCALFREQ)/(NUMCALPTS-1))));
+				return (Convert::ToInt32(MINCALFREQ + (index * (Cal->maxCalFreq - MINCALFREQ)/(NUMCALPTS-1))));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromPhaseCalGrid: index is invalid ");	// bad index value
 };
 
+#endif
 
 // Wrap phase to be in the range -180 to +180.  Three overloads.
 int NormalizePhaseDegr(int phase)
@@ -1673,7 +1714,7 @@ bool ExcessRxNoiseIngress(array<MeasurementSet^>^ trace, int points)
 	return(false);		// no noise ingress detected
 };
 
-
+/*
 /// Compute Frequency of grid point for linear(f) and log(f) fixture cal points
 int GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibration Grid index to Frequency.
 {
@@ -1683,7 +1724,7 @@ int GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibr
 	if(LogMode)								// Compute fixture calibration log frequency point
 		{											/// Grid is 1024 points.
 			double FreqIncrement;
-			FreqIncrement = Math::Pow(10,Math::Log10(MAXCALFREQ/MINCALFREQ)/(NUMCALPTS-1));
+			FreqIncrement = Math::Pow(10,Math::Log10(Cal->maxCalFreq/MINCALFREQ)/(NUMCALPTS-1));
 
 			if (index < PHASECALGRIDSIZE && index >= 0)
 				return (Convert::ToInt32(MINCALFREQ * Math::Pow(FreqIncrement, index)));
@@ -1694,10 +1735,10 @@ int GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibr
 	else									// Compute fixture calibration linear frequency point
 		{											/// Grid is 1024 points.
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(MINCALFREQ + (index * (MAXCALFREQ - MINCALFREQ)/(NUMCALPTS-1))));
+				return (Convert::ToInt32(MINCALFREQ + (index * (Cal->maxCalFreq - MINCALFREQ)/(NUMCALPTS-1))));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
 		}												
 };
-
+*/

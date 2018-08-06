@@ -46,10 +46,12 @@ using the .NET style of Event Delegates.
 #include "Mockup.h"
 #include "SerialPort.h"
 #include "SignalGenerator.h"
+
 //#include "AudioInput.h"
 //#include "Serial.h"
 //#include "AudioDevice.h"
 #include <complex>
+#include <stdlib.h>
 
 //#define DEBUGAUDIOLEVELS		// Display pareto of reference signal measured during a sweep
 //#define DEBUGAUDIODISTANCE
@@ -385,6 +387,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  signalGeneratorToolStripMen
 private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator4;
 private: System::Windows::Forms::ToolStripMenuItem^  rawDetectorDataToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuItem;
+private: System::Windows::Forms::CheckBox^  Spectrum;
+private: System::Windows::Forms::Label^  label7;
+
+
 
 
 
@@ -430,6 +436,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->SweepProgressBar = (gcnew System::Windows::Forms::ProgressBar());
 			this->FrequencyDigitIncrease = (gcnew System::Windows::Forms::Button());
 			this->FrequencyDigitDecrease = (gcnew System::Windows::Forms::Button());
+			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->calCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->StartFrequencyDigitIndicator = (gcnew System::Windows::Forms::Label());
 			this->StopFrequencyDigitIndicator = (gcnew System::Windows::Forms::Label());
@@ -495,6 +502,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->backgroundColorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator4 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->rawDetectorDataToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->audioDistanceToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->VertScaleItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->Scale10dB = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->Scale5dB = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -578,7 +586,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->RefExtnCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->serialPort1 = (gcnew System::IO::Ports::SerialPort(this->components));
-			this->audioDistanceToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->Spectrum = (gcnew System::Windows::Forms::CheckBox());
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -800,9 +808,9 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->label5->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label5->BackColor = System::Drawing::Color::Transparent;
 			this->label5->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label5->Location = System::Drawing::Point(839, 306);
+			this->label5->Location = System::Drawing::Point(840, 306);
 			this->label5->Name = L"label5";
-			this->label5->Size = System::Drawing::Size(73, 35);
+			this->label5->Size = System::Drawing::Size(72, 35);
 			this->label5->TabIndex = 18;
 			this->label5->Text = L"Apply Fixture Calibration";
 			this->label5->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
@@ -812,7 +820,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			// 
 			this->SweepSpd->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->SweepSpd->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->SweepSpd->Location = System::Drawing::Point(784, 328);
+			this->SweepSpd->Location = System::Drawing::Point(784, 335);
 			this->SweepSpd->Name = L"SweepSpd";
 			this->SweepSpd->Size = System::Drawing::Size(50, 23);
 			this->SweepSpd->TabIndex = 21;
@@ -883,6 +891,19 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->toolTip1->SetToolTip(this->FrequencyDigitDecrease, L"Move digit selector right");
 			this->FrequencyDigitDecrease->UseVisualStyleBackColor = false;
 			this->FrequencyDigitDecrease->Click += gcnew System::EventHandler(this, &Form1::FrequencyDigitDecrease_Click);
+			// 
+			// label7
+			// 
+			this->label7->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->label7->BackColor = System::Drawing::Color::Transparent;
+			this->label7->ForeColor = System::Drawing::SystemColors::InfoText;
+			this->label7->Location = System::Drawing::Point(755, 311);
+			this->label7->Name = L"label7";
+			this->label7->Size = System::Drawing::Size(58, 22);
+			this->label7->TabIndex = 31;
+			this->label7->Text = L"Spectrum";
+			this->label7->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+			this->toolTip1->SetToolTip(this->label7, L"Must have Cal File Loaded or must Run Cal file in order to enable.");
 			// 
 			// calCheckBox
 			// 
@@ -1382,6 +1403,13 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->rawDetectorDataToolStripMenuItem->Size = System::Drawing::Size(306, 22);
 			this->rawDetectorDataToolStripMenuItem->Text = L"Raw Detector Data";
 			this->rawDetectorDataToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::rawDetectorDataToolStripMenuItem_Click);
+			// 
+			// audioDistanceToolStripMenuItem
+			// 
+			this->audioDistanceToolStripMenuItem->Name = L"audioDistanceToolStripMenuItem";
+			this->audioDistanceToolStripMenuItem->Size = System::Drawing::Size(306, 22);
+			this->audioDistanceToolStripMenuItem->Text = L"Audio Distance";
+			this->audioDistanceToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDistanceToolStripMenuItem_Click);
 			// 
 			// VertScaleItem
 			// 
@@ -1989,12 +2017,16 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->label6->Text = L"Refl Plane Ext";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			// 
-			// audioDistanceToolStripMenuItem
+			// Spectrum
 			// 
-			this->audioDistanceToolStripMenuItem->Name = L"audioDistanceToolStripMenuItem";
-			this->audioDistanceToolStripMenuItem->Size = System::Drawing::Size(306, 22);
-			this->audioDistanceToolStripMenuItem->Text = L"Audio Distance";
-			this->audioDistanceToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDistanceToolStripMenuItem_Click);
+			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->Spectrum->AutoSize = true;
+			this->Spectrum->Location = System::Drawing::Point(819, 317);
+			this->Spectrum->Name = L"Spectrum";
+			this->Spectrum->Size = System::Drawing::Size(15, 14);
+			this->Spectrum->TabIndex = 30;
+			this->Spectrum->UseVisualStyleBackColor = true;
+			this->Spectrum->CheckedChanged += gcnew System::EventHandler(this, &Form1::Spectrum_CheckedChanged);
 			// 
 			// Form1
 			// 
@@ -2003,6 +2035,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 376);
+			this->Controls->Add(this->Spectrum);
+			this->Controls->Add(this->label7);
 			this->Controls->Add(this->stopF);
 			this->Controls->Add(this->startF);
 			this->Controls->Add(this->label6);
@@ -4247,6 +4281,44 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		}  // End if TDR mode
 
 		gr->ResetClip();
+
+		//------------------ Trace labels -----------------------------------------------------
+		if (s11magItem->Checked )
+		{
+			gr->DrawString("S11 Magnitude", Parameterfont, brS11Mag, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+		}
+		if (s11phsItem->Checked)
+		{
+			gr->DrawString("S11 Phase", Parameterfont, brS11Phs, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+		}
+
+		if (s21magItem->Checked)
+		{
+			gr->DrawString("S21 Magnitude", Parameterfont, brS21Mag, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+		}
+		if (s21phsItem->Checked)
+		{
+			gr->DrawString("S21 Phase", Parameterfont, brS21Phs, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+
+		}
+		if(RDisplay->Checked)		// draw R-ohms part of S11
+		{
+			gr->DrawString("R", Parameterfont, brR, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+		}
+		if(jXDisplay->Checked)		// draw jX-ohms part of S11
+		{
+			gr->DrawString("jX", Parameterfont, brjX, leftstatuspoint);
+			leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+		}
+
+		leftstatuspoint.Y += (int)(10.0 * DisplayExpansion); // Gap before markers
+
+//-----------------------------------------------
 		// Display marker status in margin on left side of scope display - rectangular and polar modes
 		if (rectItem->Checked || polarItem->Checked)
 			for (int i = 0; i<5; i++)
@@ -4994,7 +5066,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
-			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5);
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5, Spectrum->Checked);
 			for (int m=0; m<FG->points; m++)
 			{
     
@@ -5660,8 +5732,8 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 private: System::Void startFup_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStartF(FG->StartF() + (int)Math::Pow(10.0, FrequencyDigitIndex));
-			 if (FG->StartF() > MAXCALFREQ)  // max allowed frequency
-					FG->SetStartF(MAXCALFREQ);
+//			 if (FG->StartF() > MAXCALFREQ)  // max allowed frequency
+//					FG->SetStartF(MAXCALFREQ);
 			 startF->Text = FG->StartF().ToString("N0");
 		 }
 		/// Start Frequency Down (decrement) button click event handler
@@ -5676,8 +5748,8 @@ private: System::Void startFdown_Click(System::Object^  sender, System::EventArg
 private: System::Void stopFup_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStopF(FG->StopF() + (int)Math::Pow(10.0, FrequencyDigitIndex));
-			 if (FG->StopF() > MAXCALFREQ)  // max allowed frequency
-					FG->SetStopF(MAXCALFREQ);
+//			 if (FG->StopF() > MAXCALFREQ)  // max allowed frequency
+//					FG->SetStopF(MAXCALFREQ);
 			 stopF->Text = FG->StopF().ToString("N0");
 		 }
 		/// Stop Frequency Down (decrement) button click event handler
@@ -7532,12 +7604,26 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				try 
 				{
 					serialPort1->PortName = br->ReadString();
+				    serialPort1->BaudRate = 115200;
+
 					serialPort1->Open();
+					 System::Threading::Thread::Sleep(2000);
+					String ^reply = serialPort1->ReadExisting();
+					if (!reply->StartsWith("TAPR VNA v4")) {
+						MessageBox::Show("No VNA connected to stored port", "Error",
+						 MessageBoxButtons::OK, MessageBoxIcon::Error);
+
+					    throw; 
+					}
+
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
 				{											// They probably don't care anyway
 					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
 									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+					SerialPortBox = gcnew SerialPort (serialPort1);
+					SerialPortBox->ShowDialog();
+
 				}
 
 			}
@@ -7932,6 +8018,10 @@ private: System::Void rawDetectorDataToolStripMenuItem_Click(System::Object^  se
 			 Refresh();
 
 		  }
+
+private: System::Void Spectrum_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
+			Refresh();	// Force Screen redraw
+		 }
 }
 ;};
 

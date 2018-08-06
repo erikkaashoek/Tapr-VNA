@@ -125,7 +125,7 @@ namespace VNAR3 {
 			this->showTrans->TabIndex = 2;
 			this->showTrans->Text = L"Transmission";
 			this->showTrans->UseVisualStyleBackColor = true;
-			this->showTrans->CheckedChanged += gcnew System::EventHandler(this, &SignalGenerator::radioButton1_CheckedChanged_1);
+			//this->showTrans->CheckedChanged += gcnew System::EventHandler(this, &SignalGenerator::radioButton1_CheckedChanged_1);
 			// 
 			// magnitude
 			// 

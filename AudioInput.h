@@ -4,10 +4,10 @@
 #define WAVEHDRBUFFER 4
 #define SAMP	44		// Audio samples per dsp
 // For normal operation
-//#define NUMPTS 2*SAMP*10 // stereo  * 10 * SAMP
+#define NUMPTS 2*SAMP*10 // stereo  * 10 * SAMP
 
 // For debugging
-#define NUMPTS 2*SAMP // stereo  * 10 * SAMP
+//#define NUMPTS 2*SAMP // stereo  * 10 * SAMP
 
 extern short int waveIn[WAVEHDRBUFFER][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 
@@ -24,8 +24,8 @@ extern bool audio_simulation;
 extern int OpenAudio (void);
 extern void ArmAudio(int pM);
 extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r);
-extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after);
-
+extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction);
+extern void SetAudioPower(int power);
 
 typedef struct measurementType {
 	float magnitude;
