@@ -366,6 +366,16 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 					audio_volume_reflection = 0.0001 * sigLevel;
 					audio_simulation = true;
 				}
+				if (simMode == M_ATTN) {
+					audio_volume_transmission = 0.9 * sigLevel / 100; // /100 = -40dB
+ 					audio_phase_transmission = 0.0 + (simBefore + simAfter) * simStartF / 1000000.;
+					while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
+					while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
+					audio_phase_reflection = 0.0;
+					audio_volume_reflection = 0.0001 * sigLevel;
+					audio_simulation = true;
+				}
+
 
 #define SILENCE_GAP	5
 				if (simDirection) {
