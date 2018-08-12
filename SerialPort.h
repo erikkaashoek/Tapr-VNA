@@ -161,6 +161,7 @@ namespace VNAR3 {
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    this->DialogResult = System::Windows::Forms::DialogResult::None;
 					}
+					delete reply;
 				}
 				catch (Exception^)
 				{

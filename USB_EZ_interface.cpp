@@ -47,7 +47,7 @@
 #include <math.h>
 
 using namespace System;
-
+	using namespace System::Windows::Forms;
 //volatile float magSig;
 //volatile float phaseSig;
 
@@ -392,29 +392,31 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 	Sweep(startF, stepF, numPoints, duration, false);
 }
 
-void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int power)
+bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int power)
 {
-	String ^ t;
+//	String ^ t;
 	ArmAudio(numPoints);
-	dur = duration;
+	dur = duration+2; // Add 2 ms for start and stop of audio
 	SetAudioPower(power);
 	if (! mode){
 
-		//try {
-		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
+		try {
+//		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
 //		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
 //		Sleep(200);
-		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, duration));
+		serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur));
 		Sleep(100);
-		//}
-		//catch (System::Exception^ e) {
-		//		(void) e;
-		//}
+		}
+		catch (System::Exception^ e) {
+			     MessageBox::Show(e->Message, "Error");
+				 return(false);
+		}
 
 	} else {
-		StartAudioSimulation(mode, numPoints + 10, duration, startF, stepF, cable_before, cable_after, 0);
+		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0);
 	}
-	mp = 0;
+	return(true);
+	// mp = 0;
 }
 
 void VNADevice::SetFreq(long startF, int direction)
@@ -438,6 +440,35 @@ void VNADevice::SetFreq(long startF, int direction)
 #define MaxDAC	3500
 #define MagDac(X)	((short)(MaxDAC * (( X ) - MinLevel) / (MaxLevel - MinLevel) ) )
 
+#define MAXAVERAGE	300
+
+static float sumreflphase[MAXAVERAGE];
+static float sumtranphase[MAXAVERAGE];
+static float sumreflmag[MAXAVERAGE];
+static float sumtranmag[MAXAVERAGE];
+static float sumreflevel[MAXAVERAGE];
+
+
+static float Median(float *data, int size)
+{
+	int i, j;
+	float swap;
+
+	// bubble sort the elements
+	for (i=size-1; i>=0; i--) {
+        for (j=1; j<=i; j++) {
+            if (data[j-1] > data[j])
+			{
+				swap = data[j-1];
+				data[j-1] = data[j];
+				data[j] = swap;
+			}
+		}
+	}
+	return(data[size/2]);	// the median value
+}
+
+
 	/// Write TxBuffer to VNA (command),  readback the result to RxBuffer (response)
 bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int direction)
 {
@@ -447,114 +478,37 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflphase,tranphase;
 	float reflmag,tranmag;
 	float reflevel;
-	int reply = TxBuffer->ReplyType;
+	int i;
+
+//	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
 	
-	while (!RetreiveData((int)TxBuffer->TxAccum, dur, reflmag, reflphase, tranmag, tranphase, reflevel) && retries < 400) {
-		Sleep(2);
-		retries++;
-	}
-	if (retries >= 400)
-		return (false);
-	mp++;
-#if 0
-//	int level;
-//	freq = DDSToFreq(TxBuffer->TxAccum);
-	freq = (long)TxBuffer->TxAccum;
-
-			// when ReflPI is low,  the phase is near   0 degrees
-			// when ReflPI is high, the phase is near 180 degrees
-			// when ReflPQ is low,  the phase is near  90 degrees
-			// when ReflPQ is high, the phase is near -90 degrees
-
-	audio_simulation = false;
-	if (mode == M_SHORT) {
-			audio_volume_transmission = 0.000001;
-			audio_phase_transmission = 0.0;
-			audio_phase_reflection = -180.0;
-			audio_volume_reflection = 0.9;
-		audio_simulation = true;
-	}
-	if (mode == M_OPEN) {
-			audio_volume_transmission = 0.000001;
-			audio_phase_transmission = 0.0;
-			audio_phase_reflection = 0.0;
-			audio_volume_reflection = 0.9;
-		audio_simulation = true;
-	}
-	if (mode == M_LOAD) {
-			audio_volum_transmissione = 0.00000001;
-			audio_phase_transmission = 0.0;
-			audio_phase_reflection = 0.0;
-			audio_volume_reflection = 0.00000001;
-		audio_simulation = true;
-	}
-	if (mode == M_THROUGH) {
-			audio_volume_transmission = 0.8;
-			audio_phase_transmission = 0.0 + (cable_before + cable_after) * freq / 1000000.;
-			while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
-			while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
-			audio_phase_reflection = 0.0;
-			audio_volume_reflection = 0.000001;
-		audio_simulation = true;
-	}
-
-
-//		serialPort->WriteLine("1");
-		if (freq != lastFreq || direction != lastDir) {
-			try {
-				if (direction == DIR_TRANS) {
-					if (! audio_simulation) serialPort->WriteLine(String::Format("0 {0} 1 0 ", freq));
-				} else if (direction == DIR_REFL) {
-					if (! audio_simulation) serialPort->WriteLine(String::Format("1 {0} 1 0 ", freq));
-				}
-			}
-			catch (System::Exception^ e) {
-				(void) e;
-			}
-			if (audio_simulation)
-				audio_delay = 0;
-			else {
-				if (lastFreq != freq)
-					audio_delay = 50; // 22
-				else if (lastDir != direction)
-					audio_delay = 50; // 4
-				else
-					audio_delay = 0;
-			}
-			lastFreq = freq;
-			lastDir = direction;
-		} else {
-			audio_delay = 0;
+	for (i=0; i<dur-2; i++) {
+		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i]) && retries < 400) {
+			Sleep(2);
+			retries++;
 		}
+		if (retries >= 400)
+			return (false);
+	}
+	reflmag = Median(sumreflmag,dur-2);
+	tranmag = Median(sumtranmag,dur-2);
+	reflphase = Median(sumreflphase,dur-2);
+	tranphase = Median(sumtranphase,dur-2);
+	reflevel = Median(sumreflevel,dur-2);
 
-//		serialPort->WriteLine("1");
-//		serialPort->WriteLine("0");
-		while (audio_delay >=0) Sleep(2);
+		// mp++;
+	RxBuffer->Vref1 = DB2SHORT(reflevel);
+	
+	NormalizePhase(reflphase);
+	RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
+	RxBuffer->ReflMQ = DB2SHORT(reflmag);
+	NormalizePhase(tranphase);
+	RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
+	RxBuffer->TranMQLo = DB2SHORT(tranmag);
 
-		if (direction == DIR_TRANS) {
-			tranmag = gamma[0];
-			tranphase = gamma[1];
-		} else if (direction == DIR_REFL) {
-			reflmag = gamma[0];
-			reflphase = gamma[1];
-		}
-
-		//magSig = gamma[0];
-		//phaseSig = gamma[1];
-#endif
-		RxBuffer->Vref1 = DB2SHORT(reflevel);
-		
-		NormalizePhase(reflphase);
-		RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
-		RxBuffer->ReflMQ = DB2SHORT(reflmag);
-
-		NormalizePhase(tranphase);
-		RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
-		RxBuffer->TranMQLo = DB2SHORT(tranmag);
-
-		return(rxsuccess);
+	return(rxsuccess);
 }
 
 

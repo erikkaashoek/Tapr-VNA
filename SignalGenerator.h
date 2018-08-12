@@ -62,6 +62,8 @@ namespace VNAR3 {
 
 
 	private: long freq;
+			 long oldFreq;
+			 bool oldChecked;
 	private: System::Windows::Forms::Label^  label5;
 			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
 
@@ -109,10 +111,10 @@ namespace VNAR3 {
 			this->showRefl->Checked = true;
 			this->showRefl->Location = System::Drawing::Point(404, 24);
 			this->showRefl->Name = L"showRefl";
-			this->showRefl->Size = System::Drawing::Size(72, 17);
+			this->showRefl->Size = System::Drawing::Size(86, 17);
 			this->showRefl->TabIndex = 1;
 			this->showRefl->TabStop = true;
-			this->showRefl->Text = L"Reflextion";
+			this->showRefl->Text = L"Transmission";
 			this->showRefl->UseVisualStyleBackColor = true;
 			this->showRefl->CheckedChanged += gcnew System::EventHandler(this, &SignalGenerator::radioButton1_CheckedChanged);
 			// 
@@ -121,11 +123,10 @@ namespace VNAR3 {
 			this->showTrans->AutoSize = true;
 			this->showTrans->Location = System::Drawing::Point(404, 47);
 			this->showTrans->Name = L"showTrans";
-			this->showTrans->Size = System::Drawing::Size(86, 17);
+			this->showTrans->Size = System::Drawing::Size(72, 17);
 			this->showTrans->TabIndex = 2;
-			this->showTrans->Text = L"Transmission";
+			this->showTrans->Text = L"Reflextion";
 			this->showTrans->UseVisualStyleBackColor = true;
-			//this->showTrans->CheckedChanged += gcnew System::EventHandler(this, &SignalGenerator::radioButton1_CheckedChanged_1);
 			// 
 			// magnitude
 			// 
@@ -185,6 +186,7 @@ namespace VNAR3 {
 			this->frequency->Size = System::Drawing::Size(255, 29);
 			this->frequency->TabIndex = 10;
 			this->frequency->TextChanged += gcnew System::EventHandler(this, &SignalGenerator::frequency_TextChanged);
+			this->frequency->Enter += gcnew System::EventHandler(this, &SignalGenerator::frequency_Enter);
 			this->frequency->Leave += gcnew System::EventHandler(this, &SignalGenerator::frequency_Leave);
 			// 
 			// label4
@@ -241,10 +243,10 @@ namespace VNAR3 {
 		}
 #pragma endregion
 	private: System::Void radioButton1_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
-				VNA->SetFreq(freq,showTrans->Checked);
+				// VNA->SetFreq(freq,showTrans->Checked);
 			 }
 	private: System::Void radioButton1_CheckedChanged_1(System::Object^  sender, System::EventArgs^  e) {
-				VNA->SetFreq(freq,showTrans->Checked);
+				//VNA->SetFreq(freq,showTrans->Checked);
 			 }
 	private: System::Void label2_Click(System::Object^  sender, System::EventArgs^  e) {
 			 }
@@ -256,29 +258,33 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 			magnitude->Text = String::Format("{0}",actualMeasurement.magnitude);
 			phase->Text = String::Format("{0}",actualMeasurement.phase);
 			reference->Text = String::Format("{0}",actualMeasurement.reference);
-			//frequency->Text = String::Format("{0}",freq);
-
+			//frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
+			if (freq != oldFreq || oldChecked != showTrans->Checked) {
+				VNA->SetFreq(freq,showTrans->Checked);
+				oldFreq = freq;
+				oldChecked = showTrans->Checked;
+			}
 		 }
 private: System::Void trackBar1_Scroll(System::Object^  sender, System::EventArgs^  e) {
 			 freq = MINCALFREQ + (long long)(MAXCALFREQ - MINCALFREQ) * trackBar1->Value / trackBar1 ->Maximum;
-			 frequency->Text = String::Format("{0}",freq);
-			VNA->SetFreq(freq,showRefl->Checked);
-
+			 frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
+//			VNA->SetFreq(freq,showRefl->Checked);
 		 }
 private: System::Void SignalGenerator_Load(System::Object^  sender, System::EventArgs^  e) {
-			 frequency->Text = String::Format("{0}",freq);
+			 oldFreq = 0;
+			 frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
 		 }
 private: System::Void frequency_Leave(System::Object^  sender, System::EventArgs^  e) {
 			 try										// make sure it's an integer number
 			{
-				freq = Convert::ToInt32(frequency->Text);
+				freq = (int)(Convert::ToDouble(frequency->Text) * 1000000);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
 				else if (freq > MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
-			VNA->SetFreq(freq,showRefl->Checked);
+					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}
 			}
@@ -297,14 +303,14 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 			return;
 			 try										// make sure it's an integer number
 			{
-				freq = Convert::ToInt32(frequency->Text);
+				freq = (int)(Convert::ToDouble(frequency->Text)*1000000.0);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
 				else if (freq > MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
-			VNA->SetFreq(freq,showRefl->Checked);
+					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}
 			}
@@ -318,6 +324,30 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 			}
 
 
+
+		 }
+private: System::Void frequency_Enter(System::Object^  sender, System::EventArgs^  e) {
+		 try										// make sure it's an integer number
+			{
+				freq = (int)(Convert::ToDouble(frequency->Text)*1000000.0);
+				if (freq < MINCALFREQ) 
+					MessageBox::Show("Frequency too low", "Error");
+				else if (freq > MAXCALFREQ)
+					MessageBox::Show("Frequency too high", "Error");
+				else {
+					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
+					//VNA->SetFreq(freq,showRefl->Checked);
+
+				}
+			}
+			catch (System::FormatException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
+			catch (System::OverflowException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
 
 		 }
 };

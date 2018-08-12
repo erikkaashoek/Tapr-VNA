@@ -108,15 +108,22 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 											// poles of AC coupling capacitors in the ModAmp.
 											// 6.2 degrees at 200 Khz.
 
-#define SHORT_RANGE 3800
+// #define SHORT_RANGE 3800
+#define SHORT_RANGE 30000
 
-#define MAX_PHASE	180.0
-#define MIN_PHASE   -180.0
+#define MAX_PHASE	181.0
+#define MIN_PHASE   -181.0
 #define NormalizePhase(X) { while ((X) > 180.0) (X) -= 360.; while ((X) < -180.0) (X) += 360.0; }
 #define PHASE2SHORT(X) (short)(((X) - MIN_PHASE) * SHORT_RANGE / (MAX_PHASE - MIN_PHASE))
 #define SHORT2PHASE(X) (((double)(X) * (MAX_PHASE - MIN_PHASE) / SHORT_RANGE ) + MIN_PHASE )
 
-#define MAX_DB	+10.0
-#define MIN_DB   -100.0
+#define MAX_DB	+1.0
+#define MIN_DB   -101.0
 #define DB2SHORT(X) (short)(((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB))
 #define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )
+
+#define CALSUM	7 //number of measurements to average for calibration
+
+
+//#define IFFREQ	5128
+#define IFFREQ	5000

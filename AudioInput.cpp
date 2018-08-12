@@ -49,6 +49,7 @@ long simStepF;
 int simBefore;
 int simAfter;
 int simDirection;
+long simS = 0;
 
 int audioPower = false;
 
@@ -84,7 +85,55 @@ MMRESULT result;
   { 32138,   6393 }, { 29389, -14493 }, { 14493, -29389 }, { -6393, -32138 },
   {-24636, -21605 }, {-32698,  -2143 }, {-27246,  18205 }, {-10533,  31029 }
 */
-/* 5khz 44100 s/s
+/*	 // 5128 Hz in 44.1kHz
+  { -30605, 11706 } ,
+  { -14982, 29141 } ,
+  { 8289, 31701 } ,
+  { 27328, 18079 } ,
+  { 32418, -4773 } ,
+  { 20958, -25188 } ,
+  { -1200, -32745 } ,
+  { -22745, -23587 } ,
+  { -32680, -2388 } ,
+  { -25932, 20030 } ,
+  { -5947, 32223 } ,
+  { 17074, 27967 } ,
+  { 31379, 9435 } ,
+  { 29666, -13913 } ,
+  { 12810, -30159 } ,
+  { -10586, -31010 } ,
+  { -28578, -16031 } ,
+  { -31981, 7132 } ,
+  { -19059, 26654 } ,
+  { 3592, 32570 } ,
+  { 24410, 21859 } ,
+  { 32767, -9 } ,
+  { 24397, -21873 } ,
+  { 3574, -32572 } ,
+  { -19074, -26643 } ,
+  { -31985, -7114 } ,
+  { -28569, 16047 } ,
+  { -10569, 31016 } ,
+  { 12827, 30152 } ,
+  { 29674, 13897 } ,
+  { 31374, -9453 } ,
+  { 17058, -27977 } ,
+  { -5966, -32219 } ,
+  { -25944, -20015 } ,
+  { -32678, 2407 } ,
+  { -22732, 23600 } ,
+  { -1181, 32746 } ,
+  { 20973, 25176 } ,
+  { 32420, 4754 } ,
+  { 27318, -18094 } ,
+  { 8271, -31706 } ,
+  { -14998, -29133 } ,
+  { -30611, -11688 } ,
+  { -30598, 11723 } ,
+*/
+	 
+//5khz 44100 s/s
+
   { 10529, 31029 } ,   { 28251, 16600 } ,  { 32231, -5904 } ,  { 20534, -25536 } ,
   { -1150, -32749 } ,  { -22276, -24034 } ,  { -32568, -3629 } ,  { -27019, 18540 } ,
   { -8330, 31691 } ,  { 14411, 29428 } ,  { 30142, 12851 } ,  { 31212, -9977 } ,
@@ -97,7 +146,8 @@ MMRESULT result;
   { 24401, 21869 } ,  { 32761, 600 } ,  { 25187, -20961 } ,  { 5361, -32327 } ,
   { -17072, -27971 } ,  { -31203, -10010 } ,  { -30157, 12819 } ,  { -14444, 29412 } ,
   { 8294, 31700 } ,  { 26997, 18569 } ,  { 32569, -3595 } ,  { 22300, -24010 }
-*/
+
+/*
   // 5khz 44100 s/s scale by div 16
   { 658, 1939 } ,   { 1766, 1038 } ,  { 2014, -369 } ,  { 1283, -1596 } ,
   { -72, -2047 } ,  { -1392, -1502 } ,  { -2035, -227 } ,  { -1689, 1159 } ,
@@ -111,7 +161,7 @@ MMRESULT result;
   { 1525, 1367 } ,  { 2048, 38 } ,  { 1574, -1310 } ,  { 335, -2020 } ,
   { -1067, -1748 } ,  { -1950, -626 } ,  { -1885, 801 } ,  { -903, 1838 } ,
   { 518, 1981 } ,  { 1687, 1161 } ,  { 2036, -225 } ,  { 1394, -1501 }
-
+*/
 };
 
 //long acc_samp_s;
@@ -124,7 +174,7 @@ MMRESULT result;
 
 #include "Constants.h"
 
-#define todb(X) (20.0f * log10 ((float(X)/(float)33000)))
+#define todb(X) (20.0f * log10 ((float(X)/(float)32768)))
 
 
 float max_rr = 0;
@@ -141,25 +191,23 @@ void dsp_process(short *capture, long length)
   short *p = capture;
   int len = length / 2;
   int i;
-  long samp_s = 0;
-  long samp_c = 0;
-  long ref_s = 0;
-  long ref_c = 0;
+  long long samp_s = 0;
+  long long samp_c = 0;
+  long long ref_s = 0;
+  long long ref_c = 0;
   double ref_mag;
-  double ref_phase;
-  double samp_mag;
-  double samp_phase;
+    double samp_mag;
 
   for (i = 0; i < len; i++) {
-    short smp = (*p++ );
-    short ref = (*p++ );
-    short s = sincos_tbl[i][0];
-    short c = sincos_tbl[i][1];
+    long long smp = (*p++ );
+    long long ref = (*p++ );
+    long s = sincos_tbl[i][0];
+    long c = sincos_tbl[i][1];
 
  
 	if (audioPower) {
-		samp_s += smp*smp/64;
-		samp_c += smp/8;
+		samp_s += smp*smp;
+		samp_c += smp;
 	} else {
 		samp_s += smp * s;
 	    samp_c += smp * c;
@@ -173,25 +221,45 @@ void dsp_process(short *capture, long length)
 //  acc_ref_s = ref_s;
 //  acc_ref_c = ref_c;
 
+	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c) * (float) 10.0;
   if (audioPower) {
 //	samp_mag = samp_s - abs(samp_c);
-	  samp_mag = sqrt((float)samp_s/len - ((float)samp_c)*samp_c/len/len);
-	  samp_phase = 0;
+	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len);
+//	  samp_phase = 0;
+	  actualMeasurement.magnitude = todb(samp_mag); 
+	  actualMeasurement.phase = (float)0.0;
   } else {
+#ifdef FAST_DSP	
+	  double fast_mag, v0,v1;
+	double fast_phase;
+	 v0 = (samp_c*(float)ref_c + samp_s*(float)ref_s) / ((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+	v1 = (samp_s*(float)ref_c - samp_c*(float)ref_s) / ((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+
+	fast_mag = sqrt(v0*v0+v1*v1);
+	fast_phase =360.0f / 2 / PI  * atan2(v1, v0);
+	actualMeasurement.magnitude = todb(fast_mag*32760);
+	actualMeasurement.phase = (float)fast_phase;
+#else
+	double ref_phase;
+    double samp_phase;
+
 	samp_mag = sqrt((samp_s*(float)samp_s)+samp_c*(float)samp_c);
-	samp_phase = 360.0f / 2 / PI  * atan2((float)samp_c, (float)samp_s);
-  }
-	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
 	ref_phase = 360.0f / 2 / PI  * atan2((float)ref_c, (float)ref_s);
+	samp_phase = 360.0f / 2 / PI  * atan2((float)samp_c, (float)samp_s);
+	actualMeasurement.magnitude = todb((samp_mag / ref_mag )*32760);
+	actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
+#endif
+  }
 
 	if (audioPower) {
-	  actualMeasurement.magnitude = todb(samp_mag);
-	} else
-	  actualMeasurement.magnitude = todb((samp_mag / ref_mag )*32000);
-  actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
+	} else {
+	}
+
+
+
   while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
   while (actualMeasurement.phase <= -180.0f) actualMeasurement.phase += 360.0;
-  actualMeasurement.reference =  todb(ref_mag / 32000);
+  actualMeasurement.reference =  todb(ref_mag / 32760 / 20);
 }
 
 
@@ -234,9 +302,9 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 		}
 		r = measured[measurementIndex[i] + 1 + lastJ].reference;
 		m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
-		p = measured[measurementIndex[i] + 1 + lastJ].phase+180;
+		p = measured[measurementIndex[i] + 1 + lastJ].phase;
 		tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
-		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase + 180;
+		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase-(float) 180.0;
 //		if (i > 4 && m > -20)
 //			m = m;
 		lastJ++;
@@ -245,7 +313,7 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 	return (false);
 }
 
-#define SIGNAL_THRESHOLD -35
+#define SIGNAL_THRESHOLD -30
 void StoreMeasurement()
 {
 	int lowmatch = 0;
@@ -258,9 +326,9 @@ void StoreMeasurement()
 		measured[nextDecoded++].reference = actualMeasurement.reference;
 	}
 	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) ) {
-		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
-		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
-		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD ) lowmatch++;
+//		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
+//		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
+//		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-7].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-6].reference < SIGNAL_THRESHOLD ) lowmatch++;
 		if ( measured[nextDecoded-5].reference > SIGNAL_THRESHOLD ) highmatch++;
@@ -268,7 +336,7 @@ void StoreMeasurement()
 		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) highmatch++;
-		if (lowmatch > 3 && highmatch > 3) {
+		if (lowmatch >= 1 && highmatch >= 5) {
 			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) 
 				 measurementIndex[lastMeasurement++] = nextDecoded - 6;
 			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) 
@@ -309,7 +377,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 	int i;
 	int remaining;
 	double temp;
-	float sigLevel = 1.0;
+	float sigLevel = (float)1;
 
 
 	//	TRACE("%d",pHdr->dwUser);
@@ -323,8 +391,8 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 		while (remaining-- > 0) {
 
 			//for (i = 0; i < 48; i++) {
-			//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * 5000 / 44100));
-			//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * 5000 / 44100));
+			//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * IFFREQ / 44100));
+			//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * IFFREQ / 44100));
 			//}
 			if (simMode) {
 				audio = waveIn[0];
@@ -337,16 +405,16 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 
 				audio_simulation = false;
 				if (simMode == M_SHORT) {
-					audio_volume_transmission = 0.0001 * sigLevel;
+					audio_volume_transmission = 0.00001 * sigLevel;
 					audio_phase_transmission = 0.0;
-					audio_phase_reflection = -180.0;
+					audio_phase_reflection = -180.0 +  (2 * simBefore) * simStartF / 1000000.;
 					audio_volume_reflection = 0.9 * sigLevel;
 					audio_simulation = true;
 				}
 				if (simMode == M_OPEN) {
-					audio_volume_transmission = 0.0001 * sigLevel;
+					audio_volume_transmission = 0.0000001 * sigLevel;
 					audio_phase_transmission = 0.0;
-					audio_phase_reflection = 0.0;
+					audio_phase_reflection = 0.0 +  (2 * simBefore) * simStartF / 1000000.;
 					audio_volume_reflection = 0.9 * sigLevel;
 					audio_simulation = true;
 				}
@@ -377,7 +445,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				}
 
 
-#define SILENCE_GAP	5
+#define SILENCE_GAP	2
 				if (simDirection) {
 					temp = audio_volume_reflection;
 					audio_volume_reflection = audio_volume_transmission;
@@ -386,31 +454,35 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 					audio_phase_reflection = audio_phase_transmission;
 					audio_phase_transmission = temp;
 				}
-
+				//simS = 0;
 				if (simPoint < simMaxPoint && simStep >= SILENCE_GAP + simDuration*2 ) {
 					simPoint += 1;
 					if (simPoint < simMaxPoint) {
-						simStep = -1;
+						simStep = 0;
 						simStartF += simStepF;
 					}
 				}
 				if (simStep < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 80+(short)(32000 * 0.0000000000000000000001 * sin(PI * 2 * ((i+1) + audio_phase_reflection * 9 / 360)  * 5000 / 44100));
-						audio [i*2+1] = 80+(short)(32000 * 0.0000000000000000000001 * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / 44100));
+						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+						simS++;
 					}
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 80+(short)(32000 * audio_volume_reflection * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_reflection * 9 / 360)  * 5000 / 44100));
-						audio [i*2+1] = 80+(short)(32000 * sigLevel * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * audio_volume_reflection * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / 44100));
+						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 80+(short)(32000 * audio_volume_transmission * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * ((i+1) + audio_phase_transmission * 9 / 360)  * 5000 / 44100));
-						audio [i*2+1] = 80+(short)(32000 * sigLevel * (1 + (rand() % 1000)/1000.0*0.1) * sin(PI * 2 * (i) * 5000 / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * audio_volume_transmission * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_transmission * 1/ 360)  * IFFREQ / 44100));
+						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+						simS++;
 					}
 				}
-				if ((rand() % 20) < 19) simStep += 1; // add uncertainty on timing
+//				if ((rand() % 20) < 19) // add uncertainty on timing
+				simStep += 1; 
 				//}
 			}
 			//float measured[1024][100];
@@ -524,6 +596,7 @@ void StartAudioSimulation(int mode, int numPoints, int duration, long startF, lo
 	simBefore = cable_before;
 	simAfter = cable_after;
 	simDirection = direction;
+	simS = 0;
 }
 
 void SetAudioPower(int power)

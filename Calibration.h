@@ -58,13 +58,13 @@ namespace VNAR3
 			Cal = CalDS;			///< Calibration Dataset
 			FG = fg;				///< Frequency Grid
 
-			BufferI = gcnew array<Int32>(7);
-			BufferQ = gcnew array<Int32>(7);
-			BufferM = gcnew array<Int32>(7);
-			BufferN = gcnew array<Int32>(7);
-			BufferP = gcnew array<Int32>(7);
-			BufferR = gcnew array<Int32>(7);
-			BufferS = gcnew array<Int32>(7);
+			BufferI = gcnew array<Int32>(CALSUM);
+			BufferQ = gcnew array<Int32>(CALSUM);
+			BufferM = gcnew array<Int32>(CALSUM);
+			BufferN = gcnew array<Int32>(CALSUM);
+			BufferP = gcnew array<Int32>(CALSUM);
+			BufferR = gcnew array<Int32>(CALSUM);
+			BufferS = gcnew array<Int32>(CALSUM);
 		}
         
 	protected: 
@@ -452,7 +452,7 @@ namespace VNAR3
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 				//VNA->SetMode(M_SHORT);
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -467,17 +467,11 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-					for (int k=0; k<7; k++)
-					{
-                        if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
-							goto done;
-						BufferI[k] = RxBuf->ReflPI;
-						BufferQ[k] = RxBuf->ReflPQ;
-						BufferM[k] = RxBuf->ReflMQ;
-					}
-					calPoint->ReflPI = Median7(BufferI);		// filter the raw readings
-					calPoint->ReflPQ = Median7(BufferQ);
-					calPoint->ReflMQ = Median7(BufferM);
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+					  goto done;
+					calPoint->ReflPI = RxBuf->ReflPI;
+					calPoint->ReflPQ = RxBuf->ReflPQ;
+					calPoint->ReflMQ = RxBuf->ReflMQ;
 
 					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
 
@@ -492,8 +486,8 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
-			done:
 				statShort->Visible = true;
+			done:
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -512,7 +506,7 @@ namespace VNAR3
 				//VNA->SetMode(M_OPEN);
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -527,17 +521,11 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-					for (int k=0; k<7; k++)
-					{
-                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-							goto done;
-						BufferI[k] = RxBuf->ReflPI;
-						BufferQ[k] = RxBuf->ReflPQ;
-						BufferM[k] = RxBuf->ReflMQ;
-					}
-					calPoint->ReflPI = Median7(BufferI);		// filter the raw readings
-					calPoint->ReflPQ = Median7(BufferQ);
-					calPoint->ReflMQ = Median7(BufferM);
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+					  goto done;
+					calPoint->ReflPI = RxBuf->ReflPI;
+					calPoint->ReflPQ = RxBuf->ReflPQ;
+					calPoint->ReflMQ = RxBuf->ReflMQ;
 
 					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
 
@@ -573,7 +561,7 @@ namespace VNAR3
 				//VNA->SetMode(M_LOAD);
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -587,18 +575,11 @@ namespace VNAR3
 					TxBuf->MeasureDelay = 0;
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
-					for (int k=0; k<7; k++)
-					{
-                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-							goto done;
-						BufferI[k] = RxBuf->ReflPI;
-						BufferQ[k] = RxBuf->ReflPQ;
-						BufferM[k] = RxBuf->ReflMQ;
-					}
-					calPoint->ReflPI = Median7(BufferI);		// filter the raw readings
-					calPoint->ReflPQ = Median7(BufferQ);
-					calPoint->ReflMQ = Median7(BufferM);
-					//VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+					  goto done;
+					calPoint->ReflPI = RxBuf->ReflPI;
+					calPoint->ReflPQ = RxBuf->ReflPQ;
+					calPoint->ReflMQ = RxBuf->ReflMQ;
 
 					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
 
@@ -635,7 +616,7 @@ namespace VNAR3
 
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, 10);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
 				for (long i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -657,27 +638,16 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-					for (int k=0; k<7; k++)
-					{
-                        if (!VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS))
-							goto done;
-//                        VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
-						BufferI[k] = RxBuf->TranPI;
-						BufferQ[k] = RxBuf->TranPQ;
-						BufferM[k] = RxBuf->TranMQHi;
-						BufferN[k] = RxBuf->TranMQLo;
-						BufferP[k] = RxBuf->TranMQMid;
-						BufferR[k] = RxBuf->TranPILow;
-						BufferS[k] = RxBuf->TranPQLow;
-					}
+                    if (!VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS))
+						goto done;
 
-					calPoint->TranPI = Median7(BufferI);		// filter the raw readings
-					calPoint->TranPQ = Median7(BufferQ);
-					calPoint->TranMQHi = Median7(BufferM);
-					calPoint->TranMQLo = Median7(BufferN);
-					calPoint->TranMQMid = Median7(BufferP);
-					calPoint->TranPILow = Median7(BufferR);
-					calPoint->TranPQLow = Median7(BufferS);
+					calPoint->TranPI = RxBuf->TranPI;
+					calPoint->TranPQ = RxBuf->TranPQ;
+					calPoint->TranMQHi = RxBuf->TranMQHi;
+					calPoint->TranMQLo = RxBuf->TranMQLo;
+					calPoint->TranMQMid = RxBuf->TranMQMid;
+					calPoint->TranPILow = RxBuf->TranPILow;
+					calPoint->TranPQLow = RxBuf->TranPQLow;
 
 					Cal->ResolveTranPolar(calPoint, (int)Fdesired, rmag, rphs);
 

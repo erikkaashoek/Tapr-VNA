@@ -61,6 +61,7 @@ using the .NET style of Event Delegates.
 //#define DEBUGRAWREFL			// display raw reflection detector ADC counts on rectangular screen
 //#define DEBUGRAWREFV			// display raw reference voltage ADC counts on rectangular screen
 //#define DUMPRAWTRACES			// dump all ADC counts to a file 'VNAdump.txt'
+//#define DUMPRAWDECODING		// dump all raw decoded data
 
 extern  int audio_delay;
 
@@ -2617,10 +2618,19 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #ifdef DUMPRAWTRACES			// Dump raw traces to a file for debugging
 			FileStream^ fs;
 			StreamWriter^ sw;
-			fs = gcnew FileStream("VNAdebug.txt", FileMode::Create, FileAccess::Write);
+			fs = gcnew FileStream("VNAdebug.csv", FileMode::Create, FileAccess::Write);
 			sw = gcnew StreamWriter(fs);
 			sw->WriteLine("sep=,");
 			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQLo, ReflPI, ReflPQ, ReflMQ");
+#endif
+#ifdef DUMPRAWDECODING			// Dump raw traces to a file for debugging
+			FileStream^ fs;
+			StreamWriter^ sw;
+			fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
+			sw = gcnew StreamWriter(fs);
+			sw->WriteLine("sep=;");
+			sw->WriteLine("ref, mag, phase ");
+			int decoded=0;
 #endif
 #ifdef DEBUGAUDIO
 			int mm = 0;
@@ -2666,6 +2676,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 						maximum = distance[i];
 				}
 				if (maximum > 0) {
+					if (maximum < 100) maximum = 100;
 					for (int i=0; i < 1024; i++)
 						distance[i] = distance[i] * SHORT_RANGE / maximum;
 				}
@@ -2776,6 +2787,16 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				gr->DrawLine(penS11Phs, traceStart, traceStop);
 #endif
 
+#ifdef DUMPRAWDECODING
+				while (decoded < measurementIndex[i]) {
+					sw->Write(measured[decoded].reference.ToString("N1"));
+					sw->Write("; ");
+					sw->Write(measured[decoded].magnitude.ToString("N1"));
+					sw->Write("; ");
+					sw->WriteLine(measured[decoded].phase);
+					decoded++;
+				}
+#endif
 
 #ifdef DUMPRAWTRACES
 				//// code to dump raw data to file
@@ -3723,10 +3744,13 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #endif
 	
 		}
-
 #ifdef DUMPRAWTRACES
 			sw->Flush();	
-			sw->Close();	// close VNAdebug.txt file
+			sw->Close();	// close VNAdebug.csv file
+#endif
+#ifdef DUMPRAWDECODING
+			sw->Flush();	
+			sw->Close();	// close VNAdecodig.csv file
 #endif
 		}
 
@@ -4903,31 +4927,6 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 
 
-		// hold temporary sweep results if glitch is detected in slow glitch mode only
-#ifdef SLOWGLITCH
-		int tempSweep1 __gc[], tempSweep2 __gc[], tempSweep3 __gc[], tempSweep4 __gc[];
-		int tempSweep5 __gc[], tempSweep6 __gc[], tempSweep7 __gc[], tempSweep8 __gc[];
-        int tempSweep9 __gc[], tempSweep10 __gc[], tempSweep11 __gc[], tempSweep12 __gc[];
-		int tempSweep13 __gc[], tempSweep14 __gc[];
-
-		tempSweep1 = new int __gc[7];
-		tempSweep2 = new int __gc[7];
-		tempSweep3 = new int __gc[7];
-		tempSweep4 = new int __gc[7];
-		tempSweep5 = new int __gc[7];
-		tempSweep6 = new int __gc[7];
-		tempSweep7 = new int __gc[7];
-		tempSweep8 = new int __gc[7];
-		tempSweep9 = new int __gc[7];
-		tempSweep10 = new int __gc[7];
-		tempSweep11 = new int __gc[7];
-		tempSweep12 = new int __gc[7];
-		tempSweep13 = new int __gc[7];
-		tempSweep14 = new int __gc[7];
-
-#endif
-
-
 		while(true)								// thread runs until terminated by program exit
 		{
 			while(WorkerCollect == false)		// while nothing to do
@@ -4960,96 +4959,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 		}
 
 
-		// Disable !!!!!!!!!!!!!!!!!!!
-		if (false && String::Compare(SweepSpd->Text, "Fast") == 0)				// if fast reading mode
-		{
 
-			TxBuf->ReplyType = VNA_REPLYTYPE_FAST;
-			TxBuf->MeasureDelay = 0;					// Fastest sweep speed
-			TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
-			TxBuf->IDAClevelHi = TxLevLinear(txLevel);	// Set High Tx Level
-			TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Set Low TX Level
-			TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Set Mid TX Level
-
-			// Set the Lo phase tran measurement level for the target   09-30-2007
-			TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Set Lo Phase Level (not used in FAST)
-
-
-			for (int m=0; m<FG->points; m+=4)	// measure 4 frequencies at a time
-			{
-
-				// calculate linear frequency spot for each sweep
-
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				TxBuf->Freq2 = FG->DDS(FG->Frequency(m+1));
-				TxBuf->Freq3 = FG->DDS(FG->Frequency(m+2));
-				TxBuf->Freq4 = FG->DDS(FG->Frequency(m+3));
-
-				VNA->WriteRead(TxBuf, (VNA_RXBUFFER *)RxBufast, DIR_REFL);
-
-				// Save received data by grid point
-
-				trace[m]->ReflMQ = RxBufast->ReflMQ1;
-				trace[m+1]->ReflMQ = RxBufast->ReflMQ2;
-				trace[m+2]->ReflMQ = RxBufast->ReflMQ3;
-				trace[m+3]->ReflMQ = RxBufast->ReflMQ4; 
-
-				trace[m]->ReflPI = RxBufast->ReflPI1;
-				trace[m+1]->ReflPI = RxBufast->ReflPI2;
-				trace[m+2]->ReflPI = RxBufast->ReflPI3;
-				trace[m+3]->ReflPI = RxBufast->ReflPI4; 
-
-				trace[m]->ReflPQ = RxBufast->ReflPQ1;
-				trace[m+1]->ReflPQ = RxBufast->ReflPQ2;
-				trace[m+2]->ReflPQ = RxBufast->ReflPQ3;
-				trace[m+3]->ReflPQ = RxBufast->ReflPQ4; 
-
-				trace[m]->TranMQHi = RxBufast->TranMQ1Hi;
-				trace[m+1]->TranMQHi = RxBufast->TranMQ2Hi;
-				trace[m+2]->TranMQHi = RxBufast->TranMQ3Hi;
-				trace[m+3]->TranMQHi = RxBufast->TranMQ4Hi; 
-
-				trace[m]->TranPI = RxBufast->TranPI1;
-				trace[m+1]->TranPI = RxBufast->TranPI2;
-				trace[m+2]->TranPI = RxBufast->TranPI3;
-				trace[m+3]->TranPI = (RxBufast->TranPI4Mix & 0xFFF); // demultiplex TranPI4
-
-				trace[m]->TranPQ = RxBufast->TranPQ1;
-				trace[m+1]->TranPQ = RxBufast->TranPQ2;
-				trace[m+2]->TranPQ = RxBufast->TranPQ3;
-				trace[m+3]->TranPQ = (RxBufast->TranPQ4Mix & 0xFFF);  // demultiplex TranPQ4
-
-				trace[m]->TranMQLo = RxBufast->TranMQ1Lo;
-				trace[m+1]->TranMQLo = RxBufast->TranMQ2Lo;
-				trace[m+2]->TranMQLo = RxBufast->TranMQ3Lo;
-				trace[m+3]->TranMQLo = (RxBufast->TranMQ4LoMix & 0xFFF);	// demultiplex TranMQ4Lo 
-
-				trace[m]->TranMQMid = RxBufast->TranMQ1Mid;
-				trace[m+1]->TranMQMid = RxBufast->TranMQ2Mid;
-				trace[m+2]->TranMQMid = RxBufast->TranMQ3Mid;
-
-				trace[m]->TranPILow = 0;		// fast mode does not measure TranPILow, zero indicates 'no data'
-				trace[m+1]->TranPILow = 0;
-				trace[m+2]->TranPILow = 0;
-				trace[m+3]->TranPILow = 0;
-
-				trace[m]->TranPQLow = 0;		// fast mode does not measure TranPQLow, zero indicates 'no data'
-				trace[m+1]->TranPQLow = 0;
-				trace[m+2]->TranPQLow = 0;
-				trace[m+3]->TranPQLow = 0;
-
-				// Demultiplex the last 12-bit word from the top 4 bits of each of 3 borrowed buffer locations.
-				// Sorry this is ugly, but we were one buffer word short in the fast buffer.
-				unsigned short temp2 = (RxBufast->TranPI4Mix & 0xF000); // grab just top nibble
-				unsigned short temp1 = (RxBufast->TranPQ4Mix & 0xF000); 
-				unsigned short temp0 = (RxBufast->TranMQ4LoMix & 0xF000);
-
-				trace[m+3]->TranMQMid = (temp2 >> 4) + (temp1 >> 8) + (temp0 >> 12); // Assemble TranMQ4Mid from nibbles
-
-			}
-		}
-		else										// slow reading mode
-		{
 
 			TxBuf->ReplyType = VNA_REPLYTYPE_FULL;
 			TxBuf->MeasureDelay = MeasureDelayStringToCount(SweepSpd->Text);
@@ -5066,7 +4976,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
-			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5, Spectrum->Checked);
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay, Spectrum->Checked);
 			for (int m=0; m<FG->points; m++)
 			{
     
@@ -5074,8 +4984,8 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				TxBuf->TxAccum = m; // FG->DDS(FG->Frequency(m));
 				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 					break;
-				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-					break;
+//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+//					break;
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 //					break;
 
@@ -5137,7 +5047,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				// Update Sweep Progress
 
 				SweepProgressBar->Value = (m+1);
-			}
+
 
 			// Glitch detection using median filtering algorithm,
 			// faster but not as accurate as slow version.
@@ -5149,107 +5059,6 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			DeGlitch(trace, FG->points);
 #endif
 
-
-#ifdef SLOWGLITCH
-			// Glitch detection using median filtering algorithm,
-			// high Accuracy but very slow. Leave code in case we want to make this
-			// an option. If glitch detected (across 7 different frequencies),
-			// then re-run the sweep 7 times and take Median at that one frequency
-
-			for(int m=3; m<FG->points-3; m++)
-			{
-				bool glitch = false;
-				unsigned short filtered;
-
-				filtered = Median7(trace1, m-3);
-				if( abs(trace1[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace2, m-3);
-				if( abs(trace2[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace3, m-3);
-				if( abs(trace3[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace4, m-3);
-				if( abs(trace4[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace6, m-3);
-				if( abs(trace6[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace7, m-3);
-				if( abs(trace7[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace8, m-3);
-				if( abs(trace8[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace9, m-3);
-				if( abs(trace9[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace11, m-3);
-				if( abs(trace11[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace12, m-3);
-				if( abs(trace12[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace13, m-3);
-				if( abs(trace13[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace14, m-3);
-				if( abs(trace14[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-
-
-				if(glitch)	// make 7 sweeps at the same frequency, and pick
-							// the median (hopefully all 12 measurements have 
-							// well behaved medians).
-				{
-
-					TxBuf->TxAccum = FG->DDS(FG->Frequency(m)); // program specific frequency
-
-					for (int i=0; i<7; i++)
-					{
-                        VNA->WriteRead(TxBuf, RxBuf);			// take a reading 
-
-						tempSweep1[i] = RxBuf->ReflMI;
-						tempSweep2[i] = RxBuf->ReflMQ;
-						tempSweep3[i] = RxBuf->ReflPI;
-						tempSweep4[i] = RxBuf->ReflPQ;
-
-						tempSweep5[i] = RxBuf->Vref1;
-
-						tempSweep6[i] = RxBuf->TranMI;
-						tempSweep7[i] = RxBuf->TranMQHi;
-						tempSweep8[i] = RxBuf->TranPI;
-						tempSweep9[i] = RxBuf->TranPQ;
-
-						tempSweep10[i] = RxBuf->Vref2;
-						tempSweep11[i] = RxBuf->TranMQLo;
-						tempSweep12[i] = RxBuf->TranMQMid;
-
-						// New 09-30-2007
-						tempSweep13[i] = RxBuf->TranPILow;
-						tempSweep14[i] = RxBuf->TranPQLow;
-
-					}
-
-					trace1[m] = Median7(tempSweep1);
-					trace2[m] = Median7(tempSweep2);
-					trace3[m] = Median7(tempSweep3);
-					trace4[m] = Median7(tempSweep4);
-					trace5[m] = Median7(tempSweep5);
-					trace6[m] = Median7(tempSweep6);
-					trace7[m] = Median7(tempSweep7);
-					trace8[m] = Median7(tempSweep8);
-					trace9[m] = Median7(tempSweep9);
-					trace10[m] = Median7(tempSweep10);
-					trace11[m] = Median7(tempSweep11);
-					trace12[m] = Median7(tempSweep12);
-					trace13[m] = Median7(tempSweep13);	// New 09-30-2007
-					trace14[m] = Median7(tempSweep14);  // New 09-30-2007
-
-				}
-			}
-#endif
 		}
 			
 
@@ -5320,33 +5129,6 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 		ITrace = gcnew array<MeasurementSet^>(1024);
 		for (int i=0; i<1024; i++)
 			ITrace[i] = gcnew MeasurementSet;
-
-
-
-		// hold temporary sweep results if glitch is detected in slow glitch mode only
-#ifdef SLOWGLITCH
-		int tempSweep1 __gc[], tempSweep2 __gc[], tempSweep3 __gc[], tempSweep4 __gc[];
-		int tempSweep5 __gc[], tempSweep6 __gc[], tempSweep7 __gc[], tempSweep8 __gc[];
-        int tempSweep9 __gc[], tempSweep10 __gc[], tempSweep11 __gc[], tempSweep12 __gc[];
-		int tempSweep13 __gc[], tempSweep14 __gc[];
-
-		tempSweep1 = new int __gc[7];
-		tempSweep2 = new int __gc[7];
-		tempSweep3 = new int __gc[7];
-		tempSweep4 = new int __gc[7];
-		tempSweep5 = new int __gc[7];
-		tempSweep6 = new int __gc[7];
-		tempSweep7 = new int __gc[7];
-		tempSweep8 = new int __gc[7];
-		tempSweep9 = new int __gc[7];
-		tempSweep10 = new int __gc[7];
-		tempSweep11 = new int __gc[7];
-		tempSweep12 = new int __gc[7];
-		tempSweep13 = new int __gc[7];
-		tempSweep14 = new int __gc[7];
-
-#endif
-
 
 		while(true)								// thread runs until terminated by program exit
 		{
@@ -5487,7 +5269,7 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
-			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, 5);
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay);
 			for (int m=0; m<FG->points; m++)
 			{
     
@@ -5495,8 +5277,8 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 				TxBuf->TxAccum = m; //FG->DDS(FG->Frequency(m));
 				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 					break;
-				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-					break;
+//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+//					break;
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 //					break;
 
@@ -5571,108 +5353,6 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 			DeGlitch(trace, FG->points);
 #endif
 
-
-#ifdef SLOWGLITCH
-			// Glitch detection using median filtering algorithm,
-			// high Accuracy but very slow. Leave code in case we want to make this
-			// an option. If glitch detected (across 7 different frequencies),
-			// then re-run the sweep 7 times and take Median at that one frequency
-/*
-			for(int m=3; m<FG->points-3; m++)
-			{
-				bool glitch = false;
-				unsigned short filtered;
-
-				filtered = Median7(trace1, m-3);
-				if( abs(trace1[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace2, m-3);
-				if( abs(trace2[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace3, m-3);
-				if( abs(trace3[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace4, m-3);
-				if( abs(trace4[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace6, m-3);
-				if( abs(trace6[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace7, m-3);
-				if( abs(trace7[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace8, m-3);
-				if( abs(trace8[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace9, m-3);
-				if( abs(trace9[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace11, m-3);
-				if( abs(trace11[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace12, m-3);
-				if( abs(trace12[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace13, m-3);
-				if( abs(trace13[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-				filtered = Median7(trace14, m-3);
-				if( abs(trace14[m]-filtered) > GLITCHSIZE)
-					glitch = true;
-
-
-				if(glitch)	// make 7 sweeps at the same frequency, and pick
-							// the median (hopefully all 12 measurements have 
-							// well behaved medians).
-				{
-
-					TxBuf->TxAccum = FG->DDS(FG->Frequency(m)); // program specific frequency
-
-					for (int i=0; i<7; i++)
-					{
-                        VNA->WriteRead(TxBuf, RxBuf);			// take a reading 
-
-						tempSweep1[i] = RxBuf->ReflMI;
-						tempSweep2[i] = RxBuf->ReflMQ;
-						tempSweep3[i] = RxBuf->ReflPI;
-						tempSweep4[i] = RxBuf->ReflPQ;
-
-						tempSweep5[i] = RxBuf->Vref1;
-
-						tempSweep6[i] = RxBuf->TranMI;
-						tempSweep7[i] = RxBuf->TranMQHi;
-						tempSweep8[i] = RxBuf->TranPI;
-						tempSweep9[i] = RxBuf->TranPQ;
-
-						tempSweep10[i] = RxBuf->Vref2;
-						tempSweep11[i] = RxBuf->TranMQLo;
-						tempSweep12[i] = RxBuf->TranMQMid;
-
-						// New 09-30-2007
-						tempSweep13[i] = RxBuf->TranPILow;
-						tempSweep14[i] = RxBuf->TranPQLow;
-
-					}
-
-					trace1[m] = Median7(tempSweep1);
-					trace2[m] = Median7(tempSweep2);
-					trace3[m] = Median7(tempSweep3);
-					trace4[m] = Median7(tempSweep4);
-					trace5[m] = Median7(tempSweep5);
-					trace6[m] = Median7(tempSweep6);
-					trace7[m] = Median7(tempSweep7);
-					trace8[m] = Median7(tempSweep8);
-					trace9[m] = Median7(tempSweep9);
-					trace10[m] = Median7(tempSweep10);
-					trace11[m] = Median7(tempSweep11);
-					trace12[m] = Median7(tempSweep12);
-					trace13[m] = Median7(tempSweep13);	// New 09-30-2007
-					trace14[m] = Median7(tempSweep14);  // New 09-30-2007
-
-				}
-			}
-*/
-#endif
 		}
 			
 
@@ -6715,7 +6395,7 @@ private: System::Void VSWRdisplay_Click(System::Object^  sender, System::EventAr
 		/// Fast/Slow button click handler
 private: System::Void SweepSpd_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
-			 if (String::Compare(SweepSpd->Text, "Fast") == 0)
+/*			 if (String::Compare(SweepSpd->Text, "Fast") == 0)
 				 SweepSpd->Text = "30 us";
 			 else if (String::Compare(SweepSpd->Text, "30 us") == 0)
 				 SweepSpd->Text = "100 us";
@@ -6723,7 +6403,8 @@ private: System::Void SweepSpd_Click(System::Object^  sender, System::EventArgs^
 				 SweepSpd->Text = "300 us";
 			 else if (String::Compare(SweepSpd->Text, "300 us") == 0)
 				 SweepSpd->Text = "1 ms";
-			 else if (String::Compare(SweepSpd->Text, "1 ms") == 0)
+			 else
+*/			 if (String::Compare(SweepSpd->Text, "1 ms") == 0)
 				 SweepSpd->Text = "3 ms";
 			 else if (String::Compare(SweepSpd->Text, "3 ms") == 0)
 				 SweepSpd->Text = "10 ms";
@@ -6732,7 +6413,7 @@ private: System::Void SweepSpd_Click(System::Object^  sender, System::EventArgs^
 			 else if (String::Compare(SweepSpd->Text, "30 ms") == 0)
 				 SweepSpd->Text = "100 ms";
 			 else
-				 SweepSpd->Text = "Fast";	// go to Fast mode if speed = 10 ms or anything unknown		
+				 SweepSpd->Text = "1 ms";	// go to Fast mode if speed = 10 ms or anything unknown		
 		 }
 
 		/// Group Delay Aperture Size=1 menu item click handler

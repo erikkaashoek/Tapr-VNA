@@ -480,7 +480,7 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 
 
 /// Compute Frequency of grid point for linear(f) and log(f) fixture cal points
-int InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibration Grid index to Frequency.
+long InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode)	/// Convert Phase Calibration Grid index to Frequency.
 {
 
 	// Note: linear mode is the default, and provides backwards-compatibility with older Fixture Cal files
@@ -491,15 +491,17 @@ int InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode)	//
 			FreqIncrement = Math::Pow(10,Math::Log10(maxCalFreq/MINCALFREQ)/(NUMCALPTS-1));
 
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(MINCALFREQ * Math::Pow(FreqIncrement, index)));
+				return (/* Convert::ToInt32*/(long) (MINCALFREQ * Math::Pow(FreqIncrement, index)));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
 		}
 	else									// Compute fixture calibration linear frequency point
 		{											/// Grid is 1024 points.
+//			long temp;
+//			temp = (long) (MINCALFREQ + (index * (((double)maxCalFreq) - MINCALFREQ)/(NUMCALPTS-1)));
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(MINCALFREQ + (index * (maxCalFreq - MINCALFREQ)/(NUMCALPTS-1))));
+				return (/* Convert::ToInt32 */(long) (MINCALFREQ + (index * (((double)maxCalFreq) - MINCALFREQ)/(NUMCALPTS-1)))); // WATCH OVERFLOW!!!!!!!!
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
@@ -709,7 +711,8 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 		double oldImagLin = imag(Et);
 		double oldAngleRadians = atan2(oldImagLin, oldRealLin);
 
-		double linmag = sqrt(real(Et) * real(Et) + imag(Et) * imag(Et));
+//		double linmag = sqrt(real(Et) * real(Et) + imag(Et) * imag(Et));
+		double linmag = 1.0; // Ignore magnitude impact for now
 		double newAngleRadians = -(Cal->reflTimeDelayEquivalent * 2 * Math::PI * Frequency);	
 
 		double realLin = linmag * cos(newAngleRadians);
@@ -886,9 +889,9 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 
 		// time delay is the total running deltaphase over the frequency range.
 
-		int freq2 = Cal->GetFreqFromFixtureCalGrid(1000, false);
-		int freq1 = Cal->GetFreqFromFixtureCalGrid(20,  false);
-		int freqd = freq2-freq1;
+		long freq2 = Cal->GetFreqFromFixtureCalGrid(1000, false);
+		long freq1 = Cal->GetFreqFromFixtureCalGrid(20,  false);
+		long freqd = freq2-freq1;
 		Cal->reflTimeDelayEquivalent = -sumDeltaPhase / (360.0 * (double)freqd);
 
 		return true;
@@ -1286,13 +1289,13 @@ int Median7(array<UInt16>^ data, int index)
 {
 	int i, j;
 	int swap;
-	int numbers[7];
+	int numbers[CALSUM];
 
-	for (i=0; i<7; i++)			// make a local copy of the data
+	for (i=0; i<CALSUM; i++)			// make a local copy of the data
 		numbers[i] = (int)data[index + i];		// don't alter what was given to us
 
 	// bubble sort the elements
-	for (i=6; i>=0; i--)
+	for (i=CALSUM-1; i>=0; i--)
         for (j=1; j<=i; j++)
             if (numbers[j-1] > numbers[j])
 			{
@@ -1301,19 +1304,19 @@ int Median7(array<UInt16>^ data, int index)
 				numbers[j] = swap;
 			}
 
-	return(numbers[3]);	// the median value
+	return(numbers[CALSUM/2]);	// the median value
 }
 int Median7(array<UInt16>^ data)
 {
 	int i, j;
 	int swap;
-	int numbers[7];
+	int numbers[CALSUM];
 
-	for (i=0; i<7; i++)			// make a local copy of the data
+	for (i=0; i<CALSUM; i++)			// make a local copy of the data
 		numbers[i] = data[i];	// don't alter what was given to us
 
 	// bubble sort the elements
-	for (i=6; i>=0; i--)
+	for (i=CALSUM-1; i>=0; i--)
         for (j=1; j<=i; j++)
             if (numbers[j-1] > numbers[j])
 			{
@@ -1322,19 +1325,19 @@ int Median7(array<UInt16>^ data)
 				numbers[j] = swap;
 			}
 
-	return(numbers[3]);	// the median value
+	return(numbers[CALSUM/2]);	// the median value
 }
 int Median7(array<Int32>^ data)
 {
 	int i, j;
 	int swap;
-	int numbers[7];
+	int numbers[CALSUM];
 
-	for (i=0; i<7; i++)			// make a local copy of the data
+	for (i=0; i<CALSUM; i++)			// make a local copy of the data
 		numbers[i] = data[i];	// don't alter what was given to us
 
 	// bubble sort the elements
-	for (i=6; i>=0; i--)
+	for (i=CALSUM-1; i>=0; i--)
         for (j=1; j<=i; j++)
             if (numbers[j-1] > numbers[j])
 			{
@@ -1343,20 +1346,20 @@ int Median7(array<Int32>^ data)
 				numbers[j] = swap;
 			}
 
-	return(numbers[3]);	// the median value
+	return(numbers[CALSUM/2]);	// the median value
 }
 
 double Median7(array<Double>^ data, int index, double epsilon )
 {
 	int i, j;
 	double swap;
-	array<Double>^ numbers = gcnew array<Double>(7);
+	array<Double>^ numbers = gcnew array<Double>(CALSUM);
 
-	for (i=0; i<7; i++)			// make a local copy of the data
+	for (i=0; i<CALSUM; i++)			// make a local copy of the data
 		numbers[i] = data[index+i];	// don't alter what was given to us
 
 	// bubble sort the elements
-	for (i=6; i>=0; i--)
+	for (i=CALSUM-1; i>=0; i--)
         for (j=1; j<=i; j++)
             if (numbers[j-1] > numbers[j])
 			{
@@ -1365,10 +1368,10 @@ double Median7(array<Double>^ data, int index, double epsilon )
 				numbers[j] = swap;
 			}
 
-	if (abs(data[index+3] - numbers[3]) > epsilon)
-		return(numbers[3]);	// the median value if deviation is larger than epsilon
+	if (abs(data[index+CALSUM/2] - numbers[CALSUM/2]) > epsilon)
+		return(numbers[CALSUM/2]);	// the median value if deviation is larger than epsilon
 	else
-		return(data[index+3]); // the original value if deviation is smaller than epsilon
+		return(data[index+CALSUM/2]); // the original value if deviation is smaller than epsilon
 }
 
 
@@ -1619,23 +1622,23 @@ int MeasureDelayStringToCount(String^ value)
 //  Values other than "FAST" use the "SLOW" mode of the buffer
 
 	if(String::Compare(value, "Fast") == 0)
-		return 0;
+		return 1;
 	if(String::Compare(value, "30 us") == 0)
-		return 0;
+		return 1;
 	if(String::Compare(value, "100 us") == 0)
-		return 2;
+		return 1;
 	if(String::Compare(value, "300 us") == 0)
-		return 7;
+		return 1;
 	if(String::Compare(value, "1 ms") == 0)
-		return 24;
+		return 1;
 	if(String::Compare(value, "3 ms") == 0)
-		return 74;
+		return 3;
 	if(String::Compare(value, "10 ms") == 0)
-		return 249;
+		return 10;
 	if(String::Compare(value, "30 ms") == 0)
-		return 749;
+		return 30;
 	if(String::Compare(value, "100 ms") == 0)
-		return 2499;
+		return 100;
 
 	return 0;	// no delay if unexpected string 
 };

@@ -112,7 +112,7 @@ void ResolveReflPolar(MeasurementSet^ dataPoint, int Freq, double& rmag, double&
 /// resolve transmitted measured data set to Magnitude and Phase
 void ResolveTranPolar(MeasurementSet^ dataPoint, int Freq, double& rmag, double& rphs);
 /// get frequency of calibration grid point
-int GetFreqFromFixtureCalGrid(long index, bool Freqmode);
+long GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 };
 
 
