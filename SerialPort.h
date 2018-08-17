@@ -9,6 +9,18 @@
 
 //#include "objbase.h"
 
+extern int sampleRate;
+#define SAMPLERATES	6
+static int sampleRateTable [SAMPLERATES] = {
+	192000,
+	96000,
+	48000,
+	44100,
+	24000,
+	12000
+};
+
+
 using namespace System;
 
 
@@ -60,6 +72,7 @@ namespace VNAR3 {
 		System::IO::Ports::SerialPort^  Port;
 		/// </summary>
 		System::ComponentModel::Container ^components;
+	private: System::Windows::Forms::ComboBox^  sampleRateBox;
 	private: System::Windows::Forms::Button^  button3;
 			 
 #pragma region Windows Form Designer generated code
@@ -73,6 +86,7 @@ namespace VNAR3 {
 			this->OK_Button = (gcnew System::Windows::Forms::Button());
 			this->CANCEL_Button = (gcnew System::Windows::Forms::Button());
 			this->button3 = (gcnew System::Windows::Forms::Button());
+			this->sampleRateBox = (gcnew System::Windows::Forms::ComboBox());
 			this->SuspendLayout();
 			// 
 			// comboBox1
@@ -114,6 +128,17 @@ namespace VNAR3 {
 			this->button3->Text = L"Refresh";
 			this->button3->UseVisualStyleBackColor = true;
 			// 
+			// sampleRateBox
+			// 
+			this->sampleRateBox->FormattingEnabled = true;
+			this->sampleRateBox->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"192 kHz", L"96 kHz", L"48 kHz", L"44.1 kHz", 
+				L"24 kHz", L"12 kHz"});
+			this->sampleRateBox->Location = System::Drawing::Point(67, 54);
+			this->sampleRateBox->Name = L"sampleRateBox";
+			this->sampleRateBox->Size = System::Drawing::Size(143, 21);
+			this->sampleRateBox->TabIndex = 4;
+			this->sampleRateBox->SelectedIndexChanged += gcnew System::EventHandler(this, &SerialPort::sampleRateBox_SelectedIndexChanged);
+			// 
 			// SerialPort
 			// 
 			this->AcceptButton = this->OK_Button;
@@ -121,6 +146,7 @@ namespace VNAR3 {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->CANCEL_Button;
 			this->ClientSize = System::Drawing::Size(284, 261);
+			this->Controls->Add(this->sampleRateBox);
 			this->Controls->Add(this->button3);
 			this->Controls->Add(this->CANCEL_Button);
 			this->Controls->Add(this->OK_Button);
@@ -142,12 +168,16 @@ namespace VNAR3 {
 
 				}
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
+				this->sampleRateBox->SelectedIndex = 0;
+
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
 
 				if (this->Port->IsOpen) this->Port->Close();
 				Port->PortName = this->comboBox1->Text;
 				Port->BaudRate = 115200;
+				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
+
 //        this->Port->Parity = SetPortParity(_serialPort->Parity);
 //        this->Port->DataBits = SetPortDataBits(_serialPort->DataBits);
 //        this->Port->StopBits = SetPortStopBits(_serialPort->StopBits);
@@ -170,6 +200,10 @@ namespace VNAR3 {
 				}
 
 			 }
+private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
+				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
+
+		 }
 };
 }
 

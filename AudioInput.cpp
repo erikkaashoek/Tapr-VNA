@@ -10,7 +10,7 @@
 #include "Mockup.h"
 
 #include "AudioInput.h"
-
+using namespace System;
 	using namespace System::Windows::Forms;
 
 
@@ -237,12 +237,13 @@ void dsp_process(short *capture, long length)
 	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
   if (audioPower) {
 //	samp_mag = samp_s - abs(samp_c);
+
 	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len);
 //	  samp_phase = 0;
 	  actualMeasurement.magnitude = todb(samp_mag); 
 	  actualMeasurement.phase = (float)0.0;
   } else {
-#define FASTDSP
+//#define FASTDSP
 #ifdef FAST_DSP	
 	  double fast_mag, v0,v1;
 	double fast_phase;
@@ -334,7 +335,7 @@ void StoreMeasurement()
 	int highmatch = 0;
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
-	if (nextDecoded < 1024*100) {
+	if (nextDecoded < 1040*300) {
 		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
 		measured[nextDecoded].phase = actualMeasurement.phase;
 		measured[nextDecoded++].reference = actualMeasurement.reference;
@@ -624,7 +625,9 @@ void CALLBACK waveInProc(HWAVEIN hwi,UINT uMsg,DWORD dwInstance,DWORD dwParam1,D
 int OpenAudio (void) {
 	int i;
 	bool again = true;
-	int sampleRate = 192000;
+
+	if (hWaveIn != NULL)
+		waveInClose(hWaveIn);
 
 	while (again) {
 		pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
@@ -653,6 +656,10 @@ int OpenAudio (void) {
 				sampleRate = 48000;
 			else if (sampleRate == 48000)
 				sampleRate = 44100;
+			else if (sampleRate == 44100)
+				sampleRate = 24000;
+			else if (sampleRate == 24000)
+				sampleRate = 12000;
 			else
 				again = false;
 		} else
@@ -660,28 +667,32 @@ int OpenAudio (void) {
 	}
 	if (result)
 	{
-//		wchar_t fault[256];
-//		waveInGetErrorText(result, fault, 256);
-//		MessageBox::Show(fault, "Failed to open waveform input device.", MB_OK | MB_ICONEXCLAMATION);
+		//char fault[256];
+		//waveInGetErrorText(result, fault, 256);
+		//MessageBox::Show(fault->Text(), "Failed to open waveform input device.", MB_OK | MB_ICONEXCLAMATION);
 		return(result);
 	} else {
 		if (sampleRate == 192000)
-			MessageBox::Show("Input samplerate = 192kHz", "Success");
+			MessageBox::Show("Input samplerate = 192 kHz", "Success");
 		if (sampleRate == 96000)
-			MessageBox::Show("Input samplerate = 96kHz", "Success");
+			MessageBox::Show("Input samplerate = 96 kHz", "Success");
 		if (sampleRate == 48000)
-			MessageBox::Show("Input samplerate = 48kHz", "Success");
+			MessageBox::Show("Input samplerate = 48 kHz", "Success");
 		if (sampleRate == 44100)
 			MessageBox::Show("Input samplerate = 44.1kHz", "Success");
+		if (sampleRate == 24000)
+			MessageBox::Show("Input samplerate = 24 kHz", "Success");
+		if (sampleRate == 12000)
+			MessageBox::Show("Input samplerate = 12 kHz", "Success");
 
 	}
 
 	SAMP=sampleRate / 1000;		// Audio samples per dsp
 	NUMPTS=2*SAMP*10;
 
-	for (i = 0; i < sampleRate/1000; i++) {
-		sincos_tbl[i][0] = (short)(32600 * sin(PI/4 + PI * 2  * i * IFFREQ / sampleRate));
-		sincos_tbl[i][1] = (short)(32600 * cos(PI/4 + PI * 2  * i * IFFREQ / sampleRate));
+	for (i = 0; i < SAMP; i++) {
+		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFFREQ + 20)/ sampleRate));
+		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFFREQ + 20) / sampleRate));
 	}
 
 
