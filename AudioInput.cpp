@@ -10,6 +10,10 @@
 #include "Mockup.h"
 
 #include "AudioInput.h"
+
+	using namespace System::Windows::Forms;
+
+
 /*
 typedef struct measurement {
 	float magnitude;
@@ -17,7 +21,8 @@ typedef struct measurement {
 	float reference;
 } measurementType;
 */
-measurementType measured[1024*100];
+// Max gridsize = 1024, 1040 gives some extra data slots. 100 ms measurement means more then 200 samples point 
+measurementType measured[1040*300];
 volatile measurementType actualMeasurement;
 int measurementCount[1100];
 int measurementIndex[1100];
@@ -50,6 +55,9 @@ int simBefore;
 int simAfter;
 int simDirection;
 long simS = 0;
+int simR;
+int simC;
+int simL;
 
 int audioPower = false;
 
@@ -656,6 +664,16 @@ int OpenAudio (void) {
 //		waveInGetErrorText(result, fault, 256);
 //		MessageBox::Show(fault, "Failed to open waveform input device.", MB_OK | MB_ICONEXCLAMATION);
 		return(result);
+	} else {
+		if (sampleRate == 192000)
+			MessageBox::Show("Input samplerate = 192kHz", "Success");
+		if (sampleRate == 96000)
+			MessageBox::Show("Input samplerate = 96kHz", "Success");
+		if (sampleRate == 48000)
+			MessageBox::Show("Input samplerate = 48kHz", "Success");
+		if (sampleRate == 44100)
+			MessageBox::Show("Input samplerate = 44.1kHz", "Success");
+
 	}
 
 	SAMP=sampleRate / 1000;		// Audio samples per dsp
@@ -699,7 +717,7 @@ int OpenAudio (void) {
 	return(0);
 }
 
-void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF, int cable_before, int cable_after, int direction)
+void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF, int cable_before, int cable_after, int direction, int r, int c, int l)
 {
 	simMode = mode;
 	simPoint = 0;
@@ -712,6 +730,9 @@ void StartAudioSimulation(int mode, int numPoints, int duration, long startF, lo
 	simAfter = cable_after;
 	simDirection = direction;
 	simS = 0;
+	simR = r;
+	simC = c;
+	simL = l;
 }
 
 void SetAudioPower(int power)

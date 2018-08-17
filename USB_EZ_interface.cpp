@@ -413,7 +413,7 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 		}
 
 	} else {
-		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0);
+		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance);
 	}
 	return(true);
 	// mp = 0;
@@ -424,7 +424,7 @@ void VNADevice::SetFreq(long startF, int direction)
 	if (! mode){
 		serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
 	} else {
-		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction);
+		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance);
 	}
 }
 
@@ -522,4 +522,16 @@ void VNADevice::SetBefore(int l) {
 
 void VNADevice::SetAfter(int l) {
 	cable_after = l;
+}
+
+void VNADevice::SetResistance(int l) {
+	resistance = l;
+}
+
+void VNADevice::SetCapacitance(int l) {
+	capacitance = l;
+}
+
+void VNADevice::SetInductance(int l) {
+	inductance = l;
 }

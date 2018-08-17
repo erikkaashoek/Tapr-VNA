@@ -26,7 +26,7 @@ namespace VNAR3 {
 
 	int mode;					///< maximum magnitude reading
 	int cable_before;
-	int cable_after;
+			 int cable_after;
 	
 
 
@@ -55,8 +55,14 @@ namespace VNAR3 {
 	private: System::Windows::Forms::RadioButton^  radioButton5;
 	private: System::Windows::Forms::TrackBar^  CableBefore;
 	private: System::Windows::Forms::TrackBar^  CableAfter;
+	private: System::Windows::Forms::TrackBar^  Resistance;
+	private: System::Windows::Forms::TrackBar^  Capacitance;
+	private: System::Windows::Forms::TrackBar^  Inductance;
 	private: System::Windows::Forms::Label^  label1;
 	private: System::Windows::Forms::Label^  label2;
+	private: System::Windows::Forms::Label^  label3;
+	private: System::Windows::Forms::Label^  label4;
+	private: System::Windows::Forms::Label^  label5;
 	private: VNADevice^ VNA;		///< Vector Network Analyzer hardware object
 
 	private:
@@ -82,8 +88,17 @@ namespace VNAR3 {
 			this->CableAfter = (gcnew System::Windows::Forms::TrackBar());
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->label2 = (gcnew System::Windows::Forms::Label());
+			this->Resistance = (gcnew System::Windows::Forms::TrackBar());
+			this->Capacitance = (gcnew System::Windows::Forms::TrackBar());
+			this->Inductance = (gcnew System::Windows::Forms::TrackBar());
+			this->label3 = (gcnew System::Windows::Forms::Label());
+			this->label4 = (gcnew System::Windows::Forms::Label());
+			this->label5 = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Capacitance))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Inductance))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// radioButton1
@@ -104,7 +119,7 @@ namespace VNAR3 {
 			this->radioButton2->AutoSize = true;
 			this->radioButton2->Location = System::Drawing::Point(21, 40);
 			this->radioButton2->Name = L"radioButton2";
-			this->radioButton2->Size = System::Drawing::Size(57, 17);
+			this->radioButton2->Size = System::Drawing::Size(50, 17);
 			this->radioButton2->TabIndex = 1;
 			this->radioButton2->TabStop = true;
 			this->radioButton2->Text = L"Short";
@@ -185,12 +200,74 @@ namespace VNAR3 {
 			this->label2->TabIndex = 8;
 			this->label2->Text = L"Lenght After";
 			// 
+			// Resistance
+			// 
+			this->Resistance->Location = System::Drawing::Point(229, 12);
+			this->Resistance->Maximum = 100;
+			this->Resistance->Name = L"Resistance";
+			this->Resistance->Size = System::Drawing::Size(177, 45);
+			this->Resistance->TabIndex = 9;
+			this->Resistance->ValueChanged += gcnew System::EventHandler(this, &Mockup::Resistance_ValueChanged);
+			// 
+			// Capacitance
+			// 
+			this->Capacitance->Location = System::Drawing::Point(229, 58);
+			this->Capacitance->Maximum = 100;
+			this->Capacitance->Name = L"Capacitance";
+			this->Capacitance->Size = System::Drawing::Size(177, 45);
+			this->Capacitance->TabIndex = 10;
+			this->Capacitance->ValueChanged += gcnew System::EventHandler(this, &Mockup::Capacitance_ValueChanged);
+			// 
+			// Inductance
+			// 
+			this->Inductance->Location = System::Drawing::Point(229, 109);
+			this->Inductance->Maximum = 100;
+			this->Inductance->Name = L"Inductance";
+			this->Inductance->Size = System::Drawing::Size(177, 45);
+			this->Inductance->TabIndex = 11;
+			this->Inductance->ValueChanged += gcnew System::EventHandler(this, &Mockup::Inductance_ValueChanged);
+			// 
+			// label3
+			// 
+			this->label3->AutoSize = true;
+			this->label3->Location = System::Drawing::Point(141, 12);
+			this->label3->Name = L"label3";
+			this->label3->Size = System::Drawing::Size(60, 13);
+			this->label3->TabIndex = 12;
+			this->label3->Text = L"Resistance";
+			this->label3->Click += gcnew System::EventHandler(this, &Mockup::label3_Click);
+			// 
+			// label4
+			// 
+			this->label4->AutoSize = true;
+			this->label4->Location = System::Drawing::Point(141, 58);
+			this->label4->Name = L"label4";
+			this->label4->Size = System::Drawing::Size(67, 13);
+			this->label4->TabIndex = 13;
+			this->label4->Text = L"Capacitance";
+			this->label4->Click += gcnew System::EventHandler(this, &Mockup::label4_Click);
+			// 
+			// label5
+			// 
+			this->label5->AutoSize = true;
+			this->label5->Location = System::Drawing::Point(141, 109);
+			this->label5->Name = L"label5";
+			this->label5->Size = System::Drawing::Size(61, 13);
+			this->label5->TabIndex = 14;
+			this->label5->Text = L"Inductance";
+			// 
 			// Mockup
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
 			this->ClientSize = System::Drawing::Size(434, 339);
+			this->Controls->Add(this->label5);
+			this->Controls->Add(this->label4);
+			this->Controls->Add(this->label3);
+			this->Controls->Add(this->Inductance);
+			this->Controls->Add(this->Capacitance);
+			this->Controls->Add(this->Resistance);
 			this->Controls->Add(this->label2);
 			this->Controls->Add(this->label1);
 			this->Controls->Add(this->CableAfter);
@@ -205,6 +282,9 @@ namespace VNAR3 {
 			this->Load += gcnew System::EventHandler(this, &Mockup::Mockup_Load);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Capacitance))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Inductance))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -223,24 +303,44 @@ private: System::Void radioButton1_CheckedChanged(System::Object^  sender, Syste
 		 }
 private: System::Void radioButton1_Click(System::Object^  sender, System::EventArgs^  e) {
 			 VNA->SetMode(M_OPEN);
+			 Resistance->Value = 100;
 		 }
 private: System::Void radioButton2_Click(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetMode(M_SHORT);
+			 Resistance->Value = 0;
 		 }
 private: System::Void radioButton3_Click(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetMode(M_LOAD);
+			 Resistance->Value = 50;
 		 }
 private: System::Void radioButton4_Click(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetMode(M_THROUGH);
+			 Resistance->Value = 50;
 		 }
 private: System::Void radioButton5_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetMode(M_ATTN);
+			 Resistance->Value = 50;
 		 }
 private: System::Void CableBefore_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetBefore(CableBefore->Value);
 		 }
 private: System::Void CableAfter_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			 this->VNA->SetAfter(CableAfter->Value);
+		 }
+
+private: System::Void label3_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+
+private: System::Void label4_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void Resistance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			this->VNA->SetResistance(Resistance->Value);
+		 }
+private: System::Void Capacitance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			this->VNA->SetCapacitance(Capacitance->Value);
+		 }
+private: System::Void Inductance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			this->VNA->SetInductance(Inductance->Value);
 		 }
 };
 }

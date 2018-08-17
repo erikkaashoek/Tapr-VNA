@@ -22,7 +22,7 @@ extern bool audio_simulation;
 extern int OpenAudio (void);
 extern void ArmAudio(int pM);
 extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r);
-extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction);
+extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction, int r, int c, int l);
 extern void SetAudioPower(int power);
 
 typedef struct measurementType {
@@ -31,7 +31,7 @@ typedef struct measurementType {
 	float reference;
 } measurementType;
 
-extern measurementType measured[1024*100];
+extern measurementType measured[1040*300];
 extern int measurementIndex[1100];
 extern int lastMeasurement;
 extern volatile measurementType actualMeasurement;

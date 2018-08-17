@@ -58,6 +58,9 @@ private:
 	int lastDir;
 	int cable_before;
 	int cable_after;
+	int resistance;
+	int capacitance;
+	int inductance;
 	int dur;						// total duration of one side signal (2 + selected duration)
 	System::IO::Ports::SerialPort^  serialPort;
 
@@ -91,4 +94,7 @@ public:
 	void SetMode(int m);
 	void SetBefore(int l);
 	void SetAfter(int l);
+	void SetResistance(int v);
+	void SetCapacitance(int v);
+	void SetInductance(int v);
 };
