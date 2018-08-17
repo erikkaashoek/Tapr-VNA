@@ -56,12 +56,17 @@ int audioPower = false;
 #define DEBUGAUDIO
 
 #ifdef DEBUGAUDIO
-short temp_audio[NUMPTS];
+//short temp_audio[NUMPTS];
 #endif
 HWAVEIN      hWaveIn;
 
-int sampleRate = 44100;
-short int waveIn[WAVEHDRBUFFER][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
+//int sampleRate = 44100;
+int sampleRate = 192000;
+int SAMP=192;		// Audio samples per dsp
+// For normal operation
+int NUMPTS=2*192*10; // stereo  * 10 * SAMP
+
+short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 WAVEHDR      WaveInHdr[WAVEHDRBUFFER];
 MMRESULT result;
 
@@ -69,8 +74,8 @@ MMRESULT result;
  WAVEFORMATEX pFormat;
 
 
- //const 
-	 short sincos_tbl[48][2] = {
+ //table size 200 > 192kHz
+	 short sincos_tbl[200][2] = {
 /* 5 khz 48000 s/s
   { 10533,  31029 }, { 27246,  18205 }, { 32698,  -2143 }, { 24636, -21605 },
   {  6393, -32138 }, {-14493, -29389 }, {-29389, -14493 }, {-32138,   6393 },
@@ -229,6 +234,7 @@ void dsp_process(short *capture, long length)
 	  actualMeasurement.magnitude = todb(samp_mag); 
 	  actualMeasurement.phase = (float)0.0;
   } else {
+#define FASTDSP
 #ifdef FAST_DSP	
 	  double fast_mag, v0,v1;
 	double fast_phase;
@@ -304,7 +310,7 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 		m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
 		p = measured[measurementIndex[i] + 1 + lastJ].phase;
 		tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
-		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase;
+		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase - (float)180.0; // Corrects mistake in hardware
 //		if (i > 4 && m > -20)
 //			m = m;
 		lastJ++;
@@ -431,11 +437,6 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 
 		remaining = NUMPTS / 2 / SAMP;
 		while (remaining-- > 0) {
-
-			//for (i = 0; i < 48; i++) {
-			//			sincos_tbl[i][0] = (short)(32000 * sin(3.1416 * 2  * i * IFFREQ / 44100));
-			//			sincos_tbl[i][1] = (short)(32000 * cos(3.1416 * 2  * i * IFFREQ / 44100));
-			//}
 //#define DEBUGSIM
 #ifdef DEBUGSIM
 			if (simMode == 0) {
@@ -528,8 +529,8 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				for (i = 0; i < SAMP; i++) {
 					a = abs(refl);
 					v = arg(refl);
-					audio [i*2+0] = 0+(short)(32600 * abs(real(refl)) * cos(PI *2 * simS * IFFREQ / 44100 + v ));
-					audio [i*2+1] = 0+(short)(32600 * 0.1 * cos(PI *2 * (simS) * IFFREQ / 44100)); // Reference
+					audio [i*2+0] = 0+(short)(32600 * abs(real(refl)) * cos(PI *2 * simS * IFFREQ / sampleRate + v ));
+					audio [i*2+1] = 0+(short)(32600 * 0.1 * cos(PI *2 * (simS) * IFFREQ / sampleRate)); // Reference
 					simS++;
 					simStartF += simStepF;
 				}
@@ -543,29 +544,29 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				}
 				if (simStep < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / 44100));
-						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / sampleRate));
+						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
 						simS++;
 					}
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
-//						audio [i*2+0] = 0+(short)(32600 * audio_volume_reflection * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / 44100));
-//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+//						audio [i*2+0] = 0+(short)(32600 * audio_volume_reflection * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / sampleRate));
+//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
 
 						a = abs(refl);
 						v = arg(refl);
-						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / 44100 + arg(refl) ));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate + arg(refl) ));
+						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate)); // Reference
 						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
-//						audio [i*2+0] = 0+(short)(32600 * audio_volume_transmission * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_transmission * 1/ 360)  * IFFREQ / 44100));
-//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / 44100)); // Reference
+//						audio [i*2+0] = 0+(short)(32600 * audio_volume_transmission * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_transmission * 1/ 360)  * IFFREQ / sampleRate));
+//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
 						a = abs(tran);
 						v = arg(tran);
-						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFFREQ / 44100 + arg(tran)));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / 44100)); // Reference
+						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFFREQ / sampleRate + arg(tran)));
+						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / sampleRate)); // Reference
 						simS++;
 					}
 				}
@@ -614,32 +615,57 @@ void CALLBACK waveInProc(HWAVEIN hwi,UINT uMsg,DWORD dwInstance,DWORD dwParam1,D
 
 int OpenAudio (void) {
 	int i;
-	pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
-	pFormat.nChannels=2;                    //  1=mono, 2=stereo
-	pFormat.nSamplesPerSec=sampleRate;      // 44100
-	pFormat.nAvgBytesPerSec=sampleRate*4;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
-	pFormat.nBlockAlign=4;                  // = n.Channels * wBitsPerSample/8
-	pFormat.wBitsPerSample=16;              //  16 for high quality, 8 for telephone-grade
-	pFormat.cbSize=0;
-	/*
-	WAVEINCAPS stWIC={0};
-	MMRESULT mRes;
+	bool again = true;
+	int sampleRate = 192000;
 
-	ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
-	mRes=waveInGetDevCaps(nSel,&stWIC,sizeof(WAVEINCAPS));
-	*/
+	while (again) {
+		pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
+		pFormat.nChannels=2;                    //  1=mono, 2=stereo
+		pFormat.nSamplesPerSec=sampleRate;      // 44100
+		pFormat.nAvgBytesPerSec=sampleRate*4;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
+		pFormat.nBlockAlign=4;                  // = n.Channels * wBitsPerSample/8
+		pFormat.wBitsPerSample=16;              //  16 for high quality, 8 for telephone-grade
+		pFormat.cbSize=0;
 
-	result = waveInOpen(&hWaveIn, WAVE_MAPPER,&pFormat,
-		(DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
-	//            0L, 0L, WAVE_FORMAT_DIRECT);
+		WAVEINCAPS stWIC={0};
+		MMRESULT mRes;
+		int nSel = WAVE_MAPPER;
+
+		ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
+		mRes=waveInGetDevCaps(nSel,&stWIC,sizeof(WAVEINCAPS));
+
+
+		result = waveInOpen(&hWaveIn, WAVE_MAPPER,&pFormat, (DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
+		//            0L, 0L, WAVE_FORMAT_DIRECT);
+
+		if (result != 0) {
+			if (sampleRate == 192000)
+				sampleRate = 96000;
+			else if (sampleRate == 96000)
+				sampleRate = 48000;
+			else if (sampleRate == 48000)
+				sampleRate = 44100;
+			else
+				again = false;
+		} else
+			again = false;
+	}
 	if (result)
 	{
-		// wchar_t fault[256];
-		//waveInGetErrorText(result, fault, 256);
-		//Application->MessageBox(fault, "Failed to open waveform input device.",
-		//            MB_OK | MB_ICONEXCLAMATION);
+//		wchar_t fault[256];
+//		waveInGetErrorText(result, fault, 256);
+//		MessageBox::Show(fault, "Failed to open waveform input device.", MB_OK | MB_ICONEXCLAMATION);
 		return(result);
 	}
+
+	SAMP=sampleRate / 1000;		// Audio samples per dsp
+	NUMPTS=2*SAMP*10;
+
+	for (i = 0; i < sampleRate/1000; i++) {
+		sincos_tbl[i][0] = (short)(32600 * sin(PI/4 + PI * 2  * i * IFFREQ / sampleRate));
+		sincos_tbl[i][1] = (short)(32600 * cos(PI/4 + PI * 2  * i * IFFREQ / sampleRate));
+	}
+
 
 	for (i=0; i<WAVEHDRBUFFER ; i++) {
 		// Set up and prepare header for input

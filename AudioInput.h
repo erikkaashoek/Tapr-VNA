@@ -2,14 +2,12 @@
 #ifndef AUDIOINPUT_H
 #define AUDIOINPUT_H
 #define WAVEHDRBUFFER 4
-#define SAMP	44		// Audio samples per dsp
-// For normal operation
-#define NUMPTS 2*SAMP*10 // stereo  * 10 * SAMP
 
+#define MAXNUMPTS	2*192*10 // 192kHz
 // For debugging
 //#define NUMPTS 2*SAMP // stereo  * 10 * SAMP
 
-extern short int waveIn[WAVEHDRBUFFER][NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
+extern short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 
 extern float decoded[1024][2];
 extern  int audio_delay;
