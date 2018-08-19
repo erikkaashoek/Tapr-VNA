@@ -240,10 +240,10 @@ void dsp_process(short *capture, long length)
 
 	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len);
 //	  samp_phase = 0;
-	  actualMeasurement.magnitude = todb(samp_mag); 
+	  actualMeasurement.magnitude = todb(samp_mag*(float)2.0); // compansate 3 dB difference
 	  actualMeasurement.phase = (float)0.0;
   } else {
-//#define FASTDSP
+#define FASTDSP
 #ifdef FAST_DSP	
 	  double fast_mag, v0,v1;
 	double fast_phase;
@@ -265,12 +265,6 @@ void dsp_process(short *capture, long length)
 	actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
 #endif
   }
-
-	if (audioPower) {
-	} else {
-	}
-
-
 
   while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
   while (actualMeasurement.phase <= -180.0f) actualMeasurement.phase += 360.0;
@@ -386,14 +380,30 @@ void StoreMeasurement()
 #include <complex>
 using namespace std;  
 
+
+#define Z0	50.0
+
+#define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
+
+#define CAPACITANCE	1/(2.0*PI*freq*pow(10,(101-simC)/20.0)/1e12)
+
 complex <double> modelLoadRefl(long freq, double res)
 {
+	long f = freq;
+	double ind = INDUCTANCE;
+	double cap = CAPACITANCE;
+/*
 	if (res < 50.0) {
-		return (polar(- (50.0-res)/50.0, 0.0));
+		return (polar(- (50.0-res)/50.0, INDUCTANCE));
 	} else if (res == 50.0) {
-		return (polar(- 0.0001, 0.0));
+		return (polar(- 0.0001, INDUCTANCE));
 	}
-	return( polar( (res-50.0) / (res+50.0), 0.0) ); 
+	return( polar( (res-50.0) / (res+50.0), INDUCTANCE) ); 
+*/
+	complex <double> Zl (res, -INDUCTANCE + CAPACITANCE) , Zs ( Z0, 0.0);
+//	Zl = polar(res,0.0) + polar(0.0, INDUCTANCE);
+//	Zs = polar(Z0, 0.0);
+	return( (Zl - Zs)/(Zl +Zs) );
 }
 
 complex <double> modelLoadTran(long freq, double res)
@@ -411,7 +421,7 @@ complex <double> modelLoadTran(long freq, double res)
 complex <double> modelRefl(long freq, double bef, double res, double aft)
 {
 	double del1 = bef/10./160e6, del2 = aft/10./160e6;
-	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq,res) * polar(1.,del1*freq*2*PI) ;
+	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq,simR) * polar(1.,del1*freq*2*PI) ;
 	debugC = r;
 	return(r);
 }
@@ -434,7 +444,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 	float sigLevel = (float)1;
 	complex <double> tran;
 	complex <double> refl;
-	double v,a;
+//	double v,a;
 	double pi = 3.14159265359;
 
 	//	TRACE("%d",pHdr->dwUser);
@@ -463,7 +473,9 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 			}
 #endif
 			if (simMode) {
+				audio_simulation = true;
 				audio = waveIn[0];
+
 				if (simStartF > MAXCALFREQ * 3)
 					sigLevel = sigLevel / 16;
 				else if (simStartF > MAXCALFREQ)
@@ -475,51 +487,22 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				if (simMode == M_SHORT) {
 					tran = modelTran(simStartF, simBefore, 1.0, simAfter);
 					refl = modelRefl(simStartF, simBefore, 1.0, simAfter);
-					audio_volume_transmission = 0.00001 * sigLevel;
-					audio_phase_transmission = 0.0;
-					audio_phase_reflection = -180.0 +  (2 * simBefore) * simStartF / 1000000.;
-					audio_volume_reflection = 0.9 * sigLevel;
-					audio_simulation = true;
 				}
 				if (simMode == M_OPEN) {
 					tran = modelTran(simStartF, simBefore, 20000.0, simAfter);
 					refl = modelRefl(simStartF, simBefore, 20000.0, simAfter);
-					audio_volume_transmission = 0.0000001 * sigLevel;
-					audio_phase_transmission = 0.0;
-					audio_phase_reflection = 0.0 +  (2 * simBefore) * simStartF / 1000000.;
-					audio_volume_reflection = 0.9 * sigLevel;
-					audio_simulation = true;
 				}
 				if (simMode == M_LOAD) {
 					tran = modelTran(simStartF, simBefore, 0.01, simAfter);
 					refl = modelRefl(simStartF, simBefore, 50.0, simAfter);
-					audio_volume_transmission = 0.0001 * sigLevel;
-					audio_phase_transmission = 0.0;
-					audio_phase_reflection = 0.0;
-					audio_volume_reflection = 0.0001 * sigLevel;
-					audio_simulation = true;
 				}
 				if (simMode == M_THROUGH) {
 					tran = modelTran(simStartF, simBefore, 50.0, simAfter);
 					refl = modelRefl(simStartF, simBefore, 50.0, simAfter);
-					audio_volume_transmission = 0.9 * sigLevel;
-					audio_phase_transmission = 0.0 + (simBefore + simAfter) * simStartF / 1000000.;
-					while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
-					while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
-					audio_phase_reflection = 0.0;
-					audio_volume_reflection = 0.0001 * sigLevel;
-					audio_simulation = true;
 				}
 				if (simMode == M_ATTN) {
 					tran = modelTran(simStartF, simBefore, 0.5, simAfter);
 					refl = modelRefl(simStartF, simBefore, 50.0, simAfter);
-					audio_volume_transmission = 0.9 * sigLevel / 100; // /100 = -40dB
- 					audio_phase_transmission = 0.0 + (simBefore + simAfter) * simStartF / 1000000.;
-					while (audio_phase_transmission >= +180.0) audio_phase_transmission -= 360.0;
-					while (audio_phase_transmission <= -180.0) audio_phase_transmission += 360.0;
-					audio_phase_reflection = 0.0;
-					audio_volume_reflection = 0.0001 * sigLevel;
-					audio_simulation = true;
 				}
 
 
@@ -553,27 +536,22 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				}
 				if (simStep < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / sampleRate));
+						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFFREQ / sampleRate));
 						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
 						simS++;
 					}
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
-//						audio [i*2+0] = 0+(short)(32600 * audio_volume_reflection * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_reflection * 1 / 360)  * IFFREQ / sampleRate));
-//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
-
-						a = abs(refl);
-						v = arg(refl);
+//						a = abs(refl);
+//						v = arg(refl);
 						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate + arg(refl) ));
 						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate)); // Reference
 						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
-//						audio [i*2+0] = 0+(short)(32600 * audio_volume_transmission * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * ((simS+0) + audio_phase_transmission * 1/ 360)  * IFFREQ / sampleRate));
-//						audio [i*2+1] = 0+(short)(32600 * 0.1 * sigLevel * (1 - (rand() % 1000)/1000.0*0.00001) * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
-						a = abs(tran);
-						v = arg(tran);
+//						a = abs(tran);
+//						v = arg(tran);
 						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFFREQ / sampleRate + arg(tran)));
 						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / sampleRate)); // Reference
 						simS++;
