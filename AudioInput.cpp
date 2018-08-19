@@ -29,6 +29,7 @@ int measurementIndex[1100];
 int lastMeasurement;
 int maxMeasurement;
 
+bool audioStopping = false;
 
 float decoded[1024][2];
 volatile int nextDecoded = 0;
@@ -70,9 +71,11 @@ HWAVEIN      hWaveIn;
 
 //int sampleRate = 44100;
 int sampleRate = 192000;
-int SAMP=192;		// Audio samples per dsp
+int oldSampleRate = 0;
+
+int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
 // For normal operation
-int NUMPTS=2*192*10; // stereo  * 10 * SAMP
+int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
 
 short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 WAVEHDR      WaveInHdr[WAVEHDRBUFFER];
@@ -234,6 +237,11 @@ void dsp_process(short *capture, long length)
 //  acc_ref_s = ref_s;
 //  acc_ref_c = ref_c;
 
+#define REFERENCE_LEVEL_REDUCTION	30
+
+	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for 26dB reduced level
+	ref_c *= REFERENCE_LEVEL_REDUCTION;	
+
 	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
   if (audioPower) {
 //	samp_mag = samp_s - abs(samp_c);
@@ -322,7 +330,8 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 	return (false);
 }
 
-#define SIGNAL_THRESHOLD -30
+#define SIGNAL_THRESHOLD -25
+
 void StoreMeasurement()
 {
 	int lowmatch = 0;
@@ -385,7 +394,7 @@ using namespace std;
 
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
 
-#define CAPACITANCE	1/(2.0*PI*freq*pow(10,(101-simC)/20.0)/1e12)
+#define CAPACITANCE	1/(2.0*PI*freq*pow(10,(100-simC)/10.0)/1e13)
 
 complex <double> modelLoadRefl(long freq, double res)
 {
@@ -537,7 +546,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				if (simStep < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
 						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFFREQ / sampleRate));
-						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / sampleRate)); // Reference
+						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
@@ -545,7 +554,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(refl);
 //						v = arg(refl);
 						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate)); // Reference
+						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else { // Transmission
@@ -553,7 +562,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(tran);
 //						v = arg(tran);
 						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFFREQ / sampleRate + arg(tran)));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / sampleRate)); // Reference
+						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				}
@@ -572,7 +581,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 			audio = & (audio[SAMP*2]);
 			//}
 		}
-		mRes=waveInAddBuffer(hWaveIn,pHdr,sizeof(WAVEHDR));
+		if (!audioStopping) mRes=waveInAddBuffer(hWaveIn,pHdr,sizeof(WAVEHDR));
 	}
 }
 
@@ -604,9 +613,13 @@ int OpenAudio (void) {
 	int i;
 	bool again = true;
 
-	if (hWaveIn != NULL)
+	if (hWaveIn != NULL) {
+		audioStopping = true;
+		Sleep(20);
+		waveInReset(hWaveIn);
 		waveInClose(hWaveIn);
-
+		audioStopping = false;
+	}
 	while (again) {
 		pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
 		pFormat.nChannels=2;                    //  1=mono, 2=stereo

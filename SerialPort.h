@@ -10,6 +10,7 @@
 //#include "objbase.h"
 
 extern int sampleRate;
+extern int oldSampleRate;
 #define SAMPLERATES	6
 static int sampleRateTable [SAMPLERATES] = {
 	192000,
@@ -20,6 +21,7 @@ static int sampleRateTable [SAMPLERATES] = {
 	12000
 };
 
+extern int OpenAudio();
 
 using namespace System;
 
@@ -202,7 +204,10 @@ namespace VNAR3 {
 			 }
 private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
-
+				if (oldSampleRate!=sampleRate) {
+					OpenAudio();
+					oldSampleRate=sampleRate;
+				}
 		 }
 };
 }

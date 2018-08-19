@@ -26,6 +26,7 @@ namespace VNAR3 {
 
 	int mode;					///< maximum magnitude reading
 	int cable_before;
+	public: 
 			 int cable_after;
 	
 
@@ -63,6 +64,10 @@ namespace VNAR3 {
 	private: System::Windows::Forms::Label^  label3;
 	private: System::Windows::Forms::Label^  label4;
 	private: System::Windows::Forms::Label^  label5;
+	private: System::Windows::Forms::Label^  label6;
+	private: System::Windows::Forms::Label^  label7;
+	private: System::Windows::Forms::Label^  label8;
+	private: System::Windows::Forms::Label^  label9;
 	private: VNADevice^ VNA;		///< Vector Network Analyzer hardware object
 
 	private:
@@ -94,6 +99,10 @@ namespace VNAR3 {
 			this->label3 = (gcnew System::Windows::Forms::Label());
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->label5 = (gcnew System::Windows::Forms::Label());
+			this->label6 = (gcnew System::Windows::Forms::Label());
+			this->label7 = (gcnew System::Windows::Forms::Label());
+			this->label8 = (gcnew System::Windows::Forms::Label());
+			this->label9 = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->BeginInit();
@@ -256,12 +265,53 @@ namespace VNAR3 {
 			this->label5->TabIndex = 14;
 			this->label5->Text = L"Inductance";
 			// 
+			// label6
+			// 
+			this->label6->AutoSize = true;
+			this->label6->Location = System::Drawing::Point(375, 88);
+			this->label6->Name = L"label6";
+			this->label6->Size = System::Drawing::Size(31, 13);
+			this->label6->TabIndex = 15;
+			this->label6->Text = L"0.1pf";
+			// 
+			// label7
+			// 
+			this->label7->AutoSize = true;
+			this->label7->Location = System::Drawing::Point(226, 86);
+			this->label7->Name = L"label7";
+			this->label7->Size = System::Drawing::Size(31, 13);
+			this->label7->TabIndex = 16;
+			this->label7->Text = L"10uF";
+			// 
+			// label8
+			// 
+			this->label8->AutoSize = true;
+			this->label8->Location = System::Drawing::Point(226, 141);
+			this->label8->Name = L"label8";
+			this->label8->Size = System::Drawing::Size(36, 13);
+			this->label8->TabIndex = 17;
+			this->label8->Text = L"0.1nH";
+
+			// 
+			// label9
+			// 
+			this->label9->AutoSize = true;
+			this->label9->Location = System::Drawing::Point(375, 141);
+			this->label9->Name = L"label9";
+			this->label9->Size = System::Drawing::Size(33, 13);
+			this->label9->TabIndex = 18;
+			this->label9->Text = L"10uH";
+			// 
 			// Mockup
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
 			this->ClientSize = System::Drawing::Size(434, 339);
+			this->Controls->Add(this->label9);
+			this->Controls->Add(this->label8);
+			this->Controls->Add(this->label7);
+			this->Controls->Add(this->label6);
 			this->Controls->Add(this->label5);
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->label3);
@@ -341,6 +391,9 @@ private: System::Void Capacitance_ValueChanged(System::Object^  sender, System::
 		 }
 private: System::Void Inductance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			this->VNA->SetInductance(Inductance->Value);
+		 }
+
+private: System::Void label8_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
 };
 }
