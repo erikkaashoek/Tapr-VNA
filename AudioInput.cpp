@@ -394,13 +394,14 @@ using namespace std;
 
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
 
-#define CAPACITANCE	1/(2.0*PI*freq*pow(10,(100-simC)/10.0)/1e13)
+#define CAPACITANCE	1/(2.0*PI*freq*pow(10,simC/20.0)/1e13)
 
 complex <double> modelLoadRefl(long freq, double res)
 {
 	long f = freq;
 	double ind = INDUCTANCE;
 	double cap = CAPACITANCE;
+	res = pow(10, (res - 50.0)/20.0)*Z0;
 /*
 	if (res < 50.0) {
 		return (polar(- (50.0-res)/50.0, INDUCTANCE));
@@ -409,7 +410,8 @@ complex <double> modelLoadRefl(long freq, double res)
 	}
 	return( polar( (res-50.0) / (res+50.0), INDUCTANCE) ); 
 */
-	complex <double> Zl (res, -INDUCTANCE + CAPACITANCE) , Zs ( Z0, 0.0);
+	complex <double> Zl (0.0, -INDUCTANCE), Zr(res, 0.0) , Zc(0.0, + CAPACITANCE) , Zs ( Z0, 0.0);
+	Zl = Zl + (Zr * Zc)/(Zr + Zc);
 //	Zl = polar(res,0.0) + polar(0.0, INDUCTANCE);
 //	Zs = polar(Z0, 0.0);
 	return( (Zl - Zs)/(Zl +Zs) );

@@ -51,6 +51,8 @@ using the .NET style of Event Delegates.
 //#include "Serial.h"
 //#include "AudioDevice.h"
 #include <complex>
+using namespace std;  
+
 #include <stdlib.h>
 
 //#define DEBUGAUDIOLEVELS		// Display pareto of reference signal measured during a sweep
@@ -4478,8 +4480,13 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 									else
 									{
 										String^ exponent = gcnew String("");
+										complex <double> Zt (R, jX), Zr (R, 0.0), Zc, one(1.0,0.0), Rt, Rr,Rc ;
+										Rt = one / Zt;
+										jX = 1 / imag(Rt);
+										//Zc = one/((one/Zt)-(one/Zr));
+										//jX = imag(Zc);
 										// negative series reactance .. compute Cseries
-										jX = -jX;
+										//jX = -jX;
 										double Cs = 1.0 / ( 2.0 * Math::PI * FG->Frequency(index) * jX);
 										// format Cs as pF, nF, or uF
 										if (Cs < 0.000000001)	// pF
@@ -4499,7 +4506,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 										}
 										if (polarItem->Checked)
 										gr->DrawString(String::Concat("Z  ",R.ToString("N1")," - j ", jX.ToString("N1")," ohms",
-											"  (Cs = ",Cs.ToString("N1"),exponent), Parameterfont, brS11Mag, leftstatuspoint);
+											"  (Cp = ",Cs.ToString("N1"),exponent), Parameterfont, brS11Mag, leftstatuspoint);
 										else
 										gr->DrawString(String::Concat("Z  ",R.ToString("N1")," - j ", jX.ToString("N1")," ohms"),
 											Parameterfont, brS11Mag, leftstatuspoint);

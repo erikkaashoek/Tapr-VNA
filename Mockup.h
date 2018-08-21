@@ -268,7 +268,7 @@ namespace VNAR3 {
 			// label6
 			// 
 			this->label6->AutoSize = true;
-			this->label6->Location = System::Drawing::Point(375, 88);
+			this->label6->Location = System::Drawing::Point(226, 88);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(31, 13);
 			this->label6->TabIndex = 15;
@@ -277,11 +277,11 @@ namespace VNAR3 {
 			// label7
 			// 
 			this->label7->AutoSize = true;
-			this->label7->Location = System::Drawing::Point(226, 86);
+			this->label7->Location = System::Drawing::Point(375, 88);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(31, 13);
 			this->label7->TabIndex = 16;
-			this->label7->Text = L"10uF";
+			this->label7->Text = L"10nF";
 			// 
 			// label8
 			// 
@@ -291,7 +291,6 @@ namespace VNAR3 {
 			this->label8->Size = System::Drawing::Size(36, 13);
 			this->label8->TabIndex = 17;
 			this->label8->Text = L"0.1nH";
-
 			// 
 			// label9
 			// 
