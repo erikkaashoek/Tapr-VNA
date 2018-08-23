@@ -237,7 +237,7 @@ void dsp_process(short *capture, long length)
 //  acc_ref_s = ref_s;
 //  acc_ref_c = ref_c;
 
-#define REFERENCE_LEVEL_REDUCTION	30
+#define REFERENCE_LEVEL_REDUCTION	1  // 30 with 1.5k resistor
 
 	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for 26dB reduced level
 	ref_c *= REFERENCE_LEVEL_REDUCTION;	
@@ -393,28 +393,19 @@ using namespace std;
 #define Z0	50.0
 
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
-
 #define CAPACITANCE	1/(2.0*PI*freq*pow(10,simC/20.0)/1e13)
+#define RESISTANCE pow(10, (simR - 50.0)/20.0)*Z0
 
-complex <double> modelLoadRefl(long freq, double res)
+
+complex <double> modelLoadRefl(long freq)
 {
-	long f = freq;
-	double ind = INDUCTANCE;
-	double cap = CAPACITANCE;
-	res = pow(10, (res - 50.0)/20.0)*Z0;
-/*
-	if (res < 50.0) {
-		return (polar(- (50.0-res)/50.0, INDUCTANCE));
-	} else if (res == 50.0) {
-		return (polar(- 0.0001, INDUCTANCE));
-	}
-	return( polar( (res-50.0) / (res+50.0), INDUCTANCE) ); 
-*/
-	complex <double> Zl (0.0, -INDUCTANCE), Zr(res, 0.0) , Zc(0.0, + CAPACITANCE) , Zs ( Z0, 0.0);
-	Zl = Zl + (Zr * Zc)/(Zr + Zc);
-//	Zl = polar(res,0.0) + polar(0.0, INDUCTANCE);
-//	Zs = polar(Z0, 0.0);
-	return( (Zl - Zs)/(Zl +Zs) );
+//	long f = freq;
+//	double ind = INDUCTANCE;
+//	double cap = CAPACITANCE;
+//	res = pow(10, (res - 50.0)/20.0)*Z0;
+	complex <double> Zl (0.0, -INDUCTANCE), Zr(RESISTANCE, 0.0) , Zc(0.0, + CAPACITANCE) , Zs ( Z0, 0.0);
+	Zl = Zl + (Zr * Zc)/(Zr + Zc); // L series with R/C
+	return( (Zl - Zs)/(Zl +Zs) );	// Reflection due to mismatch
 }
 
 complex <double> modelLoadTran(long freq, double res)
@@ -432,7 +423,7 @@ complex <double> modelLoadTran(long freq, double res)
 complex <double> modelRefl(long freq, double bef, double res, double aft)
 {
 	double del1 = bef/10./160e6, del2 = aft/10./160e6;
-	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq,simR) * polar(1.,del1*freq*2*PI) ;
+	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq) * polar(1.,del1*freq*2*PI) ;
 	debugC = r;
 	return(r);
 }

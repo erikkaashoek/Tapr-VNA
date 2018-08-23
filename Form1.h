@@ -4482,7 +4482,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 										String^ exponent = gcnew String("");
 										complex <double> Zt (R, jX), Zr (R, 0.0), Zc, one(1.0,0.0), Rt, Rr,Rc ;
 										Rt = one / Zt;
-										jX = 1 / imag(Rt);
+										jX = (float)( 1 / imag(Rt));
 										//Zc = one/((one/Zt)-(one/Zr));
 										//jX = imag(Zc);
 										// negative series reactance .. compute Cseries
