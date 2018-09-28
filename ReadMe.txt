@@ -1,5 +1,5 @@
 This project is a continuation of the TAPR VNA 3.1.
-It combines SW and HW designs from various VNA projects to come with to cheap and simple design.
+It combines SW and HW designs from various VNA projects to come with to cheap and simple design capable to measure from 1 MHz (or below) to above 900MHz
 
 Main changes are (see Schematic.jpg in Doc folder):
 - Using SI5351 to generate both test signal and 5kHz offset mixing signal. Both can be square wave as the mixing removes all harmonics
@@ -8,7 +8,7 @@ Main changes are (see Schematic.jpg in Doc folder):
 - Removal of all complex calibration of the phase/magnitude detectors as the audio DSP is completely lineair
 - Adding a mockup test device simulating the audio signals generated during a sweep of SOLT to test the SW without connected module
 
-An example implementation uses:
+An example implementation uses (see Schematic in doc folder):
  - PC with this SW
  - Auduino module controlled by serial line steering the SI5351 to sweep
  - Resistor based SW bridge and 50 transmission sink
@@ -16,5 +16,5 @@ An example implementation uses:
  - two FET's to switch between reflection and transmission for right audio channel.
 
 Todo:
-- Test if 3 harmonic can be used to extend VNA till above 500 MHz. Initial test shows 30dB reduction in SNR but that still may leave above 50dB dynamic range
-- Add an programmable attanuator to control the 
+- Add a programmable attanuator to increase dynamic range
+
