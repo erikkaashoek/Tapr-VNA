@@ -54,9 +54,9 @@
 
 // Constants related to calibration grid (both instrument calibration and fixture calibration)
 ///\def Maximum Calibration Frequency
-#define MAXCALFREQ 224000000
+#define MAXCALFREQ 249000000
 ///\def Minimum Calibration Frequency
-#define MINCALFREQ 200000
+#define MINCALFREQ   1000000
 ///\def Number of Calibration Points
 #define NUMCALPTS 1024.0
 ///\def Size of Phase Calibration Grid
@@ -126,4 +126,4 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 
 
 //#define IFFREQ	5128
-#define IFFREQ	5000
+

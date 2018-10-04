@@ -14,6 +14,7 @@ extern  int audio_delay;
 //extern volatile float gamma[4];
 
 extern int sampleRate;
+extern int IFREQ;
 extern double audio_volume_reflection;
 extern double audio_phase_reflection;
 extern double audio_volume_transmission;

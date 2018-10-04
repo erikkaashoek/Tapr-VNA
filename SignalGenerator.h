@@ -204,7 +204,7 @@ namespace VNAR3 {
 			// timer1
 			// 
 			this->timer1->Enabled = true;
-			this->timer1->Interval = 500;
+			this->timer1->Interval = 100;
 			this->timer1->Tick += gcnew System::EventHandler(this, &SignalGenerator::timer1_Tick);
 			// 
 			// label5
@@ -266,7 +266,8 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 			}
 		 }
 private: System::Void trackBar1_Scroll(System::Object^  sender, System::EventArgs^  e) {
-			 freq = MINCALFREQ + (long long)(MAXCALFREQ - MINCALFREQ) * trackBar1->Value / trackBar1 ->Maximum;
+//			 freq = MINCALFREQ + (long long)(MAXCALFREQ - MINCALFREQ) * trackBar1->Value / trackBar1 ->Maximum;
+			 freq = (long) pow((float)10.0, (float) ((log10f(MAXCALFREQ) - log10f(MINCALFREQ)) * trackBar1->Value / trackBar1 ->Maximum + log10f(MINCALFREQ)));
 			 frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
 //			VNA->SetFreq(freq,showRefl->Checked);
 		 }
@@ -283,7 +284,10 @@ private: System::Void frequency_Leave(System::Object^  sender, System::EventArgs
 				else if (freq > MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
-					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
+					// trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
+
+					trackBar1->Value = (int) (log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) ;
+
 					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}
@@ -309,7 +313,7 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 				else if (freq > MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
-					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
+					trackBar1->Value = (int) (log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) ;
 					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}

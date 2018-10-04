@@ -9,6 +9,7 @@
 
 //#include "objbase.h"
 
+extern int IFREQ;
 extern int sampleRate;
 extern int oldSampleRate;
 #define SAMPLERATES	6
@@ -75,6 +76,10 @@ namespace VNAR3 {
 		/// </summary>
 		System::ComponentModel::Container ^components;
 	private: System::Windows::Forms::ComboBox^  sampleRateBox;
+	private: System::Windows::Forms::Label^  label1;
+	private: System::Windows::Forms::TextBox^  IFreq;
+
+	private: System::Windows::Forms::Label^  label2;
 	private: System::Windows::Forms::Button^  button3;
 			 
 #pragma region Windows Form Designer generated code
@@ -89,6 +94,9 @@ namespace VNAR3 {
 			this->CANCEL_Button = (gcnew System::Windows::Forms::Button());
 			this->button3 = (gcnew System::Windows::Forms::Button());
 			this->sampleRateBox = (gcnew System::Windows::Forms::ComboBox());
+			this->label1 = (gcnew System::Windows::Forms::Label());
+			this->IFreq = (gcnew System::Windows::Forms::TextBox());
+			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// comboBox1
@@ -141,6 +149,33 @@ namespace VNAR3 {
 			this->sampleRateBox->TabIndex = 4;
 			this->sampleRateBox->SelectedIndexChanged += gcnew System::EventHandler(this, &SerialPort::sampleRateBox_SelectedIndexChanged);
 			// 
+			// label1
+			// 
+			this->label1->AutoSize = true;
+			this->label1->Location = System::Drawing::Point(36, 57);
+			this->label1->Name = L"label1";
+			this->label1->Size = System::Drawing::Size(25, 13);
+			this->label1->TabIndex = 5;
+			this->label1->Text = L"SR:";
+			// 
+			// IFreq
+			// 
+			this->IFreq->Location = System::Drawing::Point(125, 88);
+			this->IFreq->Name = L"IFreq";
+			this->IFreq->Size = System::Drawing::Size(84, 20);
+			this->IFreq->TabIndex = 6;
+			this->IFreq->TextChanged += gcnew System::EventHandler(this, &SerialPort::IFreq_TextChanged);
+			// 
+			// label2
+			// 
+			this->label2->AutoSize = true;
+			this->label2->Location = System::Drawing::Point(36, 91);
+			this->label2->Name = L"label2";
+			this->label2->Size = System::Drawing::Size(19, 13);
+			this->label2->TabIndex = 7;
+			this->label2->Text = L"IF:";
+			this->label2->Click += gcnew System::EventHandler(this, &SerialPort::label2_Click);
+			// 
 			// SerialPort
 			// 
 			this->AcceptButton = this->OK_Button;
@@ -148,6 +183,9 @@ namespace VNAR3 {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->CANCEL_Button;
 			this->ClientSize = System::Drawing::Size(284, 261);
+			this->Controls->Add(this->label2);
+			this->Controls->Add(this->IFreq);
+			this->Controls->Add(this->label1);
 			this->Controls->Add(this->sampleRateBox);
 			this->Controls->Add(this->button3);
 			this->Controls->Add(this->CANCEL_Button);
@@ -157,6 +195,7 @@ namespace VNAR3 {
 			this->Text = L"SerialPort";
 			this->Load += gcnew System::EventHandler(this, &SerialPort::SerialPort_Load);
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}
 #pragma endregion
@@ -171,6 +210,7 @@ namespace VNAR3 {
 				}
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
 				this->sampleRateBox->SelectedIndex = 0;
+				this->IFreq->Text = IFREQ.ToString();
 
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -193,6 +233,8 @@ namespace VNAR3 {
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    this->DialogResult = System::Windows::Forms::DialogResult::None;
 					}
+					if (this->Port->IsOpen) this->Port->Close();
+
 					delete reply;
 				}
 				catch (Exception^)
@@ -208,6 +250,12 @@ private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender
 					OpenAudio();
 					oldSampleRate=sampleRate;
 				}
+		 }
+private: System::Void label2_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void IFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+			IFREQ = Convert::ToInt32(this->IFreq->Text);	
+
 		 }
 };
 }

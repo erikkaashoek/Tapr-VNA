@@ -72,6 +72,7 @@ HWAVEIN      hWaveIn;
 //int sampleRate = 44100;
 int sampleRate = 192000;
 int oldSampleRate = 0;
+int IFREQ = 5000;
 
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
 // For normal operation
@@ -317,11 +318,19 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 			lastI = i;
 			lastJ = 0;
 		}
-		r = measured[measurementIndex[i] + 1 + lastJ].reference;
-		m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
-		p = measured[measurementIndex[i] + 1 + lastJ].phase;
-		tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
-		tp = measured[measurementIndex[i] + 1 + d + lastJ].phase - (float)180.0; // Corrects mistake in hardware
+		if (audioPower) {
+			r = measured[measurementIndex[i] + 1 + lastJ].reference;
+			tm = measured[measurementIndex[i] + 1 + lastJ].magnitude;
+			tp = measured[measurementIndex[i] + 1 + lastJ].phase;
+			m = 0.0;
+			p = 0.0;
+		} else {
+			r = measured[measurementIndex[i] + 1 + lastJ].reference;
+			m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
+			p = measured[measurementIndex[i] + 1 + lastJ].phase;
+			tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
+			tp = measured[measurementIndex[i] + 1 + d + lastJ].phase;
+		}
 //		if (i > 4 && m > -20)
 //			m = m;
 		lastJ++;
@@ -354,7 +363,7 @@ void StoreMeasurement()
 		if ( measured[nextDecoded-3].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-2].reference > SIGNAL_THRESHOLD ) highmatch++;
 		if ( measured[nextDecoded-1].reference > SIGNAL_THRESHOLD ) highmatch++;
-		if (lowmatch >= 1 && highmatch >= 5) {
+		if (lowmatch >= 1 && highmatch >= 2) {
 			 if (measured[nextDecoded-6].reference > SIGNAL_THRESHOLD) 
 				 measurementIndex[lastMeasurement++] = nextDecoded - 6;
 			 else if (measured[nextDecoded-5].reference > SIGNAL_THRESHOLD) 
@@ -523,8 +532,8 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				for (i = 0; i < SAMP; i++) {
 					a = abs(refl);
 					v = arg(refl);
-					audio [i*2+0] = 0+(short)(32600 * abs(real(refl)) * cos(PI *2 * simS * IFFREQ / sampleRate + v ));
-					audio [i*2+1] = 0+(short)(32600 * 0.1 * cos(PI *2 * (simS) * IFFREQ / sampleRate)); // Reference
+					audio [i*2+0] = 0+(short)(32600 * abs(real(refl)) * cos(PI *2 * simS * IFREQ / sampleRate + v ));
+					audio [i*2+1] = 0+(short)(32600 * 0.1 * cos(PI *2 * (simS) * IFREQ / sampleRate)); // Reference
 					simS++;
 					simStartF += simStepF;
 				}
@@ -538,24 +547,24 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				}
 				if (simStep < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFFREQ / sampleRate));
-						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
+						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(refl);
 //						v = arg(refl);
-						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
+						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(tran);
 //						v = arg(tran);
-						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFFREQ / sampleRate + arg(tran)));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
+						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				}
@@ -652,11 +661,11 @@ int OpenAudio (void) {
 	if (result)
 	{
 		//char fault[256];
-		//waveInGetErrorText(result, fault, 256);
-		//MessageBox::Show(fault->Text(), "Failed to open waveform input device.", MB_OK | MB_ICONEXCLAMATION);
+		//waveInGetErrorText(result, (LPWSTR)&fault[0], 256);
+		MessageBox::Show("Failed to open waveform input device.", "Error");//, MB_OK | MB_ICONEXCLAMATION);
 		return(result);
 	} else {
-		if (sampleRate == 192000)
+/*		if (sampleRate == 192000)
 			MessageBox::Show("Input samplerate = 192 kHz", "Success");
 		if (sampleRate == 96000)
 			MessageBox::Show("Input samplerate = 96 kHz", "Success");
@@ -668,15 +677,15 @@ int OpenAudio (void) {
 			MessageBox::Show("Input samplerate = 24 kHz", "Success");
 		if (sampleRate == 12000)
 			MessageBox::Show("Input samplerate = 12 kHz", "Success");
-
+*/
 	}
 
 	SAMP=sampleRate / 1000;		// Audio samples per dsp
 	NUMPTS=2*SAMP*10;
 
 	for (i = 0; i < SAMP; i++) {
-		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFFREQ + 20)/ sampleRate));
-		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFFREQ + 20) / sampleRate));
+		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFREQ)/ sampleRate));
+		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFREQ) / sampleRate));
 	}
 
 

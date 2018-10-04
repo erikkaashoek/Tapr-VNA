@@ -399,6 +399,7 @@ private: System::Windows::Forms::Label^  label7;
 
 
 
+
 	private: System::ComponentModel::IContainer^  components;
 
 	private:
@@ -2330,6 +2331,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		Point traceStart, traceStop;							// incremental trace drawing points
 		Point traceStartS, traceStopS;							// trace drawing points for storage
 		Point polarCenter, polarRightCenter;					// polar display bounding box
+		long avrgRef = 0;
 
 		// Set antialiasing for lines and circles  07-13-2008
 		gr->SmoothingMode = SmoothingMode::AntiAlias;
@@ -2623,7 +2625,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 			fs = gcnew FileStream("VNAdebug.csv", FileMode::Create, FileAccess::Write);
 			sw = gcnew StreamWriter(fs);
 			sw->WriteLine("sep=,");
-			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQLo, ReflPI, ReflPQ, ReflMQ");
+			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQLo, ReflPI, ReflPQ, ReflMQ, Ref");
 #endif
 #ifdef DUMPRAWDECODING			// Dump raw traces to a file for debugging
 			FileStream^ fs;
@@ -2684,13 +2686,11 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				}
 			}
 		}
-
-
+// ------------------ Start display rectangular -------------------------------
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
 			{
 				traceStart.X = scopeDisp.X + (int)(((float)i-1.0f) * PixelsPerGrid); // previous point
 				traceStop.X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
-
 
 
 #ifdef	DEBUGRAWREFL		
@@ -2767,6 +2767,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / SHORT_RANGE;
 				gr->DrawLine(penBrown2, traceStart, traceStop);
 #endif
+				avrgRef += trace[i]->Vref1;
 
 
 #ifdef DEBUGRAWTRANHIPHASE
@@ -2802,27 +2803,29 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 #ifdef DUMPRAWTRACES
 				//// code to dump raw data to file
-				sw->Write(FG->Frequency(i));
+				sw->Write(FG->Frequency(i).ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranPI);
+				sw->Write(trace[i]->TranPI.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranPQ);
+				sw->Write(trace[i]->TranPQ.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranPILow);
+				sw->Write(trace[i]->TranPILow.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranPQLow);
+				sw->Write(trace[i]->TranPQLow.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranMQHi);
+				sw->Write(trace[i]->TranMQHi.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranMQMid);
+				sw->Write(trace[i]->TranMQMid.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranMQLo);
+				sw->Write(trace[i]->TranMQLo.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->ReflPI);
+				sw->Write(trace[i]->ReflPI.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->ReflPQ);
+				sw->Write(trace[i]->ReflPQ.ToString("N1"));
 				sw->Write(", ");
-				sw->WriteLine(trace[i]->ReflMQ);
+				sw->Write(trace[i]->ReflMQ.ToString("N1"));
+				sw->Write(", ");
+				sw->WriteLine(trace[i]->Vref1.ToString("N1"));
 #endif
 
 //
@@ -3746,6 +3749,13 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #endif
 	
 		}
+		//avrgRef = avrgRef / FG->points;
+//		refLevelBox->Text = avrgRef.ToString("N1");
+//		brBlack
+
+//		gr->DrawString("Average ref", Parameterfont, brS11Mag, leftstatuspoint);
+//		leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+
 #ifdef DUMPRAWTRACES
 			sw->Flush();	
 			sw->Close();	// close VNAdebug.csv file
@@ -3954,6 +3964,8 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			for (int i=0; i<FG->points; i++)	// Display the frequency grid
 			{
+				avrgRef += trace[i]->Vref1;
+
 				if (DisplayMeasured->Checked)
 				{
 					// convert measurements into polar S11
@@ -4309,6 +4321,14 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		gr->ResetClip();
 
 		//------------------ Trace labels -----------------------------------------------------
+
+		avrgRef = avrgRef / FG->points;
+		double avrgdBRef = SHORT2DB(avrgRef);
+//		refLevelBox->Text = avrgRef.ToString("N1");
+		gr->DrawString(String::Concat("Ref level = ",avrgdBRef.ToString("N1"), "dB"), Parameterfont, brBlack, leftstatuspoint);
+		leftstatuspoint.Y += (int)(10.0 * DisplayExpansion);
+
+
 		if (s11magItem->Checked )
 		{
 			gr->DrawString("S11 Magnitude", Parameterfont, brS11Mag, leftstatuspoint);
@@ -4943,7 +4963,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					menuItem5->Enabled = true;		// allow freq grid to be changed
 					calibrateMenu->Enabled = true;	// enable calibration menu launch while collecting data
 				}
-				VNAWorkerThread->Sleep(500);	// go to sleep for 500 milliseconds (since nothing to do)
+				VNAWorkerThread->Sleep(50);	// go to sleep for 50 milliseconds (since nothing to do)
 			}
 	
 		menuItem5->Enabled = false;				// disable change of FreqGrid while collecting data
@@ -5052,8 +5072,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				trace[m]->TranPQLow = RxBuf->TranPQLow;
 
 				// Update Sweep Progress
-
-				SweepProgressBar->Value = (m+1);
+				if ((m % 3) == 0) SweepProgressBar->Value = (m+1);
 
 
 			// Glitch detection using median filtering algorithm,
@@ -5104,6 +5123,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			}
 
 		}
+		if(serialPort1->IsOpen) serialPort1->Close();
 
 			// if not triggered by a recurrent sweep
 
@@ -5119,6 +5139,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 		}
 
+#if 0
 		/// Background thread that reads & writes VNA hardware
 private: System::Void Audio_Worker(void)			// runs as a background thread
 		{
@@ -5347,7 +5368,7 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 
 				// Update Sweep Progress
 
-				SweepProgressBar->Value = m+1 ;
+				if ((m % 3) == 0) SweepProgressBar->Value = m+1 ;
 			}
 
 			// Glitch detection using median filtering algorithm,
@@ -5412,7 +5433,7 @@ private: System::Void Audio_Worker(void)			// runs as a background thread
 		}	//end	while(true)
 
 	}
-
+#endif
 
 
 		/// Start Frequency Up (increment) button click event handler
@@ -7303,6 +7324,8 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 
 					    throw; 
 					}
+					if (serialPort1->IsOpen) serialPort1->Close();
+
 
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...

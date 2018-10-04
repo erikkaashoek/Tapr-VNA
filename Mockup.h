@@ -1,12 +1,14 @@
 #pragma once
 
 #include "USB_EZ_interface.h"
+//#include <Windows.h>
 
 #define M_OPEN 1
 #define M_SHORT 2
 #define M_LOAD 3
 #define M_THROUGH 4
 #define M_ATTN 5
+#include <math.h> 
 
 namespace VNAR3 {
 
@@ -26,6 +28,10 @@ namespace VNAR3 {
 
 	int mode;					///< maximum magnitude reading
 	int cable_before;
+	private: System::Windows::Forms::TextBox^  RText;
+	public: 
+	private: System::Windows::Forms::TextBox^  CText;
+	private: System::Windows::Forms::TextBox^  LText;
 	public: 
 			 int cable_after;
 	
@@ -103,6 +109,9 @@ namespace VNAR3 {
 			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->label8 = (gcnew System::Windows::Forms::Label());
 			this->label9 = (gcnew System::Windows::Forms::Label());
+			this->RText = (gcnew System::Windows::Forms::TextBox());
+			this->CText = (gcnew System::Windows::Forms::TextBox());
+			this->LText = (gcnew System::Windows::Forms::TextBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->BeginInit();
@@ -301,12 +310,36 @@ namespace VNAR3 {
 			this->label9->TabIndex = 18;
 			this->label9->Text = L"10uH";
 			// 
+			// RText
+			// 
+			this->RText->Location = System::Drawing::Point(289, 32);
+			this->RText->Name = L"RText";
+			this->RText->Size = System::Drawing::Size(56, 20);
+			this->RText->TabIndex = 19;
+			// 
+			// CText
+			// 
+			this->CText->Location = System::Drawing::Point(289, 81);
+			this->CText->Name = L"CText";
+			this->CText->Size = System::Drawing::Size(56, 20);
+			this->CText->TabIndex = 20;
+			// 
+			// LText
+			// 
+			this->LText->Location = System::Drawing::Point(289, 130);
+			this->LText->Name = L"LText";
+			this->LText->Size = System::Drawing::Size(56, 20);
+			this->LText->TabIndex = 21;
+			// 
 			// Mockup
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
 			this->ClientSize = System::Drawing::Size(434, 339);
+			this->Controls->Add(this->LText);
+			this->Controls->Add(this->CText);
+			this->Controls->Add(this->RText);
 			this->Controls->Add(this->label9);
 			this->Controls->Add(this->label8);
 			this->Controls->Add(this->label7);
@@ -384,11 +417,14 @@ private: System::Void label4_Click(System::Object^  sender, System::EventArgs^  
 		 }
 private: System::Void Resistance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			this->VNA->SetResistance(Resistance->Value);
+			RText->Text = String::Format("{0}",(pow(10, (Resistance->Value - 50.0)/20.0)*50).ToString("G5"));
 		 }
 private: System::Void Capacitance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			CText->Text = String::Format("{0}pF",(pow(10,Capacitance->Value/20.0)/10).ToString("G5"));
 			this->VNA->SetCapacitance(Capacitance->Value);
 		 }
 private: System::Void Inductance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			LText->Text = String::Format("{0}nH",(pow(10,Inductance->Value/20.0)/10).ToString("G5"));
 			this->VNA->SetInductance(Inductance->Value);
 		 }
 
