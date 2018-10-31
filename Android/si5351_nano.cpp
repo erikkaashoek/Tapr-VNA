@@ -20,6 +20,8 @@
 #include "Arduino.h"
 #define SI_OVERCLOCK 1000000000      // 1.0 GHz in Hz
 
+
+#define TWI_FREQ 400000L
 // wire library loading, if not defined
 #ifndef WIRE_H
     #include "Wire.h"
@@ -34,35 +36,42 @@
     #include "Wire.h"
 #endif
 
+
+//#define DEBUG(X) Serial.print( X )
+//#define DEBUGLN(X) Serial.println( X )
+#define DEBUG(X)
+#define DEBUGLN(X)
+
+
 #define SI5351_I2C_ADDR   	(0x60)
 
 static void
 si5351_write(uint8_t reg, uint8_t dat)
 {
-//Serial.print("I2C "); 
+DEBUG("    I2C "); 
     Wire.beginTransmission(SI5351_I2C_ADDR);
     Wire.write(reg);
-//Serial.print((int)reg);
-//Serial.print(", ");
+DEBUG((int)reg);
+DEBUG(", ");
     Wire.write(dat);
-//Serial.print((int)dat);
-//Serial.println(".");
+DEBUG((int)dat);
+DEBUGLN(".");
     Wire.endTransmission();
 }
 
 static void
 si5351_bulk_write(const uint8_t *buf, int len)
 {
-//Serial.print("I2C ");
+DEBUG("    I2C ");
     Wire.beginTransmission(SI5351_I2C_ADDR);
     while (len > 0) {
-//Serial.print((int)*buf);
-//Serial.print(", ");
+DEBUG((int)*buf);
+DEBUG(", ");
       Wire.write(*buf++);
       len--;
     }
     Wire.endTransmission();
-//Serial.println(".");
+DEBUGLN(".");
 }
 
 // register addr, length, data, ...
@@ -70,6 +79,8 @@ const uint8_t si5351_configs[] = {
   2, SI5351_REG_3_OUTPUT_ENABLE_CONTROL, 0xff,
   4, SI5351_REG_16_CLK0_CONTROL, SI5351_CLK_POWERDOWN, SI5351_CLK_POWERDOWN, SI5351_CLK_POWERDOWN,
   2, SI5351_REG_183_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_8PF,
+  2, SI5351_REG_3_OUTPUT_ENABLE_CONTROL, 0,
+  0,
   // setup PLL (26MHz * 32 = 832MHz, 32/2-2=14)
   9, SI5351_REG_26_PLL_A, /*P3*/0, 1, /*P1*/0, 14, 0, /*P3/P2*/0, 0, 0,
   // RESET PLL
@@ -96,22 +107,25 @@ si5351_init(void)
 void si5351_disable_output(void)
 {
   uint8_t reg[4];
+  DEBUGLN("Disable output");
   si5351_write(SI5351_REG_3_OUTPUT_ENABLE_CONTROL, 0xff);
   reg[0] = SI5351_REG_16_CLK0_CONTROL;
   reg[1] = SI5351_CLK_POWERDOWN;
   reg[2] = SI5351_CLK_POWERDOWN;
   reg[3] = SI5351_CLK_POWERDOWN;
-  si5351_bulk_write(reg, 4);
+  //si5351_bulk_write(reg, 4);
 }
 
 void si5351_enable_output(void)
 {
+  DEBUGLN("  Enable output");
   si5351_write(SI5351_REG_3_OUTPUT_ENABLE_CONTROL, 0x00);
 }
 
 void si5351_reset_pll(void)
 {
   //si5351_write(SI5351_REG_177_PLL_RESET, SI5351_PLL_RESET_A | SI5351_PLL_RESET_B);
+  DEBUGLN("  Reset PLL");
   si5351_write(SI5351_REG_177_PLL_RESET, 0xAC);
 }
 
@@ -129,6 +143,14 @@ void si5351_setupPLL(uint8_t pll, /* SI5351_PLL_A or SI5351_PLL_B */
   uint32_t P2;
   uint32_t P3;
 
+  DEBUG("  Setup PLL ");
+  DEBUG(pll);
+  DEBUG(" mult=");
+  DEBUG(mult);
+  DEBUG(" num=");
+  DEBUG(num);
+  DEBUG(" denom=");
+  DEBUGLN(denom);
   /* Feedback Multisynth Divider Equation
    * where: a = mult, b = num and c = denom
    * P1 register is an 18-bit value using following formula:
@@ -197,6 +219,21 @@ si5351_setupMultisynth(uint8_t     output,
   uint32_t P2;
   uint32_t P3;
   uint32_t div4 = 0;
+
+  DEBUG("  Setup MULTI ");
+  DEBUG(output);
+  DEBUG(" pllSource=");
+  DEBUG(pllSource);
+  DEBUG(" div=");
+  DEBUG(div);
+  DEBUG(" num=");
+  DEBUG(num);
+  DEBUG(" denom=");
+  DEBUG(denom);
+  DEBUG(" rdiv=");
+  DEBUGLN(rdiv);
+
+
 
   /* Output Multisynth Divider Equations
    * where: a = div, b = num and c = denom
@@ -297,7 +334,7 @@ si5351_set_frequency_fixeddiv(int channel, int pll, uint32_t freq, int div, uint
     si5351_setupPLL(pll, multi, num, denom);
 #if OVERTONE
 #else
-    si5351_setupMultisynth(channel, pll, div, 0, 1, SI5351_R_DIV_1, drive_strength);
+    //si5351_setupMultisynth(channel, pll, div, 0, 1, SI5351_R_DIV_1, drive_strength);
 #endif
 }
 
@@ -315,17 +352,17 @@ void
 si5351_set_frequency(int channel, uint32_t freq, uint8_t drive_strength)
 {
 
-  //Serial.print("Setfreq channel ");
-  //Serial.print(channel);
-  //Serial.print(" to ");
-  //Serial.println(freq);
+  DEBUG(" SETFREQ channel ");
+  DEBUG(channel);
+  DEBUG(" to ");
+  DEBUGLN(freq);
 
 
 #if OVERTONE
   int band;
   int setPLL = true;
   int rdiv = SI5351_R_DIV_1;
-  if (freq <= 100000000L) {
+  if (freq < 100000000L) {
     band = 0;
   } else if (freq < 150000000L) {
     band = 1;
@@ -341,11 +378,11 @@ si5351_set_frequency(int channel, uint32_t freq, uint8_t drive_strength)
 //      setPLL = false;
 
     if (setPLL) {
-    if (current_band[channel] == 1 || current_band[channel] == 2)
-      si5351_setupPLL(channelPLL[channel], 32, 0, 1);
-    // Set PLL twice on changing from band 2
-    if (current_band[channel] == 2) 
-      si5351_setupPLL(channelPLL[channel], 32, 0, 1);
+      if (current_band[channel] != 0)
+        si5351_setupPLL(channelPLL[channel], 32, 0, 1);
+      // Set PLL twice on changing from band 2
+      if (current_band[channel] == 2) 
+        si5351_setupPLL(channelPLL[channel], 32, 0, 1);
     }      
     if (freq <= 500000L) {
       rdiv = SI5351_R_DIV_64;
@@ -367,34 +404,52 @@ si5351_set_frequency(int channel, uint32_t freq, uint8_t drive_strength)
       si5351_set_frequency_fixeddiv(channel, channelPLL[channel], freq, 6, drive_strength);
     }
     si5351_set_frequency_fixeddiv(channel, channelPLL[channel], freq, 6, drive_strength);
-//    if (current_band[channel] != 1)
+    if (current_band[channel] != 1)
         si5351_setupMultisynth(channel, channelPLL[channel], 6, 0, 1, SI5351_R_DIV_1, drive_strength);
     break;
   case 2:
     if (channel == 0) 
       PLL_A_at_800_mhz = false;
     si5351_set_frequency_fixeddiv(channel, channelPLL[channel], freq, 4, drive_strength);
-//    if (current_band[channel] != 2)
+    if (current_band[channel] != 2)
         si5351_setupMultisynth(channel, channelPLL[channel], 4, 0, 1, SI5351_R_DIV_1, drive_strength);
     break;
   }
 
   if (current_band[channel] != band) {
     PLL_reset_required = true;
+    si5351_reset_pll();
     current_band[channel] = band;
   }
 #else
-  if (freq <= 100000000UL) {
-    si5351_setupPLL(SI5351_PLL_B, 32, 0, 1);
-    si5351_set_frequency_fixedpll(channel, SI5351_PLL_B, PLLFREQ, freq, SI5351_R_DIV_1, drive_strength);
+  int band;
+  if (freq < 100000000UL) {
+    band = 0;
+    if (current_band[channel] != 0)
+      si5351_setupPLL(channelPLL[channel], 32, 0, 1);
+   // Set PLL twice on changing from band 2
+    if (current_band[channel] == 2) 
+      si5351_setupPLL(channelPLL[channel], 32, 0, 1);
+    si5351_set_frequency_fixedpll(channel, channelPLL[channel], PLLFREQ, freq, SI5351_R_DIV_1, drive_strength);
   } else if (freq < 150000000) {
-    si5351_set_frequency_fixeddiv(channel, SI5351_PLL_B, freq, 6, drive_strength);
+    band = 1;
+    si5351_set_frequency_fixeddiv(channel, channelPLL[channel], freq, 6, drive_strength);
+    if (current_band[channel] != 1)
+        si5351_setupMultisynth(channel, channelPLL[channel], 6, 0, 1, SI5351_R_DIV_1, drive_strength);
   } else {
-    si5351_set_frequency_fixeddiv(channel, SI5351_PLL_B, freq, 4, drive_strength);
+    band = 2;
+    si5351_set_frequency_fixeddiv(channel, channelPLL[channel], freq, 4, drive_strength);
+    if (current_band[channel] != 2)
+        si5351_setupMultisynth(channel, channelPLL[channel], 4, 0, 1, SI5351_R_DIV_1, drive_strength);
+  }
+  if (current_band[channel] != band) {
+    si5351_reset_pll();
+    current_band[channel] = band;
   }
 #endif
 }
 
+#define OVERTONE 1
 
 
 /*
@@ -419,17 +474,17 @@ si5351_set_frequency_with_offset(uint32_t freq, int offset, uint8_t drive_streng
     ofreq /= 5;
   }
   
-  si5351_set_frequency(0, ofreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
+  si5351_set_frequency(0, ofreq, SI5351_CLK_DRIVE_STRENGTH_8MA);
   si5351_set_frequency(2, freq, drive_strength);
-  if (PLL_reset_required)
-    si5351_reset_pll();
+  // if (PLL_reset_required)
+   // si5351_reset_pll();
 
 #else
   int band;
   int delay = 5;
   uint32_t ofreq = freq + offset;
   uint32_t rdiv = SI5351_R_DIV_1;
-  if (freq <= 100000000L) {
+  if (freq < 100000000L) {
     band = 0;
   } else if (freq < 150000000L) {
     band = 1;
@@ -467,7 +522,7 @@ si5351_set_frequency_with_offset(uint32_t freq, int offset, uint8_t drive_streng
     }
 
     si5351_set_frequency_fixedpll(0, SI5351_PLL_A, PLLFREQ, ofreq, rdiv, SI5351_CLK_DRIVE_STRENGTH_2MA);
-    si5351_set_frequency_fixedpll(1, SI5351_PLL_A, PLLFREQ, freq,  rdiv, drive_strength);
+    si5351_set_frequency_fixedpll(2, SI5351_PLL_A, PLLFREQ, freq,  rdiv, drive_strength);
     //if (current_band != 0)
     // si5351_set_frequency_fixedpll(2, SI5351_PLL_A, PLLFREQ, CLK2_FREQUENCY, SI5351_R_DIV_1, SI5351_CLK_DRIVE_STRENGTH_2MA);
     break;
@@ -476,12 +531,12 @@ si5351_set_frequency_with_offset(uint32_t freq, int offset, uint8_t drive_streng
     // Set PLL twice on changing from band 2
     if (current_band[0] == 2) {
       si5351_set_frequency_fixeddiv(0, SI5351_PLL_A, freq + offset, 6, SI5351_CLK_DRIVE_STRENGTH_2MA);
-      si5351_set_frequency_fixeddiv(1, SI5351_PLL_B, freq, 6, drive_strength);
+      si5351_set_frequency_fixeddiv(2, SI5351_PLL_B, freq, 6, drive_strength);
     }
 
     // div by 6 mode. both PLL A and B are dedicated for CLK0, CLK1
     si5351_set_frequency_fixeddiv(0, SI5351_PLL_A, freq + offset, 6, SI5351_CLK_DRIVE_STRENGTH_2MA);
-    si5351_set_frequency_fixeddiv(1, SI5351_PLL_B, freq, 6, drive_strength);
+    si5351_set_frequency_fixeddiv(2, SI5351_PLL_B, freq, 6, drive_strength);
     // si5351_set_frequency_fixedpll(2, SI5351_PLL_B, freq * 6, CLK2_FREQUENCY, SI5351_R_DIV_1, SI5351_CLK_DRIVE_STRENGTH_2MA);
     break;
 
@@ -489,7 +544,7 @@ si5351_set_frequency_with_offset(uint32_t freq, int offset, uint8_t drive_streng
     // div by 4 mode. both PLL A and B are dedicated for CLK0, CLK1
     // si5351_set_frequency_fixedpll(2, SI5351_PLL_B, freq * 4, CLK2_FREQUENCY, SI5351_R_DIV_1, SI5351_CLK_DRIVE_STRENGTH_2MA);
     si5351_set_frequency_fixeddiv(0, SI5351_PLL_A, freq + offset, 4, SI5351_CLK_DRIVE_STRENGTH_2MA);
-    si5351_set_frequency_fixeddiv(1, SI5351_PLL_B, freq, 4, drive_strength);
+    si5351_set_frequency_fixeddiv(2, SI5351_PLL_B, freq, 4, drive_strength);
     break;
   }
 

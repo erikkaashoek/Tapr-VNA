@@ -6,6 +6,9 @@
 #define SI_OVERCLOCK 910000000      // 1.0 GHz in Hz
 // #include "si5351mcu.h"
 //Si5351mcu si5351;
+
+#define ALIVE_MESSAGE 1
+
 #include "si5351_nano.h"
 
 //#include <LiquidCrystal_I2C.h>
@@ -188,10 +191,9 @@ void setup(){
 
 void Debug(int c, int l, long d)
 {
-#if 1
+#if !ALIVE_MESSAGE
   Serial.print(c);
   Serial.print(" ");
-
   Serial.println(d);
   // lcd.clear();
 //  lcd.setCursor(c, l);
@@ -202,7 +204,9 @@ void Debug(int c, int l, long d)
 
 void DebugText( char * t)
 {
+#if !ALIVE_MESSAGE
   Serial.println(t);
+#endif
 }
 
 //main loop
@@ -211,7 +215,9 @@ void loop(){
   if ((millis() & (1024 - 1) )== 0) {
     last_led = ! last_led;
     digitalWrite(LED_BUILTIN, last_led);// waiting
+#if ALIVE_MESSAGE
     Serial.println("TAPR VNA v4");
+#endif
     delay(2);
   }
 
@@ -231,6 +237,8 @@ void Jnva()
   long old_milis;
   unsigned long old_micros;
   unsigned long new_micros;
+  unsigned long old_startf;
+
   if ((millis() & (1024 - 1) )== 0) {
     last_led = ! last_led;
     digitalWrite(LED_BUILTIN, last_led);// waiting
@@ -276,14 +284,15 @@ void Jnva()
     if (Mode == 1) digitalWrite(Rele, HIGH);   // commande relais tansmission 0 ou refection 1
     else digitalWrite(Rele, LOW);
     old_micros = micros();
+    old_startf = StartF;
     for (intTemp=0; intTemp < NumberF; intTemp++)    //boucle des mesures
     {
-//      DebugText("Step");
-//      Debug(0,0,StartF);
+      DebugText("Step");
+      Debug(0,0,StartF);
 
-      if (Mode == 1) digitalWrite(Rele, LOW);   // commande relais tansmission 0 ou refection 1
-      else if (Mode == 0) digitalWrite(Rele, HIGH);
-      else digitalWrite(Rele, LOW);
+//      if (Mode == 1) digitalWrite(Rele, LOW);   // commande relais tansmission 0 ou refection 1
+//      else if (Mode == 0) digitalWrite(Rele, HIGH);
+//      else digitalWrite(Rele, LOW);
 
 //      affiche_freqs();    //pour debug
       if (StartF > freqMin)
@@ -292,12 +301,19 @@ void Jnva()
 //          si5351.disable(0);
             si5351_disable_output();
 
+      if (Mode == 1) digitalWrite(Rele, LOW);   // commande relais tansmission 0 ou refection 1
+      else if (Mode == 0) digitalWrite(Rele, HIGH);
+      else digitalWrite(Rele, LOW);
+            
+            
+            si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
+#if 0
             if (StartF > (MAXFREQ + IFFreq) * 3) {
 //              si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
               setFreq((long)((StartF)/5L ),MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
               setFreq((long)((StartF + IFFreq)/7L ),LOVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
             } else if (StartF > (MAXFREQ + IFFreq) ) {
-//                si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
+                si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
               setFreq((long)((StartF)/3L ),MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
               setFreq((long)((StartF + IFFreq)/5L ),LOVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
             } else 
@@ -306,18 +322,20 @@ void Jnva()
               setFreq((long) StartF ,MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
               setFreq((long)(StartF + IFFreq ),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
           }
-
+#endif
           last_freq = StartF;
           if ((millis() & (127) )== 0) {
             last_led = ! last_led;
             digitalWrite(LED_BUILTIN, last_led);// waiting
           }
-#define SWITCH_DELAY  3000
+//          si5351_enable_output();
+//#define SWITCH_DELAY  3000
+#define SWITCH_DELAY 000
           while (micros() - old_micros < SWITCH_DELAY) {
-            delayMicroseconds(100);
+            delayMicroseconds(30);
           }
-            si5351_enable_output();
-//          si5351.enable(0);
+         si5351_enable_output();
+       //   si5351.enable(0);
         } else if (intTemp == 1) {
             si5351_disable_output();
 //          si5351.disable(0);
@@ -325,23 +343,33 @@ void Jnva()
         } else        
           setFreq((long)(StartF + IFFreq ),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
       }
-      new_micros = micros();
-      while (new_micros - old_micros < SWITCH_DELAY + StepTime * 1000L) {
-          delayMicroseconds(100);
+      old_micros = new_micros = micros();
+#define STEP_TIME_UNIT 1000L
+#define STEP_TIME_UNIT 1000L
+#define SWITCH_DELAY 000L
+//      while (new_micros - old_micros < SWITCH_DELAY + StepTime * STEP_TIME_UNIT) {
+      while (new_micros - old_micros < StepTime * STEP_TIME_UNIT + SWITCH_DELAY) {
+          delayMicroseconds(30);
           new_micros = micros();
       }
       if (Mode == 0 || Mode == 1) {
         if (Mode == 1)  { digitalWrite(Rele, HIGH);  } // commande relais tansmission 0 ou refection 1
         else { digitalWrite(Rele, LOW); }
         new_micros = micros();
-        while (new_micros - old_micros < SWITCH_DELAY + 2*StepTime * 1000L) {
-            delayMicroseconds(100);
+//        while (new_micros - old_micros < SWITCH_DELAY + 2*StepTime * STEP_TIME_UNIT) {
+        while (new_micros - old_micros < 2*StepTime* STEP_TIME_UNIT) {
+            delayMicroseconds(30);
             new_micros = micros();
           }
       }
       old_micros = new_micros;
       StartF = StartF+StepF;
     }
+
+    setFreq((long) StartF - StepF ,MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
+    setFreq((long)(StartF + IFFreq - StepF),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+
+    
     si5351_enable_output();
 //    si5351.enable(0);
     NumberF = 0;

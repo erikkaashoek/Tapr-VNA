@@ -443,6 +443,7 @@ namespace VNAR3
 		/// Fixture SHORTed Load Calibration button click handler
 	private: System::Void shortCal_Click(System::Object^  sender, System::EventArgs^  e)
 			 {
+				long i;
 				VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 				VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 				double fmagnitude;			// 0 to 1
@@ -453,7 +454,7 @@ namespace VNAR3
 				//VNA->SetMode(M_SHORT);
 
 				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
-				for (long i=0; i<PHASECALGRIDSIZE; i++)
+				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
@@ -486,7 +487,7 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
-				statShort->Visible = true;
+				if (i == PHASECALGRIDSIZE) statShort->Visible = true;
 			done:
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
@@ -496,6 +497,7 @@ namespace VNAR3
 		/// Fixture OPEN Load Calibration button click handler
 	private: System::Void openCal_Click(System::Object^  sender, System::EventArgs^  e)
 			{
+				long i;
 				VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 				VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 				double fmagnitude;			// 0 to 1
@@ -507,7 +509,7 @@ namespace VNAR3
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
-				for (long i=0; i<PHASECALGRIDSIZE; i++)
+				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
@@ -541,7 +543,7 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				statOpen->Visible = true;
+				if (i == PHASECALGRIDSIZE) statOpen->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -550,6 +552,7 @@ namespace VNAR3
 		/// Fixture TERMINATED Load Calibration button click handler
 	private: System::Void termCal_Click(System::Object^  sender, System::EventArgs^  e)
 			{
+				long i;
 				VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 				VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 				double fmagnitude;			// 0 to 1
@@ -562,7 +565,7 @@ namespace VNAR3
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
 				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
-				for (long i=0; i<PHASECALGRIDSIZE; i++)
+				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
@@ -595,7 +598,7 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				statTerm->Visible = true;
+				if (i == PHASECALGRIDSIZE) statTerm->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -604,6 +607,7 @@ namespace VNAR3
 		/// Fixture Through Calibration button click handler
 	private: System::Void thruCal_Click(System::Object^  sender, System::EventArgs^  e)
 			{
+				long i;
 				VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 				VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 				double fmagnitude;			// 0 to 1
@@ -617,7 +621,7 @@ namespace VNAR3
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
 				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
-				for (long i=0; i<PHASECALGRIDSIZE; i++)
+				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
 
@@ -663,7 +667,7 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				statThru->Visible = true;
+				if (i == PHASECALGRIDSIZE) statThru->Visible = true;
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 

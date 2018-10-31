@@ -494,7 +494,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 			Sleep(2);
 			retries++;
 		}
-		if (retries >= 400)
+		if (retries >= 10)
 			return (false);
 	}
 	reflmag = Median(sumreflmag,dur-2);

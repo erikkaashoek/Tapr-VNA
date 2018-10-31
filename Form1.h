@@ -392,6 +392,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  rawDetectorDataToolStripMen
 private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuItem;
 private: System::Windows::Forms::CheckBox^  Spectrum;
 private: System::Windows::Forms::Label^  label7;
+private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuItem1;
 
 
 
@@ -470,6 +471,7 @@ private: System::Windows::Forms::Label^  label7;
 			this->TDRItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->audioDevicesToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->signalGeneratorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->mockupDeviceToolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->calibrateMenu = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->runItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->loadItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -1100,8 +1102,8 @@ private: System::Windows::Forms::Label^  label7;
 			// 
 			// viewMenu
 			// 
-			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->rectItem, this->polarItem, 
-				this->TDRItem, this->audioDevicesToolStripMenuItem, this->signalGeneratorToolStripMenuItem});
+			this->viewMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->rectItem, this->polarItem, 
+				this->TDRItem, this->audioDevicesToolStripMenuItem, this->signalGeneratorToolStripMenuItem, this->mockupDeviceToolStripMenuItem1});
 			this->viewMenu->Name = L"viewMenu";
 			this->viewMenu->Size = System::Drawing::Size(44, 20);
 			this->viewMenu->Text = L"&View";
@@ -1145,6 +1147,13 @@ private: System::Windows::Forms::Label^  label7;
 			this->signalGeneratorToolStripMenuItem->Size = System::Drawing::Size(239, 22);
 			this->signalGeneratorToolStripMenuItem->Text = L"Signal generator";
 			this->signalGeneratorToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::signalGeneratorToolStripMenuItem_Click);
+			// 
+			// mockupDeviceToolStripMenuItem1
+			// 
+			this->mockupDeviceToolStripMenuItem1->Name = L"mockupDeviceToolStripMenuItem1";
+			this->mockupDeviceToolStripMenuItem1->Size = System::Drawing::Size(239, 22);
+			this->mockupDeviceToolStripMenuItem1->Text = L"Mockup Device";
+			this->mockupDeviceToolStripMenuItem1->Click += gcnew System::EventHandler(this, &Form1::mockupDeviceToolStripMenuItem_Click);
 			// 
 			// calibrateMenu
 			// 
@@ -7398,23 +7407,29 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 		 /// Paint event handler
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
-			Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
+#if 0
+			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
 			delete(pg);
-
+#else
 		 // Double-buffered version of paint
-			//Graphics* pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
+			Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 
-			//Bitmap * localBitmap = new Bitmap(ClientRectangle.Width, ClientRectangle.Height);
-			//Graphics* bitmapGraphics = Graphics::FromImage(localBitmap);
-			//bitmapGraphics->Clip = pg->Clip;
+			Bitmap ^ localBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
+			Graphics^ bitmapGraphics = Graphics::FromImage(localBitmap);
+			bitmapGraphics->Clip = pg->Clip;
 
-			//Form_Render(bitmapGraphics, ClientSize);	// redraw to our local bitmap
-			//pg->DrawImage(localBitmap, 0, 0);			// draw our local bitmap to the screen
+			Form_Render(bitmapGraphics, ClientSize);	// redraw to our local bitmap
+			pg->DrawImage(localBitmap, 0, 0);			// draw our local bitmap to the screen
 
-			//bitmapGraphics->Dispose();
-			//localBitmap->Dispose();
-			//pg->Dispose();
+//			bitmapGraphics->Dispose();
+//			localBitmap->Dispose();
+//			pg->Dispose();
+			//delete(bitmapGraphics);
+			//delete(localBitmap);
+			//delete(pg);
+
+#endif
 		 }
 
 	/// Resize event handler
