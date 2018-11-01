@@ -7,6 +7,11 @@
 
 #using<system.dll>
 
+#include "Constants.h"
+#include "AudioInput.h"
+#include "USB_EZ_interface.h"
+ 
+
 //#include "objbase.h"
 
 extern int IFREQ;
@@ -42,10 +47,12 @@ namespace VNAR3 {
 	public ref class SerialPort : public System::Windows::Forms::Form
 	{
 	public:
-		SerialPort(System::IO::Ports::SerialPort^  serialPort1)
+		SerialPort(System::IO::Ports::SerialPort^  serialPort1,VNADevice^ VNADev)
 		{
 			InitializeComponent();
 			Port = serialPort1;
+			VNA = VNADev;
+
 			//
 			//TODO: Add the constructor code here
 			//
@@ -65,6 +72,7 @@ namespace VNAR3 {
 	private: System::Windows::Forms::ComboBox^  comboBox1;
 	private: System::Windows::Forms::Button^  OK_Button;
 	private: System::Windows::Forms::Button^  CANCEL_Button;
+	private: System::Windows::Forms::TextBox^  reference;
 
 
 	protected: 
@@ -73,14 +81,20 @@ namespace VNAR3 {
 		/// <summary>
 		/// Required designer variable.
 		System::IO::Ports::SerialPort^  Port;
-		/// </summary>
-		System::ComponentModel::Container ^components;
+	private: System::ComponentModel::IContainer^  components;
+			 /// </summary>
+
 	private: System::Windows::Forms::ComboBox^  sampleRateBox;
 	private: System::Windows::Forms::Label^  label1;
 	private: System::Windows::Forms::TextBox^  IFreq;
 
 	private: System::Windows::Forms::Label^  label2;
+	private: System::Windows::Forms::Label^  label3;
+	private: System::Windows::Forms::Label^  label4;
+	private: System::Windows::Forms::Timer^  timer1;
 	private: System::Windows::Forms::Button^  button3;
+			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
+
 			 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -89,6 +103,7 @@ namespace VNAR3 {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
 			this->OK_Button = (gcnew System::Windows::Forms::Button());
 			this->CANCEL_Button = (gcnew System::Windows::Forms::Button());
@@ -97,6 +112,10 @@ namespace VNAR3 {
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->IFreq = (gcnew System::Windows::Forms::TextBox());
 			this->label2 = (gcnew System::Windows::Forms::Label());
+			this->label3 = (gcnew System::Windows::Forms::Label());
+			this->reference = (gcnew System::Windows::Forms::TextBox());
+			this->label4 = (gcnew System::Windows::Forms::Label());
+			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->SuspendLayout();
 			// 
 			// comboBox1
@@ -111,7 +130,7 @@ namespace VNAR3 {
 			// OK_Button
 			// 
 			this->OK_Button->DialogResult = System::Windows::Forms::DialogResult::OK;
-			this->OK_Button->Location = System::Drawing::Point(67, 170);
+			this->OK_Button->Location = System::Drawing::Point(67, 189);
 			this->OK_Button->Name = L"OK_Button";
 			this->OK_Button->Size = System::Drawing::Size(64, 28);
 			this->OK_Button->TabIndex = 1;
@@ -122,7 +141,7 @@ namespace VNAR3 {
 			// CANCEL_Button
 			// 
 			this->CANCEL_Button->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-			this->CANCEL_Button->Location = System::Drawing::Point(146, 170);
+			this->CANCEL_Button->Location = System::Drawing::Point(146, 189);
 			this->CANCEL_Button->Name = L"CANCEL_Button";
 			this->CANCEL_Button->Size = System::Drawing::Size(64, 28);
 			this->CANCEL_Button->TabIndex = 2;
@@ -131,7 +150,7 @@ namespace VNAR3 {
 			// 
 			// button3
 			// 
-			this->button3->Location = System::Drawing::Point(67, 136);
+			this->button3->Location = System::Drawing::Point(67, 155);
 			this->button3->Name = L"button3";
 			this->button3->Size = System::Drawing::Size(143, 28);
 			this->button3->TabIndex = 3;
@@ -176,6 +195,37 @@ namespace VNAR3 {
 			this->label2->Text = L"IF:";
 			this->label2->Click += gcnew System::EventHandler(this, &SerialPort::label2_Click);
 			// 
+			// label3
+			// 
+			this->label3->AutoSize = true;
+			this->label3->Location = System::Drawing::Point(42, 127);
+			this->label3->Name = L"label3";
+			this->label3->Size = System::Drawing::Size(60, 13);
+			this->label3->TabIndex = 8;
+			this->label3->Text = L"Reference:";
+			// 
+			// reference
+			// 
+			this->reference->Location = System::Drawing::Point(126, 124);
+			this->reference->Name = L"reference";
+			this->reference->Size = System::Drawing::Size(83, 20);
+			this->reference->TabIndex = 9;
+			// 
+			// label4
+			// 
+			this->label4->AutoSize = true;
+			this->label4->Location = System::Drawing::Point(215, 127);
+			this->label4->Name = L"label4";
+			this->label4->Size = System::Drawing::Size(20, 13);
+			this->label4->TabIndex = 10;
+			this->label4->Text = L"dB";
+			// 
+			// timer1
+			// 
+			this->timer1->Enabled = true;
+			this->timer1->Interval = 500;
+			this->timer1->Tick += gcnew System::EventHandler(this, &SerialPort::timer1_Tick);
+			// 
 			// SerialPort
 			// 
 			this->AcceptButton = this->OK_Button;
@@ -183,6 +233,9 @@ namespace VNAR3 {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->CANCEL_Button;
 			this->ClientSize = System::Drawing::Size(284, 261);
+			this->Controls->Add(this->label4);
+			this->Controls->Add(this->reference);
+			this->Controls->Add(this->label3);
 			this->Controls->Add(this->label2);
 			this->Controls->Add(this->IFreq);
 			this->Controls->Add(this->label1);
@@ -211,7 +264,7 @@ namespace VNAR3 {
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
 				this->sampleRateBox->SelectedIndex = 0;
 				this->IFreq->Text = IFREQ.ToString();
-
+				VNA->SetFreq(1000000,true);
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
 
@@ -256,6 +309,12 @@ private: System::Void label2_Click(System::Object^  sender, System::EventArgs^  
 private: System::Void IFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 			IFREQ = Convert::ToInt32(this->IFreq->Text);	
 
+		 }
+
+private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
+			//magnitude->Text = String::Format("{0}",actualMeasurement.magnitude);
+			//phase->Text = String::Format("{0}",actualMeasurement.phase);
+			this->reference->Text = String::Format("{0}",actualMeasurement.reference);
 		 }
 };
 }

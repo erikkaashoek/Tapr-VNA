@@ -95,6 +95,10 @@ namespace VNAR3
 	private: System::Windows::Forms::RadioButton^  LinearFreqButton;
 	private: System::Windows::Forms::Label^  label7;
 	private: System::Windows::Forms::TextBox^  maxFreq;
+	private: System::Windows::Forms::Label^  statThruF;
+	private: System::Windows::Forms::Label^  statTermF;
+	private: System::Windows::Forms::Label^  statOpenF;
+	private: System::Windows::Forms::Label^  statShortF;
 
 
 
@@ -134,6 +138,10 @@ namespace VNAR3
 			this->LinearFreqButton = (gcnew System::Windows::Forms::RadioButton());
 			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->maxFreq = (gcnew System::Windows::Forms::TextBox());
+			this->statThruF = (gcnew System::Windows::Forms::Label());
+			this->statTermF = (gcnew System::Windows::Forms::Label());
+			this->statOpenF = (gcnew System::Windows::Forms::Label());
+			this->statShortF = (gcnew System::Windows::Forms::Label());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -389,6 +397,46 @@ namespace VNAR3
 			this->maxFreq->TextChanged += gcnew System::EventHandler(this, &Calibration::maxFreq_TextChanged);
 			this->maxFreq->Leave += gcnew System::EventHandler(this, &Calibration::maxFreq_Leave);
 			// 
+			// statThruF
+			// 
+			this->statThruF->BackColor = System::Drawing::Color::Transparent;
+			this->statThruF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statThruF.Image")));
+			this->statThruF->Location = System::Drawing::Point(32, 365);
+			this->statThruF->Name = L"statThruF";
+			this->statThruF->Size = System::Drawing::Size(32, 32);
+			this->statThruF->TabIndex = 24;
+			this->statThruF->Visible = false;
+			// 
+			// statTermF
+			// 
+			this->statTermF->BackColor = System::Drawing::Color::Transparent;
+			this->statTermF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statTermF.Image")));
+			this->statTermF->Location = System::Drawing::Point(32, 309);
+			this->statTermF->Name = L"statTermF";
+			this->statTermF->Size = System::Drawing::Size(32, 32);
+			this->statTermF->TabIndex = 25;
+			this->statTermF->Visible = false;
+			// 
+			// statOpenF
+			// 
+			this->statOpenF->BackColor = System::Drawing::Color::Transparent;
+			this->statOpenF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statOpenF.Image")));
+			this->statOpenF->Location = System::Drawing::Point(32, 253);
+			this->statOpenF->Name = L"statOpenF";
+			this->statOpenF->Size = System::Drawing::Size(32, 32);
+			this->statOpenF->TabIndex = 26;
+			this->statOpenF->Visible = false;
+			// 
+			// statShortF
+			// 
+			this->statShortF->BackColor = System::Drawing::Color::Transparent;
+			this->statShortF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statShortF.Image")));
+			this->statShortF->Location = System::Drawing::Point(32, 197);
+			this->statShortF->Name = L"statShortF";
+			this->statShortF->Size = System::Drawing::Size(32, 32);
+			this->statShortF->TabIndex = 27;
+			this->statShortF->Visible = false;
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -396,6 +444,10 @@ namespace VNAR3
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
 			this->ClientSize = System::Drawing::Size(640, 492);
+			this->Controls->Add(this->statShortF);
+			this->Controls->Add(this->statOpenF);
+			this->Controls->Add(this->statTermF);
+			this->Controls->Add(this->statThruF);
 			this->Controls->Add(this->maxFreq);
 			this->Controls->Add(this->label7);
 			this->Controls->Add(this->LinLogBox);
@@ -468,8 +520,10 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL)) {
+						statShortF->Visible = true;
 					  goto done;
+					}
 					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
@@ -487,7 +541,10 @@ namespace VNAR3
 					if(i%20 == 0)
 						calProgressBar->Update();
 				}
-				if (i == PHASECALGRIDSIZE) statShort->Visible = true;
+				if (i == PHASECALGRIDSIZE) {
+					statShort->Visible = true;
+					statShortF->Visible = false;
+				}
 			done:
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
@@ -523,8 +580,10 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL)) {
+					  statOpenF->Visible = true;
 					  goto done;
+					}
 					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
@@ -543,7 +602,10 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				if (i == PHASECALGRIDSIZE) statOpen->Visible = true;
+				if (i == PHASECALGRIDSIZE) {
+					statOpen->Visible = true;
+					statOpenF->Visible = false;
+				}
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -578,8 +640,10 @@ namespace VNAR3
 					TxBuf->MeasureDelay = 0;
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
-                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL))
+                    if (!VNA->WriteRead(TxBuf, RxBuf,DIR_REFL)) {
+						statTermF->Visible = true;
 					  goto done;
+					}
 					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
@@ -598,7 +662,10 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				if (i == PHASECALGRIDSIZE) statTerm->Visible = true;
+				if (i == PHASECALGRIDSIZE) {
+					statTerm->Visible = true;
+					statTermF->Visible = false;
+				}
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -642,8 +709,11 @@ namespace VNAR3
 					TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
 
 
-                    if (!VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS))
+                    if (!VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS)) {
+						statThruF->Visible = true;
 						goto done;
+					}
+
 
 					calPoint->TranPI = RxBuf->TranPI;
 					calPoint->TranPQ = RxBuf->TranPQ;
@@ -667,7 +737,10 @@ namespace VNAR3
 						calProgressBar->Update();
 				}
 			done:
-				if (i == PHASECALGRIDSIZE) statThru->Visible = true;
+				if (i == PHASECALGRIDSIZE) {
+					statThru->Visible = true;
+					statThruF->Visible = false;
+				}
 				// update the type of Fixture Calibration Frequency mode in the dataset
 				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
 
@@ -705,6 +778,10 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 			 statTerm->Visible = false;
 			 statOpen->Visible = false;
 			 statShort->Visible = false;
+			 statThruF->Visible = false;
+			 statTermF->Visible = false;
+			 statOpenF->Visible = false;
+			 statShortF->Visible = false;
 
 			 Refresh();
 		 }

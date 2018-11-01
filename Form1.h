@@ -600,7 +600,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->stopFdown->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->stopFdown->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->stopFdown->Location = System::Drawing::Point(384, 346);
+			this->stopFdown->Location = System::Drawing::Point(384, 401);
 			this->stopFdown->Name = L"stopFdown";
 			this->stopFdown->Size = System::Drawing::Size(24, 19);
 			this->stopFdown->TabIndex = 0;
@@ -613,7 +613,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->stopFup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->stopFup->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->stopFup->Location = System::Drawing::Point(384, 328);
+			this->stopFup->Location = System::Drawing::Point(384, 383);
 			this->stopFup->Name = L"stopFup";
 			this->stopFup->Size = System::Drawing::Size(24, 19);
 			this->stopFup->TabIndex = 1;
@@ -626,7 +626,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->startFdown->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->startFdown->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->startFdown->Location = System::Drawing::Point(384, 296);
+			this->startFdown->Location = System::Drawing::Point(384, 351);
 			this->startFdown->Name = L"startFdown";
 			this->startFdown->Size = System::Drawing::Size(24, 19);
 			this->startFdown->TabIndex = 2;
@@ -639,7 +639,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->startFup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->startFup->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->startFup->Location = System::Drawing::Point(384, 278);
+			this->startFup->Location = System::Drawing::Point(384, 333);
 			this->startFup->Name = L"startFup";
 			this->startFup->Size = System::Drawing::Size(24, 19);
 			this->startFup->TabIndex = 3;
@@ -655,7 +655,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->startF->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->startF->ForeColor = System::Drawing::Color::Aquamarine;
-			this->startF->Location = System::Drawing::Point(208, 280);
+			this->startF->Location = System::Drawing::Point(208, 335);
 			this->startF->Name = L"startF";
 			this->startF->Size = System::Drawing::Size(176, 25);
 			this->startF->TabIndex = 4;
@@ -670,7 +670,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->stopF->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->stopF->ForeColor = System::Drawing::Color::Aquamarine;
-			this->stopF->Location = System::Drawing::Point(208, 331);
+			this->stopF->Location = System::Drawing::Point(208, 386);
 			this->stopF->Name = L"stopF";
 			this->stopF->Size = System::Drawing::Size(176, 27);
 			this->stopF->TabIndex = 5;
@@ -684,7 +684,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->txL->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->txL->ForeColor = System::Drawing::Color::Aquamarine;
-			this->txL->Location = System::Drawing::Point(632, 282);
+			this->txL->Location = System::Drawing::Point(632, 337);
 			this->txL->Name = L"txL";
 			this->txL->Size = System::Drawing::Size(104, 32);
 			this->txL->TabIndex = 6;
@@ -698,7 +698,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->refL->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->refL->ForeColor = System::Drawing::Color::Aquamarine;
-			this->refL->Location = System::Drawing::Point(632, 331);
+			this->refL->Location = System::Drawing::Point(632, 386);
 			this->refL->Name = L"refL";
 			this->refL->Size = System::Drawing::Size(104, 32);
 			this->refL->TabIndex = 7;
@@ -709,7 +709,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->txLup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->txLup->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->txLup->Location = System::Drawing::Point(736, 280);
+			this->txLup->Location = System::Drawing::Point(736, 335);
 			this->txLup->Name = L"txLup";
 			this->txLup->Size = System::Drawing::Size(24, 19);
 			this->txLup->TabIndex = 8;
@@ -722,7 +722,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->txLdown->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->txLdown->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->txLdown->Location = System::Drawing::Point(736, 299);
+			this->txLdown->Location = System::Drawing::Point(736, 354);
 			this->txLdown->Name = L"txLdown";
 			this->txLdown->Size = System::Drawing::Size(24, 19);
 			this->txLdown->TabIndex = 9;
@@ -735,7 +735,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->refLup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->refLup->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->refLup->Location = System::Drawing::Point(736, 328);
+			this->refLup->Location = System::Drawing::Point(736, 383);
 			this->refLup->Name = L"refLup";
 			this->refLup->Size = System::Drawing::Size(24, 19);
 			this->refLup->TabIndex = 10;
@@ -748,7 +748,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->refLdown->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->refLdown->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->refLdown->Location = System::Drawing::Point(736, 346);
+			this->refLdown->Location = System::Drawing::Point(736, 401);
 			this->refLdown->Name = L"refLdown";
 			this->refLdown->Size = System::Drawing::Size(24, 19);
 			this->refLdown->TabIndex = 11;
@@ -764,7 +764,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label1->Font = (gcnew System::Drawing::Font(L"Verdana", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label1->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label1->Location = System::Drawing::Point(7, 280);
+			this->label1->Location = System::Drawing::Point(7, 335);
 			this->label1->Name = L"label1";
 			this->label1->Size = System::Drawing::Size(213, 32);
 			this->label1->TabIndex = 12;
@@ -777,7 +777,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label2->Font = (gcnew System::Drawing::Font(L"Verdana", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label2->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label2->Location = System::Drawing::Point(8, 331);
+			this->label2->Location = System::Drawing::Point(8, 386);
 			this->label2->Name = L"label2";
 			this->label2->Size = System::Drawing::Size(205, 32);
 			this->label2->TabIndex = 13;
@@ -790,7 +790,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label3->Font = (gcnew System::Drawing::Font(L"Verdana", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label3->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label3->Location = System::Drawing::Point(440, 282);
+			this->label3->Location = System::Drawing::Point(440, 337);
 			this->label3->Name = L"label3";
 			this->label3->Size = System::Drawing::Size(184, 24);
 			this->label3->TabIndex = 14;
@@ -803,7 +803,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label4->Font = (gcnew System::Drawing::Font(L"Verdana", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label4->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label4->Location = System::Drawing::Point(440, 331);
+			this->label4->Location = System::Drawing::Point(440, 386);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(192, 24);
 			this->label4->TabIndex = 15;
@@ -814,7 +814,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label5->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label5->BackColor = System::Drawing::Color::Transparent;
 			this->label5->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label5->Location = System::Drawing::Point(840, 306);
+			this->label5->Location = System::Drawing::Point(840, 361);
 			this->label5->Name = L"label5";
 			this->label5->Size = System::Drawing::Size(72, 35);
 			this->label5->TabIndex = 18;
@@ -826,7 +826,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->SweepSpd->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->SweepSpd->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->SweepSpd->Location = System::Drawing::Point(784, 335);
+			this->SweepSpd->Location = System::Drawing::Point(784, 390);
 			this->SweepSpd->Name = L"SweepSpd";
 			this->SweepSpd->Size = System::Drawing::Size(50, 23);
 			this->SweepSpd->TabIndex = 21;
@@ -840,7 +840,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->SingleSweep->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->SingleSweep->BackColor = System::Drawing::Color::WhiteSmoke;
 			this->SingleSweep->Enabled = false;
-			this->SingleSweep->Location = System::Drawing::Point(784, 284);
+			this->SingleSweep->Location = System::Drawing::Point(784, 339);
 			this->SingleSweep->Name = L"SingleSweep";
 			this->SingleSweep->RightToLeft = System::Windows::Forms::RightToLeft::No;
 			this->SingleSweep->Size = System::Drawing::Size(64, 24);
@@ -854,7 +854,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->RecurrentSweep->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->RecurrentSweep->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->RecurrentSweep->Location = System::Drawing::Point(864, 284);
+			this->RecurrentSweep->Location = System::Drawing::Point(864, 339);
 			this->RecurrentSweep->Name = L"RecurrentSweep";
 			this->RecurrentSweep->Size = System::Drawing::Size(64, 24);
 			this->RecurrentSweep->TabIndex = 20;
@@ -866,7 +866,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// SweepProgressBar
 			// 
 			this->SweepProgressBar->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
-			this->SweepProgressBar->Location = System::Drawing::Point(16, 364);
+			this->SweepProgressBar->Location = System::Drawing::Point(16, 419);
 			this->SweepProgressBar->Name = L"SweepProgressBar";
 			this->SweepProgressBar->Size = System::Drawing::Size(912, 10);
 			this->SweepProgressBar->TabIndex = 26;
@@ -876,7 +876,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->FrequencyDigitIncrease->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->FrequencyDigitIncrease->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->FrequencyDigitIncrease->Location = System::Drawing::Point(264, 312);
+			this->FrequencyDigitIncrease->Location = System::Drawing::Point(264, 367);
 			this->FrequencyDigitIncrease->Name = L"FrequencyDigitIncrease";
 			this->FrequencyDigitIncrease->Size = System::Drawing::Size(24, 19);
 			this->FrequencyDigitIncrease->TabIndex = 24;
@@ -889,7 +889,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->FrequencyDigitDecrease->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->FrequencyDigitDecrease->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->FrequencyDigitDecrease->Location = System::Drawing::Point(312, 312);
+			this->FrequencyDigitDecrease->Location = System::Drawing::Point(312, 367);
 			this->FrequencyDigitDecrease->Name = L"FrequencyDigitDecrease";
 			this->FrequencyDigitDecrease->Size = System::Drawing::Size(24, 19);
 			this->FrequencyDigitDecrease->TabIndex = 25;
@@ -903,7 +903,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label7->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label7->BackColor = System::Drawing::Color::Transparent;
 			this->label7->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label7->Location = System::Drawing::Point(755, 311);
+			this->label7->Location = System::Drawing::Point(755, 366);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(58, 22);
 			this->label7->TabIndex = 31;
@@ -917,7 +917,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->calCheckBox->BackColor = System::Drawing::Color::Transparent;
 			this->calCheckBox->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
 			this->calCheckBox->Enabled = false;
-			this->calCheckBox->Location = System::Drawing::Point(912, 312);
+			this->calCheckBox->Location = System::Drawing::Point(912, 367);
 			this->calCheckBox->Name = L"calCheckBox";
 			this->calCheckBox->Size = System::Drawing::Size(16, 24);
 			this->calCheckBox->TabIndex = 17;
@@ -931,7 +931,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->StartFrequencyDigitIndicator->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->StartFrequencyDigitIndicator->ForeColor = System::Drawing::Color::Aquamarine;
-			this->StartFrequencyDigitIndicator->Location = System::Drawing::Point(208, 296);
+			this->StartFrequencyDigitIndicator->Location = System::Drawing::Point(208, 351);
 			this->StartFrequencyDigitIndicator->Name = L"StartFrequencyDigitIndicator";
 			this->StartFrequencyDigitIndicator->Size = System::Drawing::Size(176, 16);
 			this->StartFrequencyDigitIndicator->TabIndex = 22;
@@ -945,7 +945,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->StopFrequencyDigitIndicator->Font = (gcnew System::Drawing::Font(L"Courier New", 18, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->StopFrequencyDigitIndicator->ForeColor = System::Drawing::Color::Aquamarine;
-			this->StopFrequencyDigitIndicator->Location = System::Drawing::Point(208, 347);
+			this->StopFrequencyDigitIndicator->Location = System::Drawing::Point(208, 402);
 			this->StopFrequencyDigitIndicator->Name = L"StopFrequencyDigitIndicator";
 			this->StopFrequencyDigitIndicator->Size = System::Drawing::Size(176, 16);
 			this->StopFrequencyDigitIndicator->TabIndex = 23;
@@ -2011,7 +2011,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->RefExtnCheckBox->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->RefExtnCheckBox->AutoSize = true;
-			this->RefExtnCheckBox->Location = System::Drawing::Point(914, 342);
+			this->RefExtnCheckBox->Location = System::Drawing::Point(914, 397);
 			this->RefExtnCheckBox->Name = L"RefExtnCheckBox";
 			this->RefExtnCheckBox->Size = System::Drawing::Size(15, 14);
 			this->RefExtnCheckBox->TabIndex = 28;
@@ -2023,7 +2023,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->label6->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label6->BackColor = System::Drawing::Color::Transparent;
 			this->label6->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label6->Location = System::Drawing::Point(836, 339);
+			this->label6->Location = System::Drawing::Point(836, 394);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(76, 19);
 			this->label6->TabIndex = 29;
@@ -2034,7 +2034,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->Spectrum->AutoSize = true;
-			this->Spectrum->Location = System::Drawing::Point(819, 317);
+			this->Spectrum->Location = System::Drawing::Point(819, 372);
 			this->Spectrum->Name = L"Spectrum";
 			this->Spectrum->Size = System::Drawing::Size(15, 14);
 			this->Spectrum->TabIndex = 30;
@@ -2047,7 +2047,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->AutoScroll = true;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
-			this->ClientSize = System::Drawing::Size(935, 376);
+			this->ClientSize = System::Drawing::Size(935, 431);
 			this->Controls->Add(this->Spectrum);
 			this->Controls->Add(this->label7);
 			this->Controls->Add(this->stopF);
@@ -4921,7 +4921,7 @@ private: System::Void VNA_Initialize(void)
 				if (!result)
 					MessageBox::Show("VNA Device Error: Start","Error");
 
-				for (int k=0; k<3; k++)
+//				for (int k=0; k<3; k++)
 				{
 					result = VNA->Init();				// Build VNA descriptor tables, get pipes
 					if (!result)
@@ -4929,7 +4929,7 @@ private: System::Void VNA_Initialize(void)
 					else
 					{
 						VNAConnected = true;			// Clears display of VNA Disconnected Message
-//						SingleSweep->Enabled = true;
+						SingleSweep->Enabled = true;
 					}
 				};
 
@@ -5018,8 +5018,20 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
     
 				// calculate linear frequency spot for each sweep
 				TxBuf->TxAccum = m; // FG->DDS(FG->Frequency(m));
-				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
+				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL)) {
+					//WorkerCollect = false;
+					//SingleSweep->Enabled = true;		// re-enable the single sweep button
+					RecurrentSweep->Text = "Free Run";	// stop free run
+					//Refresh();							// Force a redraw of the screen	
+					if (actualMeasurement.reference < -25.0) 
+						MessageBox::Show("Measurement signal level too low", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+					else if (actualMeasurement.reference > 10.0) 
+						MessageBox::Show("Measurement signal level too high", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+					else
+						MessageBox::Show("Sweep failed for unknown reason", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+ 
 					break;
+				}
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 //					break;
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
@@ -5147,302 +5159,6 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 		}	//end	while(true)
 
 		}
-
-#if 0
-		/// Background thread that reads & writes VNA hardware
-private: System::Void Audio_Worker(void)			// runs as a background thread
-		{
-
-		VNA_RXBUFFER * RxBuf = new VNA_RXBUFFER;
-		VNA_RXBUFF_FAST * RxBufast = new VNA_RXBUFF_FAST;
-		VNA_TXBUFFER * TxBuf = new VNA_TXBUFFER;
-
-		long Keep, TotalSize;			// Amount of exponential integrator to keep, and total integrator count
-
-		// Buffers to hold integrand for integration of sweep values
-		// New in V1.5
-
-		array<MeasurementSet^>^ ITrace;
-		ITrace = gcnew array<MeasurementSet^>(1024);
-		for (int i=0; i<1024; i++)
-			ITrace[i] = gcnew MeasurementSet;
-
-		while(true)								// thread runs until terminated by program exit
-		{
-			while(AudioCollect == false)		// while nothing to do
-			{
-				if(TDRItem->Checked == false)
-				{
-					menuItem5->Enabled = true;		// allow freq grid to be changed
-					calibrateMenu->Enabled = true;	// enable calibration menu launch while collecting data
-				}
-
-				AudioThread->Sleep(500);	// go to sleep for 500 milliseconds (since nothing to do)
-			}
-	
-		menuItem5->Enabled = false;				// disable change of FreqGrid while collecting data
-		calibrateMenu->Enabled = false;			// disable calibration menu launch while collecting data
-
-		for (int i=0; i<FG->points; i++)			// Save current values to integrand
-		{
-			ITrace[i]->ReflMI = trace[i]->ReflMI;
-			ITrace[i]->ReflMQ = trace[i]->ReflMQ;
-			ITrace[i]->ReflPI = trace[i]->ReflPI;
-			ITrace[i]->ReflPQ = trace[i]->ReflPQ;
-			ITrace[i]->TranMI = trace[i]->TranMI;
-			ITrace[i]->TranMQHi = trace[i]->TranMQHi;
-			ITrace[i]->TranPI = trace[i]->TranPI;
-			ITrace[i]->TranPQ = trace[i]->TranPQ;
-			ITrace[i]->TranMQLo = trace[i]->TranMQLo;
-			ITrace[i]->TranMQMid = trace[i]->TranMQMid;
-			ITrace[i]->TranPILow = trace[i]->TranPILow;
-			ITrace[i]->TranPQLow = trace[i]->TranPQLow;
-		}
-
-
-		// Disable !!!!!!!!!!!!!!!!!!!
-		if (false && String::Compare(SweepSpd->Text, "Fast") == 0)				// if fast reading mode
-		{
-
-			TxBuf->ReplyType = VNA_REPLYTYPE_FAST;
-			TxBuf->MeasureDelay = 0;					// Fastest sweep speed
-			TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
-			TxBuf->IDAClevelHi = TxLevLinear(txLevel);	// Set High Tx Level
-			TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Set Low TX Level
-			TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Set Mid TX Level
-
-			// Set the Lo phase tran measurement level for the target   09-30-2007
-			TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Set Lo Phase Level (not used in FAST)
-
-
-			for (int m=0; m<FG->points; m+=4)	// measure 4 frequencies at a time
-			{
-
-				// calculate linear frequency spot for each sweep
-
-				TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				TxBuf->Freq2 = FG->DDS(FG->Frequency(m+1));
-				TxBuf->Freq3 = FG->DDS(FG->Frequency(m+2));
-				TxBuf->Freq4 = FG->DDS(FG->Frequency(m+3));
-
-				VNA->WriteRead(TxBuf, (VNA_RXBUFFER *)RxBufast , DIR_REFL);
-
-				// Save received data by grid point
-
-				trace[m]->ReflMQ = RxBufast->ReflMQ1;
-				trace[m+1]->ReflMQ = RxBufast->ReflMQ2;
-				trace[m+2]->ReflMQ = RxBufast->ReflMQ3;
-				trace[m+3]->ReflMQ = RxBufast->ReflMQ4; 
-
-				trace[m]->ReflPI = RxBufast->ReflPI1;
-				trace[m+1]->ReflPI = RxBufast->ReflPI2;
-				trace[m+2]->ReflPI = RxBufast->ReflPI3;
-				trace[m+3]->ReflPI = RxBufast->ReflPI4; 
-
-				trace[m]->ReflPQ = RxBufast->ReflPQ1;
-				trace[m+1]->ReflPQ = RxBufast->ReflPQ2;
-				trace[m+2]->ReflPQ = RxBufast->ReflPQ3;
-				trace[m+3]->ReflPQ = RxBufast->ReflPQ4; 
-
-				trace[m]->TranMQHi = RxBufast->TranMQ1Hi;
-				trace[m+1]->TranMQHi = RxBufast->TranMQ2Hi;
-				trace[m+2]->TranMQHi = RxBufast->TranMQ3Hi;
-				trace[m+3]->TranMQHi = RxBufast->TranMQ4Hi; 
-
-				trace[m]->TranPI = RxBufast->TranPI1;
-				trace[m+1]->TranPI = RxBufast->TranPI2;
-				trace[m+2]->TranPI = RxBufast->TranPI3;
-				trace[m+3]->TranPI = (RxBufast->TranPI4Mix & 0xFFF); // demultiplex TranPI4
-
-				trace[m]->TranPQ = RxBufast->TranPQ1;
-				trace[m+1]->TranPQ = RxBufast->TranPQ2;
-				trace[m+2]->TranPQ = RxBufast->TranPQ3;
-				trace[m+3]->TranPQ = (RxBufast->TranPQ4Mix & 0xFFF);  // demultiplex TranPQ4
-
-				trace[m]->TranMQLo = RxBufast->TranMQ1Lo;
-				trace[m+1]->TranMQLo = RxBufast->TranMQ2Lo;
-				trace[m+2]->TranMQLo = RxBufast->TranMQ3Lo;
-				trace[m+3]->TranMQLo = (RxBufast->TranMQ4LoMix & 0xFFF);	// demultiplex TranMQ4Lo 
-
-				trace[m]->TranMQMid = RxBufast->TranMQ1Mid;
-				trace[m+1]->TranMQMid = RxBufast->TranMQ2Mid;
-				trace[m+2]->TranMQMid = RxBufast->TranMQ3Mid;
-
-				trace[m]->TranPILow = 0;		// fast mode does not measure TranPILow, zero indicates 'no data'
-				trace[m+1]->TranPILow = 0;
-				trace[m+2]->TranPILow = 0;
-				trace[m+3]->TranPILow = 0;
-
-				trace[m]->TranPQLow = 0;		// fast mode does not measure TranPQLow, zero indicates 'no data'
-				trace[m+1]->TranPQLow = 0;
-				trace[m+2]->TranPQLow = 0;
-				trace[m+3]->TranPQLow = 0;
-
-				// Demultiplex the last 12-bit word from the top 4 bits of each of 3 borrowed buffer locations.
-				// Sorry this is ugly, but we were one buffer word short in the fast buffer.
-				unsigned short temp2 = (RxBufast->TranPI4Mix & 0xF000); // grab just top nibble
-				unsigned short temp1 = (RxBufast->TranPQ4Mix & 0xF000); 
-				unsigned short temp0 = (RxBufast->TranMQ4LoMix & 0xF000);
-
-				trace[m+3]->TranMQMid = (temp2 >> 4) + (temp1 >> 8) + (temp0 >> 12); // Assemble TranMQ4Mid from nibbles
-
-			}
-		}
-		else										// slow reading mode
-		{
-
-			TxBuf->ReplyType = VNA_REPLYTYPE_FULL;
-			TxBuf->MeasureDelay = MeasureDelayStringToCount(SweepSpd->Text);
-			TxBuf->QDAClevel = QDAC_ZERODBM;			// Reference level
-
-			// Set the Lo magnitude and Mid magnitude generator levels for the target
-			// (Hi level is always 0 db.)
-			TxBuf->IDAClevelHi = TxLevLinear(txLevel);					// High Tx Level
-			TxBuf->IDAClevelLo = TxLevLinear(txLevel - TARGETLOMAG);	// Low TX Level
-			TxBuf->IDAClevelMid = TxLevLinear(txLevel - TARGETMIDMAG);	// Mid TX Level
-
-			// Set the Lo phase tran measurement level for the target   09-30-2007
-			TxBuf->IDAClevelPhLow = TxLevLinear(txLevel - TARGETPHLOMAG);	// Lo Phase TX Level
-
-			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
-
-			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay);
-			for (int m=0; m<FG->points; m++)
-			{
-    
-				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = m; //FG->DDS(FG->Frequency(m));
-				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-					break;
-//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-//					break;
-//				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
-//					break;
-
-				// Test for ADC Write Error - retry if error
-				
-				//if(RxBuf->Header != 1)
-				//{
-				//	if(m)
-				//		m--;
-				//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				//	VNA->WriteRead(TxBuf, RxBuf);
-				//}
-
-
-
-				// Save received data by grid point
-
-				trace[m]->ReflMI = RxBuf->ReflMI;
-				trace[m]->ReflMQ = RxBuf->ReflMQ;
-				trace[m]->ReflPI = RxBuf->ReflPI;
-				trace[m]->ReflPQ = RxBuf->ReflPQ;
-				trace[m]->Vref1 = RxBuf->Vref1;
-				// Update Sweep Progress
-			//}
-			//for (int m=0; m<FG->points; m++)
-			//{
-
-				// calculate linear frequency spot for each sweep
-			//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-			//	VNA->WriteRead(TxBuf, RxBuf, DIR_TRANS);
-
-				// Test for ADC Write Error - retry if error
-				
-				//if(RxBuf->Header != 1)
-				//{
-				//	if(m)
-				//		m--;
-				//	TxBuf->TxAccum = FG->DDS(FG->Frequency(m));
-				//	VNA->WriteRead(TxBuf, RxBuf);
-				//}
-
-
-
-				// Save received data by grid point
-
-
-				trace[m]->TranMI = RxBuf->TranMI;
-				trace[m]->TranMQHi = RxBuf->TranMQHi;
-				trace[m]->TranPI = RxBuf->TranPI;
-				trace[m]->TranPQ = RxBuf->TranPQ;
-				trace[m]->Vref2 = RxBuf->Vref2;
-
-				trace[m]->TranMQLo = RxBuf->TranMQLo;
-				trace[m]->TranMQMid = RxBuf->TranMQMid;
-
-				// New 09-30-2007
-				trace[m]->TranPILow = RxBuf->TranPILow;
-				trace[m]->TranPQLow = RxBuf->TranPQLow;
-
-				// Update Sweep Progress
-
-				if ((m % 3) == 0) SweepProgressBar->Value = m+1 ;
-			}
-
-			// Glitch detection using median filtering algorithm,
-			// faster but not as accurate as slow version.
-			// Modified for V2.1 to examine the range of samples
-			// in a group of 7, and to predict the value from slope
-			// of neighboring values to avoid un-necessary filtering.
-
-#ifdef FASTGLITCH
-			DeGlitch(trace, FG->points);
-#endif
-
-		}
-			
-
-
-		// V1.5 - Integration of readings
-
-		if(PreCharge)							// If we want to Precharge the Integrator, then
-			PreCharge = false;					// don't integrate values, and disable precharge (for next sweep)
-		else
-		{
-			if(IntegrationMenu1x->Checked)
-				Keep = 0, TotalSize = 1;
-			if(IntegrationMenu2x->Checked)
-				Keep = 1, TotalSize = 2;
-			if(IntegrationMenu4x->Checked)
-				Keep = 3, TotalSize = 4;
-			if(IntegrationMenu8x->Checked)
-				Keep = 7, TotalSize = 8;
-			if(IntegrationMenu16x->Checked)
-				Keep = 15, TotalSize = 16;
-
-			for(int i=0; i<FG->points; i++)		// Exponentially Integrate the Current Readings
-			{
-				trace[i]->ReflMI = (unsigned short)(((long)ITrace[i]->ReflMI * Keep + (long)trace[i]->ReflMI ) / TotalSize);
-				trace[i]->ReflMQ = (unsigned short)(((long)ITrace[i]->ReflMQ * Keep + (long)trace[i]->ReflMQ ) / TotalSize);
-				trace[i]->ReflPI = (unsigned short)(((long)ITrace[i]->ReflPI * Keep + (long)trace[i]->ReflPI ) / TotalSize);
-				trace[i]->ReflPQ = (unsigned short)(((long)ITrace[i]->ReflPQ * Keep + (long)trace[i]->ReflPQ ) / TotalSize);
-				trace[i]->TranMI = (unsigned short)(((long)ITrace[i]->TranMI * Keep + (long)trace[i]->TranMI ) / TotalSize);
-				trace[i]->TranMQHi = (unsigned short)(((long)ITrace[i]->TranMQHi * Keep + (long)trace[i]->TranMQHi ) / TotalSize);
-				trace[i]->TranPI = (unsigned short)(((long)ITrace[i]->TranPI * Keep + (long)trace[i]->TranPI ) / TotalSize);
-				trace[i]->TranPQ = (unsigned short)(((long)ITrace[i]->TranPQ * Keep + (long)trace[i]->TranPQ ) / TotalSize);
-				trace[i]->TranMQLo = (unsigned short)(((long)ITrace[i]->TranMQLo * Keep + (long)trace[i]->TranMQLo ) / TotalSize);
-				trace[i]->TranMQMid = (unsigned short)(((long)ITrace[i]->TranMQMid * Keep + (long)trace[i]->TranMQMid) / TotalSize);
-				trace[i]->TranPILow = (unsigned short)(((long)ITrace[i]->TranPILow * Keep + (long)trace[i]->TranPILow) / TotalSize);
-				trace[i]->TranPQLow = (unsigned short)(((long)ITrace[i]->TranPQLow * Keep + (long)trace[i]->TranPQLow) / TotalSize);
-			}
-
-		}
-
-			// if not triggered by a recurrent sweep
-
-		if (String::Compare(RecurrentSweep->Text, "Running") ==0)	// triggered by a recurrent sweep
-				Refresh();
-			else									// triggered by a single sweep
-			{
-				AudioCollect = false;				// thread has completed a single sweep
-				SingleSweep->Enabled = true;		// re-enable the single sweep button
-				Refresh();							// Force a redraw of the screen	
-			}
-		}	//end	while(true)
-
-	}
-#endif
 
 
 		/// Start Frequency Up (increment) button click event handler
@@ -7330,7 +7046,13 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					if (!reply->StartsWith("TAPR VNA v4")) {
 						MessageBox::Show("No VNA connected to stored port", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
-
+					    throw; 
+					}
+					VNA->SetFreq(1000000L, true);
+					System::Threading::Thread::Sleep(500);
+					if (actualMeasurement.reference < -25.0 || actualMeasurement.reference > 10.0) {
+						MessageBox::Show("Measurement signal level out of range", "Error",
+						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
 					}
 					if (serialPort1->IsOpen) serialPort1->Close();
@@ -7339,9 +7061,9 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
 				{											// They probably don't care anyway
-					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
-									 MessageBoxButtons::OK, MessageBoxIcon::Information);
-					SerialPortBox = gcnew SerialPort (serialPort1);
+//					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
+//									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+					SerialPortBox = gcnew SerialPort (serialPort1, VNA);
 					SerialPortBox->ShowDialog();
 
 				}
@@ -7707,7 +7429,7 @@ private: System::Void audioDevicesToolStripMenuItem_Click(System::Object^  sende
 
 		 }
 private: System::Void serialPortToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-			 SerialPortBox = gcnew SerialPort (serialPort1);
+			 SerialPortBox = gcnew SerialPort (serialPort1, VNA);
 			 SerialPortBox->ShowDialog();
 		 }
 private: System::Void label10_Click(System::Object^  sender, System::EventArgs^  e) {

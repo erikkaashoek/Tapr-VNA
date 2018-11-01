@@ -339,7 +339,7 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 	return (false);
 }
 
-#define SIGNAL_THRESHOLD -25
+#define SIGNAL_THRESHOLD -30	
 
 void StoreMeasurement()
 {

@@ -220,6 +220,7 @@ VNADevice::~VNADevice()
 bool VNADevice::Init(void)						
 {
 	GetHandle();
+//	this->SetFreq(1000000L, true);
 
 // Code between these two markers is new experimental code
 
@@ -494,7 +495,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 			Sleep(2);
 			retries++;
 		}
-		if (retries >= 10)
+		if (retries >= 20)
 			return (false);
 	}
 	reflmag = Median(sumreflmag,dur-2);
