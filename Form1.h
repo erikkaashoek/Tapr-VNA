@@ -2250,6 +2250,14 @@ private: System::Void PrintAPage(Object^ pSender, PrintPageEventArgs^ pe)
 		Form_Render(pe->Graphics, pe->MarginBounds, printer);
 	}
 
+private: System::String^ FreqToString(long f)
+		 {
+			 if (f < 1000)
+				 return (String::Concat(f.ToString("N0"), "Hz"));
+			 if (f < 1000000)
+				 return (String::Concat((f/1000.0).ToString("G"), "kHz"));
+			 return (String::Concat((f/1000000.0).ToString("G"), "MHz"));
+		 }
 #define PT 1
 
 	///	Draw screen bounded by rect
@@ -2371,7 +2379,8 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		Point topright(scopeDisp.Right - scopeDisp.Width/6, scopeDisp.Y - 16);
 		Point toprightcenter(scopeDisp.Right - scopeDisp.Width/3, scopeDisp.Y - 16);
 		Point botleft(scopeDisp.Left - 20, scopeDisp.Bottom);
-		Point botright(scopeDisp.Right + RightMargin - scopeDisp.Width/5, scopeDisp.Bottom);
+		Point botright(scopeDisp.Right - 20, scopeDisp.Bottom);
+		Point botcenter(scopeDisp.Left + scopeDisp.Width/2-20, scopeDisp.Y + scopeDisp.Height);
 		Point botleftcenter(scopeDisp.Left + scopeDisp.Width/2 + RightMargin - scopeDisp.Width/3, scopeDisp.Y + scopeDisp.Height);
 		Point botrightcenter(scopeDisp.Left + scopeDisp.Width/2 + RightMargin, scopeDisp.Bottom);
 		Point leftstatuspoint(scopeDisp.Left - LeftMargin + 2, scopeDisp.Y - 6);
@@ -2387,7 +2396,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 	    Point unFixComp(scopeDisp.Left + 20, scopeDisp.Top + 48);
 		Point unConnected(scopeDisp.Right - 300, scopeDisp.Top + 8);
 
-		if (rectItem->Checked == true)  // render screen in rectangular mode
+		if (rectItem->Checked == true ||  Spectrum->Checked)  // render screen in rectangular mode
 		{
 			gr->FillRectangle(brwhite, scopeDisp);
 			gr->DrawRectangle(penBlack2, scopeDisp);
@@ -2462,6 +2471,10 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			if(s21groupdelayItem->Checked)
                 gr->DrawString(text, Statusfont, brBlack, topleftcenter);	// time, sec/div
+			else {
+				gr->DrawString(String::Concat("HOR: ",FreqToString((FG->StopF() - FG->StartF())/10), "/DIV"),
+							Statusfont, brBlack, topleftcenter);
+			}
 
             gr->DrawString(SOFTWARE_VERSION, Statusfont, brBlack, topright);	// TAPR & Version
 		
@@ -2579,15 +2592,19 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 			// Display status in margin below bottom of scope display
 
-			gr->DrawString(String::Concat("START: ", FG->StartF().ToString("N0")), Statusfont, brBlack, botleft);
-			gr->DrawString(String::Concat("STOP: ", FG->StopF().ToString("N0")),	Statusfont, brBlack, botright);
+//			gr->DrawString(String::Concat("START: ", FG->StartF().ToString("N0")), Statusfont, brBlack, botleft);
+			gr->DrawString(FreqToString(FG->StartF()), Statusfont, brBlack, botleft);
 
-			int span = FG->StopF() - FG->StartF();
-			gr->DrawString(String::Concat("SPAN: ", span.ToString("N0")), Statusfont, brBlack, botleftcenter);
+			gr->DrawString(FreqToString(FG->StopF()),	Statusfont, brBlack, botright);
 
-			span = span / 10;			// per division
-			gr->DrawString(String::Concat("HORIZ: ", span.ToString("N0"), " Hz/DIV"),
-				Statusfont, brBlack, botrightcenter);
+//			int span = FG->StopF() - FG->StartF();
+			int span = (FG->StopF() + FG->StartF())/2;
+			gr->DrawString(FreqToString(span), Statusfont, brBlack, botcenter);
+
+//			span = FG->StopF() - FG->StartF();
+//			span = span / 10;			// per division
+//			gr->DrawString(String::Concat(FreqToString(span), "/DIV"),
+//				Statusfont, brBlack, botrightcenter);
 
 
 			// Display Reference Level
@@ -2940,7 +2957,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 
 				}
-				if(s21phsItem->Checked)
+				if(s21phsItem->Checked && !Spectrum->Checked)
 				{
 					if(DisplayMeasured->Checked)
 					{
@@ -2980,7 +2997,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					}
 				}
 
-				if(s11magItem->Checked)
+				if(s11magItem->Checked && !Spectrum->Checked)
 				{
 					if(DisplayMeasured->Checked)		// display measured data
 					{
@@ -3077,7 +3094,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if(VSWRdisplay->Checked)
+				if(VSWRdisplay->Checked && !Spectrum->Checked)
 				{
 					if(DisplayMeasured->Checked)
 					{
@@ -3123,7 +3140,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if(s11phsItem->Checked)
+				if(s11phsItem->Checked && !Spectrum->Checked)
 				{
 					if(DisplayMeasured->Checked)
 					{
@@ -3164,7 +3181,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if(s21groupdelayItem->Checked)
+				if(s21groupdelayItem->Checked && !Spectrum->Checked)
 				{
 					double prevphs, currphs, groupdelay;
 					int prevfreq, currfreq;
@@ -3328,7 +3345,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if(RDisplay->Checked || jXDisplay->Checked)
+				if((RDisplay->Checked || jXDisplay->Checked) && !Spectrum->Checked)
 				{
 
 					float X, Y, Rprev, jXprev, Rcurr, jXcurr;
@@ -3442,7 +3459,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					}
 
 				}
-				if (EtTrace->Checked == true)
+				if (EtTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3476,7 +3493,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
 
 				}
-				if (EsTrace->Checked == true)
+				if (EsTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3512,7 +3529,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				}
 
 
-				if (EdTrace->Checked == true)
+				if (EdTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3547,7 +3564,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
 				}
 
-				if (calSthru->Checked)
+				if (calSthru->Checked && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3583,7 +3600,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if (calSshort->Checked)
+				if (calSshort->Checked && !Spectrum->Checked)
 				{
 					// Previous point
 					double xx = CalData->S11shortReal[i-1];
@@ -3617,7 +3634,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
 				}
 
-				if (calSopen->Checked)
+				if (calSopen->Checked && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3653,7 +3670,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 				}
 
-				if (calSterm->Checked)
+				if (calSterm->Checked && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
 					// Previous point
@@ -3775,7 +3792,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 #endif
 		}
 
-		if (polarItem->Checked == true)							// render screen in polar mode
+		if (polarItem->Checked == true  && !Spectrum->Checked)							// render screen in polar mode
 		{
 
 			// Display plot title 
@@ -4124,7 +4141,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 			}
 		}
 
-		if (TDRItem->Checked == true)		// render screen in TDR mode
+		if (TDRItem->Checked == true  && !Spectrum->Checked)		// render screen in TDR mode
 		{
 			double Real[2048], Imag[2048];
 			double fmagnitude;			// 0 to 1
@@ -4972,7 +4989,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					menuItem5->Enabled = true;		// allow freq grid to be changed
 					calibrateMenu->Enabled = true;	// enable calibration menu launch while collecting data
 				}
-				VNAWorkerThread->Sleep(50);	// go to sleep for 50 milliseconds (since nothing to do)
+				VNAWorkerThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
 			}
 	
 		menuItem5->Enabled = false;				// disable change of FreqGrid while collecting data
@@ -5025,7 +5042,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					//Refresh();							// Force a redraw of the screen	
 					if (actualMeasurement.reference < -25.0) 
 						MessageBox::Show("Measurement signal level too low", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
-					else if (actualMeasurement.reference > 10.0) 
+					else if (actualMeasurement.reference > 15.0) 
 						MessageBox::Show("Measurement signal level too high", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
 					else
 						MessageBox::Show("Sweep failed for unknown reason", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -7129,7 +7146,7 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 		 /// Paint event handler
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
-#if 0
+#if 1
 			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
 			delete(pg);

@@ -458,7 +458,7 @@ si5351_set_frequency(int channel, uint32_t freq, uint8_t drive_strength)
  * CLK1: frequency
  * CLK2: fixed 8MHz
  */
-#define MAXFREQ 250000000L
+#define MAXFREQ 240000000L
 #define CLK2_FREQUENCY 8000000L
 int
 si5351_set_frequency_with_offset(uint32_t freq, int offset, uint8_t drive_strength)

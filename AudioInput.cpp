@@ -21,8 +21,7 @@ typedef struct measurement {
 	float reference;
 } measurementType;
 */
-// Max gridsize = 1024, 1040 gives some extra data slots. 100 ms measurement means more then 200 samples point 
-measurementType measured[1040*300];
+measurementType measured[MAX_MEASUREMENTS];
 volatile measurementType actualMeasurement;
 int measurementCount[1100];
 int measurementIndex[1100];
@@ -31,7 +30,7 @@ int maxMeasurement;
 
 bool audioStopping = false;
 
-float decoded[1024][2];
+//float decoded[1024][2];
 volatile int nextDecoded = 0;
 
 //volatile float magSig;
@@ -60,7 +59,7 @@ int simR;
 int simC;
 int simL;
 
-int audioPower = false;
+volatile int audioPower = false;
 
 #define DEBUGAUDIO
 
@@ -181,11 +180,6 @@ MMRESULT result;
 */
 };
 
-//long acc_samp_s;
-//long acc_samp_c;
-//long acc_ref_s;
-//long acc_ref_c;
-
 
 #define PI	3.14159265358979
 
@@ -225,33 +219,39 @@ void dsp_process(short *capture, long length)
 	if (audioPower) {
 		samp_s += smp*smp;
 		samp_c += smp;
+		ref_s += ref*ref;
+		ref_c += ref;
 	} else {
 		samp_s += smp * s;
 	    samp_c += smp * c;
+		ref_s += ref * s;
+		ref_c += ref * c;
 	}
-	ref_s += ref * s;
-	ref_c += ref * c;
 
   }
-//  acc_samp_s = samp_s;
-//  acc_samp_c = samp_c;
-//  acc_ref_s = ref_s;
-//  acc_ref_c = ref_c;
 
 #define REFERENCE_LEVEL_REDUCTION	1  // 30 with 1.5k resistor
 
 	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for 26dB reduced level
 	ref_c *= REFERENCE_LEVEL_REDUCTION;	
 
-	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
   if (audioPower) {
 //	samp_mag = samp_s - abs(samp_c);
 
 	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len);
+	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len);
+static long saved_ref_mag;
+	  if (nextDecoded == 0)
+		 saved_ref_mag = ref_mag;
+	  samp_mag = samp_mag * 32760L / saved_ref_mag;
 //	  samp_phase = 0;
-	  actualMeasurement.magnitude = todb(samp_mag*(float)2.0); // compansate 3 dB difference
+	  actualMeasurement.magnitude = todb(samp_mag); 
 	  actualMeasurement.phase = (float)0.0;
+	  // ref_mag = 32760*32760*10; // No reference measurement during power measurement	  
+	  actualMeasurement.reference =  todb(ref_mag);
   } else {
+	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+
 #define FASTDSP
 #ifdef FAST_DSP	
 	  double fast_mag, v0,v1;
@@ -273,23 +273,13 @@ void dsp_process(short *capture, long length)
 	actualMeasurement.magnitude = todb((samp_mag / ref_mag )*32760);
 	actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
 #endif
+	actualMeasurement.reference =  todb(ref_mag / 32760 / 20);
   }
 
   while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
   while (actualMeasurement.phase <= -180.0f) actualMeasurement.phase += 360.0;
-  actualMeasurement.reference =  todb(ref_mag / 32760 / 20);
 }
 
-
-/*
-void reset_dsp_accumerator(void)
-{
-  acc_ref_s = 0;
-  acc_ref_c = 0;
-  acc_samp_s = 0;
-  acc_samp_c = 0;
-}
-*/
 
 typedef enum audioStates { AS_NOCHANGE, AS_ARMED, AS_STARTED, AS_SIGNAL, AS_SILENCE, AS_STOPPING, AS_FINISHED };
 audioStates audioState = AS_ARMED;
@@ -313,23 +303,26 @@ bool lastRefl = false;
 
 bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r)
 {
-	if (i < lastMeasurement-1 && i < maxMeasurement) {
+	int offs;
+	if ( (!audioPower && i < lastMeasurement-1 && i < maxMeasurement) ||
+		 (audioPower && lastMeasurement > 0  && measurementIndex[0] + i*d < nextDecoded)) {
 		if (i != lastI ) {
 			lastI = i;
 			lastJ = 0;
 		}
 		if (audioPower) {
-			r = measured[measurementIndex[i] + 1 + lastJ].reference;
-			tm = measured[measurementIndex[i] + 1 + lastJ].magnitude;
-			tp = measured[measurementIndex[i] + 1 + lastJ].phase;
+			int offs = measurementIndex[0];
+			r = measured[offs + i*d + lastJ].reference;
+			tm = measured[offs + i*d + lastJ].magnitude;
+			tp = measured[offs + i*d + lastJ].phase;
 			m = 0.0;
 			p = 0.0;
 		} else {
 			r = measured[measurementIndex[i] + 1 + lastJ].reference;
 			m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
 			p = measured[measurementIndex[i] + 1 + lastJ].phase;
-			tm = measured[measurementIndex[i] + 1 + d + lastJ].magnitude;
-			tp = measured[measurementIndex[i] + 1 + d + lastJ].phase;
+			tm = measured[measurementIndex[i] + 1 + d + 2 + lastJ].magnitude;
+			tp = measured[measurementIndex[i] + 1 + d + 2 + lastJ].phase;
 		}
 //		if (i > 4 && m > -20)
 //			m = m;
@@ -347,10 +340,16 @@ void StoreMeasurement()
 	int highmatch = 0;
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
-	if (nextDecoded < 1040*300) {
+	if (nextDecoded < MAX_MEASUREMENTS) {
 		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
 		measured[nextDecoded].phase = actualMeasurement.phase;
 		measured[nextDecoded++].reference = actualMeasurement.reference;
+	}
+	if (audioPower) { // No measurment indirection when measuring audioPower
+		if (lastMeasurement == 0 && actualMeasurement.reference < SIGNAL_THRESHOLD ) {
+			measurementIndex[lastMeasurement++] = nextDecoded;
+		}
+		return;
 	}
 	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) ) {
 //		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
@@ -538,6 +537,43 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 					simStartF += simStepF;
 				}
 #else
+				if (audioPower) {
+					// Audio power simulation
+					if (simPoint < simMaxPoint && simStep >= simDuration ) {
+						simPoint += 1;
+						if (simPoint < simMaxPoint) {
+							simStep = 0;
+							simStartF += simStepF;
+						}
+					}
+#if 0
+					if (simPoint == 0) { // Add reference signal at start to know audio level
+						simS = 0;
+						while (simS < 10) {
+							for (i = 0; i < SAMP; i++) {
+//						a = abs(tran);
+//						v = arg(tran);
+								audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
+								audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+								simS++;
+							}
+						}
+					}
+#endif
+					for (i = 0; i < SAMP; i++) {
+//						a = abs(tran);
+//						v = arg(tran);
+						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
+						if (simPoint >= simMaxPoint || simPoint < 5)
+							audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						else 
+							audio [i*2+1] = 0.00001;
+						simS++;
+					}
+
+			
+				} else {
+				// Regular simulation
 				if (simPoint < simMaxPoint && simStep >= SILENCE_GAP + simDuration*2 ) {
 					simPoint += 1;
 					if (simPoint < simMaxPoint) {
@@ -567,6 +603,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
+				}
 				}
 #endif
 				//				if ((rand() % 20) < 19) // add uncertainty on timing

@@ -396,9 +396,9 @@ void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
 bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int power)
 {
 //	String ^ t;
-	ArmAudio(numPoints);
-	dur = duration+2; // Add 2 ms for start and stop of audio
 	SetAudioPower(power);
+	ArmAudio(numPoints);
+	dur = duration;
 	if (! mode){
 
 		try {
@@ -409,8 +409,8 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 		if (power)
 			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur));
 		else
-			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur));
-		Sleep(100);
+			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur+2)); // add 2 duration for lead in and out
+		Sleep(20);
 		}
 		catch (System::Exception^ e) {
 			     MessageBox::Show(e->Message, "Error");
@@ -418,6 +418,7 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 		}
 
 	} else {
+		if (!power) dur += 2; // add 2 duration for lead in and out
 		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance);
 	}
 	return(true);
@@ -489,20 +490,20 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
-	
-	for (i=0; i<dur-2; i++) {
-		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i]) && retries < 400) {
+		
+	for (i=0; i<dur; i++) {
+		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i]) && retries < 20) {
 			Sleep(2);
 			retries++;
 		}
 		if (retries >= 20)
 			return (false);
 	}
-	reflmag = Median(sumreflmag,dur-2);
-	tranmag = Median(sumtranmag,dur-2);
-	reflphase = Median(sumreflphase,dur-2);
-	tranphase = Median(sumtranphase,dur-2);
-	reflevel = Median(sumreflevel,dur-2);
+	reflmag = Median(sumreflmag,dur);
+	tranmag = Median(sumtranmag,dur);
+	reflphase = Median(sumreflphase,dur);
+	tranphase = Median(sumtranphase,dur);
+	reflevel = Median(sumreflevel,dur);
 
 		// mp++;
 	RxBuffer->Vref1 = DB2SHORT(reflevel);

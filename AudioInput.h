@@ -9,7 +9,7 @@
 
 extern short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
 
-extern float decoded[1024][2];
+//extern float decoded[1024][2];
 extern  int audio_delay;
 //extern volatile float gamma[4];
 
@@ -33,7 +33,10 @@ typedef struct measurementType {
 	float reference;
 } measurementType;
 
-extern measurementType measured[1040*300];
+
+// Max gridsize = 1024, 1040 gives some extra data slots. 100 ms measurement means more then 200 samples point 
+#define MAX_MEASUREMENTS 1040*300
+extern measurementType measured[MAX_MEASUREMENTS];
 extern int measurementIndex[1100];
 extern int lastMeasurement;
 extern volatile measurementType actualMeasurement;

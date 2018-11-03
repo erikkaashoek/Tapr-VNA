@@ -56,7 +56,7 @@
 ///\def Maximum Calibration Frequency
 #define MAXCALFREQ 249000000
 ///\def Minimum Calibration Frequency
-#define MINCALFREQ   1000000
+#define MINCALFREQ   200000
 ///\def Number of Calibration Points
 #define NUMCALPTS 1024.0
 ///\def Size of Phase Calibration Grid

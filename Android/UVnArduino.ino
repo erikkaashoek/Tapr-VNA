@@ -19,6 +19,15 @@
 
 int correction = 23260; // use the Si5351 correction sketch to find the frequency correction factor
 
+#if 0
+#define IF1     110700000L  // Superhet
+#define IF2      10700000L
+#define IF3         00000L
+#else
+#define IF1     0L  // Direct conversion
+#define IF2      0L
+#define IF3         00000L
+#endif
 
 #define freqMin  100000
 #define freqMax 180000000
@@ -285,6 +294,9 @@ void Jnva()
     else digitalWrite(Rele, LOW);
     old_micros = micros();
     old_startf = StartF;
+    if (Mode == 2)
+        setFreq((long)(IF2-IF3),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+
     for (intTemp=0; intTemp < NumberF; intTemp++)    //boucle des mesures
     {
       DebugText("Step");
@@ -297,7 +309,7 @@ void Jnva()
 //      affiche_freqs();    //pour debug
       if (StartF > freqMin)
       {
-        if (Mode < 3 || intTemp == 0) {
+        if (Mode ==0 || Mode == 1) {
 //          si5351.disable(0);
             si5351_disable_output();
 
@@ -305,24 +317,7 @@ void Jnva()
       else if (Mode == 0) digitalWrite(Rele, HIGH);
       else digitalWrite(Rele, LOW);
             
-            
             si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
-#if 0
-            if (StartF > (MAXFREQ + IFFreq) * 3) {
-//              si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long)((StartF)/5L ),MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long)((StartF + IFFreq)/7L ),LOVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-            } else if (StartF > (MAXFREQ + IFFreq) ) {
-                si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long)((StartF)/3L ),MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long)((StartF + IFFreq)/5L ),LOVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-            } else 
-            {
-//                si5351_set_frequency_with_offset(StartF, IFFreq, SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long) StartF ,MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-              setFreq((long)(StartF + IFFreq ),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
-          }
-#endif
           last_freq = StartF;
           if ((millis() & (127) )== 0) {
             last_led = ! last_led;
@@ -334,16 +329,17 @@ void Jnva()
           while (micros() - old_micros < SWITCH_DELAY) {
             delayMicroseconds(30);
           }
-         si5351_enable_output();
+             si5351_enable_output();
+            old_micros = new_micros = micros();
        //   si5351.enable(0);
-        } else if (intTemp == 1) {
-            si5351_disable_output();
-//          si5351.disable(0);
-          setFreq((long)(StartF + IFFreq ),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
         } else        
-          setFreq((long)(StartF + IFFreq ),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+
+          if (IF1 == 0)
+            setFreq((long)(StartF),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+          else
+            setFreq((long)(StartF+IF1),MAINVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+          new_micros = micros();
       }
-      old_micros = new_micros = micros();
 #define STEP_TIME_UNIT 1000L
 #define STEP_TIME_UNIT 1000L
 #define SWITCH_DELAY 000L
@@ -365,10 +361,18 @@ void Jnva()
       old_micros = new_micros;
       StartF = StartF+StepF;
     }
-
-    setFreq((long) StartF - StepF ,MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
-    setFreq((long)(StartF + IFFreq - StepF),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
-
+    if (Mode == 2) {
+        if (IF1 == 0) {
+          setFreq((long)(StartF - StepF ), MAINVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+          setFreq((long)(StartF + IFFreq - StepF) + IFFreq ,LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+        } else {
+          setFreq((long)(IF2-IF3), MAINVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+          setFreq((long)(IF2-IF3) + IFFreq ,LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+        }
+    } else {
+      setFreq((long) StartF - StepF ,MAINVCO,SI5351_CLK_DRIVE_STRENGTH_2MA);
+      setFreq((long)(StartF + IFFreq - StepF),LOVCO, SI5351_CLK_DRIVE_STRENGTH_2MA);
+    }
     
     si5351_enable_output();
 //    si5351.enable(0);

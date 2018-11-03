@@ -61,7 +61,7 @@ private:
 	int resistance;
 	int capacitance;
 	int inductance;
-	int dur;						// total duration of one side signal (2 + selected duration)
+	int dur;						// total duration of one side signal
 	System::IO::Ports::SerialPort^  serialPort;
 
 	//	long int IICErrorCount;			// Temporary IIC error counter
