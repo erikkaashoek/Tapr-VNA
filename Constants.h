@@ -123,7 +123,3 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 #define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )
 
 #define CALSUM	7 //number of measurements to average for calibration
-
-
-//#define IFFREQ	5128
-

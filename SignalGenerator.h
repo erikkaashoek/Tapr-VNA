@@ -286,7 +286,7 @@ private: System::Void frequency_Leave(System::Object^  sender, System::EventArgs
 				else {
 					// trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
 
-					trackBar1->Value = (int) (log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) ;
+					trackBar1->Value = (int)( (log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) );
 
 					//VNA->SetFreq(freq,showRefl->Checked);
 
@@ -313,7 +313,7 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 				else if (freq > MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
-					trackBar1->Value = (int) (log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) ;
+					trackBar1->Value = (int) ((log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(MAXCALFREQ) - log10f(MINCALFREQ)) );
 					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}

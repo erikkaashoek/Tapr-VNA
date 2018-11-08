@@ -78,6 +78,7 @@ typedef struct _VNA_RXBUFFER {
 	unsigned short TranMQMid;	///< Transmission Magnitude Q Mid count received - only used for SLOW reads
 	unsigned short TranPILow;	///< Transmission Phase I with low reference level
 	unsigned short TranPQLow;	///< Transmission Phase Q with low reference level
+	unsigned long Freq;
 	unsigned short fill1, fill2, fill3, fill4, fill5; ///< filler (unused locations in buffer)
 	unsigned short fill6, fill7, fill8, fill9, fill10; ///< filler
 	unsigned short check;		///< filler

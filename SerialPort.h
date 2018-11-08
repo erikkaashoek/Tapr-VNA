@@ -279,7 +279,8 @@ namespace VNAR3 {
 //        this->Port->Handshake = SetPortHandshake(_serialPort->Handshake);
 				try {
 					this->Port->Open();
-					System::Threading::Thread::Sleep(2000);
+					this->Port->WriteLine("3");
+					 System::Threading::Thread::Sleep(500);
 					String ^reply = this->Port->ReadExisting();
 					if (!reply->StartsWith("TAPR VNA v4")) {
 						MessageBox::Show("No VNA connected to this port", "Error",

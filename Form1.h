@@ -47,6 +47,7 @@ using the .NET style of Event Delegates.
 #include "SerialPort.h"
 #include "SignalGenerator.h"
 
+
 //#include "AudioInput.h"
 //#include "Serial.h"
 //#include "AudioDevice.h"
@@ -144,9 +145,9 @@ namespace VNAR3
 		String^	plotTitle;				///< Plot Title (allowed to be empty)
 		String^ FixtureCalFileName;		///< Name of Fixture Calibration File loaded (empty if none)
 
-		bool WorkerCollect;				///< Work for VNA Thread to do
+		volatile bool WorkerCollect;				///< Work for VNA Thread to do
 
-		bool AudioCollect;				///< Work for VNA Thread to do
+		bool SerialCollect;				///< Work for VNA Thread to do
 
 		bool VNAConnected;				///< True if VNA is connected
 
@@ -170,9 +171,9 @@ namespace VNAR3
 		String^ CurrentUserDataPath;	///< Directory Path for application data specific to current user
 
 		Thread^ VNAWorkerThread;				///< Thread for VNA data gathering
-		Thread^ AudioThread;				    ///< Thread for audio data gathering
+		Thread^ SerialThread;				    ///< Thread for audio data gathering
 		ThreadStart^ VNAWorkerThreadDelegate;	///< Threadstart points to method
-		ThreadStart^ AudioThreadDelegate;	    ///< Threadstart points to method
+		ThreadStart^ SerialThreadDelegate;	    ///< Threadstart points to method
 
 		// Holds string that underlines the digit at position[FrequencyDigitIndex]
 		static array<String^>^ FrequencyDigitText = gcnew array<String^>{"-", "-_", "-__", "-____", "-_____",
@@ -393,6 +394,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  audioDistanceToolStripMenuI
 private: System::Windows::Forms::CheckBox^  Spectrum;
 private: System::Windows::Forms::Label^  label7;
 private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuItem1;
+private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMenuItem;
+
 
 
 
@@ -588,6 +591,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->AboutMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->settingsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->serialPortToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->dumpMeasurementsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->colorDialog1 = (gcnew System::Windows::Forms::ColorDialog());
 			this->RefExtnCheckBox = (gcnew System::Windows::Forms::CheckBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
@@ -662,6 +666,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->startF->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			this->toolTip1->SetToolTip(this->startF, L"Double-click to directly enter value");
 			this->startF->DoubleClick += gcnew System::EventHandler(this, &Form1::startF_DoubleClick);
+			this->startF->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::startF_MouseDown);
+			this->startF->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::startF_MouseDown);
 			// 
 			// stopF
 			// 
@@ -676,6 +682,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->stopF->TabIndex = 5;
 			this->stopF->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			this->toolTip1->SetToolTip(this->stopF, L"Double-click to directly enter value");
+			this->stopF->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::stopF_MouseDown);
+			this->stopF->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::stopF_MouseDown);
 			// 
 			// txL
 			// 
@@ -868,7 +876,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			this->SweepProgressBar->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->SweepProgressBar->Location = System::Drawing::Point(16, 419);
 			this->SweepProgressBar->Name = L"SweepProgressBar";
-			this->SweepProgressBar->Size = System::Drawing::Size(912, 10);
+			this->SweepProgressBar->Size = System::Drawing::Size(912, 5);
 			this->SweepProgressBar->TabIndex = 26;
 			this->toolTip1->SetToolTip(this->SweepProgressBar, L"Sweep Progress");
 			// 
@@ -1994,7 +2002,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// 
 			// settingsToolStripMenuItem
 			// 
-			this->settingsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->serialPortToolStripMenuItem});
+			this->settingsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->serialPortToolStripMenuItem, 
+				this->dumpMeasurementsToolStripMenuItem});
 			this->settingsToolStripMenuItem->Name = L"settingsToolStripMenuItem";
 			this->settingsToolStripMenuItem->Size = System::Drawing::Size(61, 20);
 			this->settingsToolStripMenuItem->Text = L"Settings";
@@ -2003,9 +2012,16 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 			// serialPortToolStripMenuItem
 			// 
 			this->serialPortToolStripMenuItem->Name = L"serialPortToolStripMenuItem";
-			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(124, 22);
+			this->serialPortToolStripMenuItem->Size = System::Drawing::Size(185, 22);
 			this->serialPortToolStripMenuItem->Text = L"SerialPort";
 			this->serialPortToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::serialPortToolStripMenuItem_Click);
+			// 
+			// dumpMeasurementsToolStripMenuItem
+			// 
+			this->dumpMeasurementsToolStripMenuItem->Name = L"dumpMeasurementsToolStripMenuItem";
+			this->dumpMeasurementsToolStripMenuItem->Size = System::Drawing::Size(185, 22);
+			this->dumpMeasurementsToolStripMenuItem->Text = L"DumpMeasurements";
+			this->dumpMeasurementsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::dumpMeasurementsToolStripMenuItem_Click);
 			// 
 			// RefExtnCheckBox
 			// 
@@ -2193,16 +2209,16 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 											// explicitly stop the VNAWorkerThread before terminating,
 											// normally using Environment::Exit
 
-//			AudioThreadDelegate = gcnew ThreadStart(this, &Form1::Audio_Worker);
-//			AudioThread = gcnew Thread(AudioThreadDelegate);
-///			AudioThread->IsBackground = true;
-//			AudioThread->Name = "Audio Thread";
+			SerialThreadDelegate = gcnew ThreadStart(this, &Form1::Serial_Worker);
+			SerialThread = gcnew Thread(SerialThreadDelegate);
+			SerialThread->IsBackground = true;
+			SerialThread->Name = "Serial Thread";
 
 			// debug for VS2005 but it doesn't solve the cross-thread UI access problem
 			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
 
-//			AudioCollect = false;			// nothing for worker thread to do yet
-//			AudioThread->Start();		// start up the thread
+//			SerialCollect = false;			// nothing for worker thread to do yet
+			//SerialThread->Start();		// start up the thread
 
 			if(OpenAudio())
 			{}
@@ -2348,6 +2364,8 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		Point traceStart, traceStop;							// incremental trace drawing points
 		Point traceStartS, traceStopS;							// trace drawing points for storage
 		Point polarCenter, polarRightCenter;					// polar display bounding box
+		array<Point>^ points = gcnew array<Point>(1024+1); // used for drawlines
+
 		long avrgRef = 0;
 
 		// Set antialiasing for lines and circles  07-13-2008
@@ -2385,10 +2403,10 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		Point botrightcenter(scopeDisp.Left + scopeDisp.Width/2 + RightMargin, scopeDisp.Bottom);
 		Point leftstatuspoint(scopeDisp.Left - LeftMargin + 2, scopeDisp.Y - 6);
 		Point botTitleCenter(scopeDisp.Left + scopeDisp.Width/2, scopeDisp.Bottom + 15);
-		Point rightScaleTop(scopeDisp.Right + 2, scopeDisp.Top - 8);
+		Point rightScaleTop(scopeDisp.Right + 2, scopeDisp.Top - 6);
         Point rightScaleBottom(scopeDisp.Right + 2, scopeDisp.Bottom - 10);
-		Point rightScaleCenter(scopeDisp.Right + 2, scopeDisp.Top + scopeDisp.Height/2 - 8);
-		Point leftScaleTop(scopeDisp.Left - (int)(40.0 * DisplayExpansion), scopeDisp.Top - 8);
+		Point rightScaleCenter(scopeDisp.Right + 2, scopeDisp.Top + scopeDisp.Height/2 - 6);
+		Point leftScaleTop(scopeDisp.Left - (int)(40.0 * DisplayExpansion), scopeDisp.Top - 6);
         Point leftScaleBottom(scopeDisp.Left - (int)(35.0 * DisplayExpansion), scopeDisp.Bottom - 10);
 		Point leftScaleCenter(scopeDisp.Left - (int)(35.0 * DisplayExpansion), scopeDisp.Top + scopeDisp.Height/2 - 8);
 		Point unCalText(scopeDisp.Left + 20, scopeDisp.Top + 8);
@@ -2659,7 +2677,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 			fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
 			sw = gcnew StreamWriter(fs);
 			sw->WriteLine("sep=;");
-			sw->WriteLine("ref, mag, phase ");
+			sw->WriteLine("index; freq; ref; mag; phase ");
 			int decoded=0;
 #endif
 #ifdef DEBUGAUDIO
@@ -2712,6 +2730,8 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				}
 			}
 		}
+
+
 // ------------------ Start display rectangular -------------------------------
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
 			{
@@ -2818,6 +2838,10 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 
 #ifdef DUMPRAWDECODING
 				while (decoded < measurementIndex[i]) {
+					sw->Write(i.ToString("N1"));
+					sw->Write("; ");
+					sw->Write(measured[decoded].freq.ToString("N1"));
+					sw->Write("; ");
 					sw->Write(measured[decoded].reference.ToString("N1"));
 					sw->Write("; ");
 					sw->Write(measured[decoded].magnitude.ToString("N1"));
@@ -3706,8 +3730,13 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 				}
 				if (rawDetectorDataToolStripMenuItem->Checked) {
 					//	Reference level
+#if 1
 					traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / SHORT_RANGE;
 					traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / SHORT_RANGE;
+#else
+					traceStop.Y = scopeDisp.Bottom - trace[i]->Vref2 * scopeDisp.Height / 1030;
+					traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / 1030;
+#endif
 					gr->DrawLine(penBrown2, traceStart, traceStop);
 				}
 #ifdef DEBUGLONGCAL
@@ -4961,12 +4990,53 @@ private: System::Void VNA_Initialize(void)
 		}
 
 		/// Background thread that reads & writes VNA hardware
+private: System::Void Serial_Worker(void)			// runs as a background thread
+		 {
+			 int done = false;
+			 unsigned long freq;
+			 unsigned int level;
+			 SerialThread->Priority= System::Threading::ThreadPriority::AboveNormal;
+			 while(true)								// thread runs until terminated by program exit
+			 {
+				 while(WorkerCollect == false)		// while nothing to do
+				 {
+					 SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
+				 }
+				 done = false;
+				 if (serialPort1->IsOpen) {
+					 while (!done) {
+						 char b = serialPort1->ReadByte();
+						 if (b == 'x') {
+//							 freq = ((unsigned long)serialPort1->ReadByte());
+//							 freq += ((unsigned long)serialPort1->ReadByte())<<8;
+//							 freq += ((unsigned long)serialPort1->ReadByte())<<16;
+//							 freq += ((unsigned long)serialPort1->ReadByte())<<24;
+							 level = ((unsigned long)serialPort1->ReadByte());
+							 level += ((unsigned long)serialPort1->ReadByte())<<8;
+								freq = level;
+							 MarkFrequency(freq);
+						 } else if (b == 'e')
+							 done = true;
+					 }
+					 while(WorkerCollect == true)		// while nothing to do
+					{
+						SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
+					}
+
+				 }
+//				 if(serialPort1->IsOpen) serialPort1->Close();
+			 }
+
+		 }
+
+		/// Background thread that reads & writes VNA hardware
 private: System::Void VNA_Worker(void)			// runs as a background thread
 		{
 
 		VNA_RXBUFFER * RxBuf = new VNA_RXBUFFER;
 		VNA_RXBUFF_FAST * RxBufast = new VNA_RXBUFF_FAST;
 		VNA_TXBUFFER * TxBuf = new VNA_TXBUFFER;
+		unsigned long freq;
 
 		long Keep, TotalSize;			// Amount of exponential integrator to keep, and total integrator count
 
@@ -5034,7 +5104,8 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			{
     
 				// calculate linear frequency spot for each sweep
-				TxBuf->TxAccum = m; // FG->DDS(FG->Frequency(m));
+				TxBuf->TxAccum = m; 
+				freq = FG->Frequency(m);
 				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL)) {
 					//WorkerCollect = false;
 					//SingleSweep->Enabled = true;		// re-enable the single sweep button
@@ -5049,6 +5120,12 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
  
 					break;
 				}
+				RxBuf->Vref2 = (unsigned short)(512 + ( (freq* 1.0 - RxBuf->Freq) / ((FG->Frequency(0) + FG->Frequency(FG->points-1))/ 2.0)) * 512.0);
+//				if ( !Spectrum->Checked  && ( freq* 1.0 / RxBuf->Freq < 0.99 || 1.01 < freq* 1.0 / RxBuf->Freq ) ) {
+//				if (RxBuf->Vref2 > 1000) {
+//					MessageBox::Show(String::Concat("More then 2% frequency tracking error expacted=",FreqToString(freq), ", actual=",FreqToString(RxBuf->Freq )), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+//					break;
+//				}
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
 //					break;
 //				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL))
@@ -5110,7 +5187,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				trace[m]->TranPQLow = RxBuf->TranPQLow;
 
 				// Update Sweep Progress
-				if ((m % 3) == 0) SweepProgressBar->Value = (m+1);
+				if ((m % 10) == 0) SweepProgressBar->Value = (m+1);
 
 
 			// Glitch detection using median filtering algorithm,
@@ -5124,6 +5201,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 #endif
 
 		}
+		SweepProgressBar->Value = FG->points;
 			
 
 
@@ -5161,7 +5239,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			}
 
 		}
-		if(serialPort1->IsOpen) serialPort1->Close();
+//		if(serialPort1->IsOpen) serialPort1->Close();
 
 			// if not triggered by a recurrent sweep
 
@@ -7058,7 +7136,8 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				    serialPort1->BaudRate = 115200;
 
 					serialPort1->Open();
-					 System::Threading::Thread::Sleep(2000);
+					serialPort1->WriteLine("3");
+					 System::Threading::Thread::Sleep(500);
 					String ^reply = serialPort1->ReadExisting();
 					if (!reply->StartsWith("TAPR VNA v4")) {
 						MessageBox::Show("No VNA connected to stored port", "Error",
@@ -7487,6 +7566,87 @@ private: System::Void rawDetectorDataToolStripMenuItem_Click(System::Object^  se
 private: System::Void Spectrum_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
 			Refresh();	// Force Screen redraw
 		 }
+
+private: System::Void dumpMeasurementsToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 DumpMeasurement();
+		 }
+
+private: System::Void startF_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  pe) {
+	int	Xpos, Ypos;		// where the mouse points relative to our display surface
+	Xpos = pe->X;// - startF->Left;
+	Ypos = pe->Y;// - startF->Top;
+											// no status if mouse is off the Scope Display surface
+	//if ((Xpos >= startF->Width) || (Xpos < 0) || (Ypos > startF->Height) || (Ypos < 0))
+	//	return;
+
+	int digit = 12 - (Xpos + 13) / 14; 
+	if (digit >= 12)
+		digit--;
+	if (digit >= 8)
+		digit--;
+	if (digit >= 4)
+		digit--;
+	if (digit >= 7)
+		digit = 7;
+	if (pe->Delta != 0) {
+		
+		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit) * pe->Delta / 30);
+//			 if (FG->StartF() > MAXCALFREQ)  // max allowed frequency
+//					FG->SetStartF(MAXCALFREQ);
+		startF->Text = FG->StartF().ToString("N0");
+		return;
+	}
+	if(pe->Button == ::MouseButtons::None)
+		return;
+	if(pe->Button == ::MouseButtons::Left)
+    {
+		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit));
+		startF->Text = FG->StartF().ToString("N0");
+    }
+	else if(pe->Button == ::MouseButtons::Right)
+    {
+		FG->SetStartF(FG->StartF() - (long)Math::Pow(10.0, digit));
+		startF->Text = FG->StartF().ToString("N0");
+    }
+  }
+private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  pe) {
+	int	Xpos, Ypos;		// where the mouse points relative to our display surface
+	Xpos = pe->X;// - startF->Left;
+	Ypos = pe->Y;// - startF->Top;
+											// no status if mouse is off the Scope Display surface
+	//if ((Xpos >= startF->Width) || (Xpos < 0) || (Ypos > startF->Height) || (Ypos < 0))
+	//	return;
+
+	int digit = 12 - (Xpos + 13) / 14; 
+	if (digit >= 12)
+		digit--;
+	if (digit >= 8)
+		digit--;
+	if (digit >= 4)
+		digit--;
+	if (digit >= 7)
+		digit = 7;
+	if (pe->Delta != 0) {
+		
+		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit) * pe->Delta / 30);
+//			 if (FG->StopF() > MAXCALFREQ)  // max allowed frequency
+//					FG->SetStopF(MAXCALFREQ);
+		stopF->Text = FG->StopF().ToString("N0");
+		return;
+	}
+	if(pe->Button == ::MouseButtons::None)
+		return;
+	if(pe->Button == ::MouseButtons::Left)
+    {
+		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit));
+		stopF->Text = FG->StopF().ToString("N0");
+    }
+	else if(pe->Button == ::MouseButtons::Right)
+    {
+		FG->SetStopF(FG->StopF() - (long)Math::Pow(10.0, digit));
+		stopF->Text = FG->StopF().ToString("N0");
+    }
+  }
 }
 ;};
 

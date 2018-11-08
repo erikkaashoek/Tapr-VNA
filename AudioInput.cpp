@@ -3,6 +3,8 @@
 #include "stdafx.h"
 
 //#using <Winmm.dll>
+using namespace std;  
+#include <stdlib.h>
 
 #include <Windows.h>
 #include <MMSystem.h>
@@ -11,7 +13,16 @@
 
 #include "AudioInput.h"
 using namespace System;
+	using namespace System::ComponentModel;
+	using namespace System::Collections;
+	using namespace System::Text;
+	using namespace System::IO;
+	using namespace System::Data;
+	using namespace System::Reflection;
+
 	using namespace System::Windows::Forms;
+
+
 
 
 /*
@@ -27,8 +38,11 @@ int measurementCount[1100];
 int measurementIndex[1100];
 int lastMeasurement;
 int maxMeasurement;
+unsigned long lastFreq;
 
 bool audioStopping = false;
+
+//static System::IO::Ports::SerialPort^ serialPort;
 
 //float decoded[1024][2];
 volatile int nextDecoded = 0;
@@ -51,6 +65,7 @@ int	simDuration = 3;
 int	simStep = 0;
 long simStartF;
 long simStepF;
+long simWidth;
 int simBefore;
 int simAfter;
 int simDirection;
@@ -71,9 +86,10 @@ HWAVEIN      hWaveIn;
 //int sampleRate = 44100;
 int sampleRate = 192000;
 int oldSampleRate = 0;
-int IFREQ = 5000;
+int IFREQ = 12000;
 
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
+int SAMPPERMS = 1;
 // For normal operation
 int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
 
@@ -242,7 +258,7 @@ void dsp_process(short *capture, long length)
 	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len);
 static long saved_ref_mag;
 	  if (nextDecoded == 0)
-		 saved_ref_mag = ref_mag;
+		 saved_ref_mag = (long) ref_mag;
 	  samp_mag = samp_mag * 32760L / saved_ref_mag;
 //	  samp_phase = 0;
 	  actualMeasurement.magnitude = todb(samp_mag); 
@@ -289,8 +305,9 @@ audioStates nextState = AS_NOCHANGE;
 #define DOWNCOUNT	1
 int maxPoints = 0;
 
-void ArmAudio(int mP)
+void ArmAudio(int mP, System::IO::Ports::SerialPort^ port)
 {
+//	serialPort = port
 	audioState = AS_ARMED;
 	maxMeasurement = mP;
 	lastMeasurement = 0;
@@ -301,9 +318,9 @@ int lastI=-1;
 int lastJ=-1;
 bool lastRefl = false;
 
-bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r)
+bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr)
 {
-	int offs;
+//	int offs;
 	if ( (!audioPower && i < lastMeasurement-1 && i < maxMeasurement) ||
 		 (audioPower && lastMeasurement > 0  && measurementIndex[0] + i*d < nextDecoded)) {
 		if (i != lastI ) {
@@ -315,14 +332,17 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 			r = measured[offs + i*d + lastJ].reference;
 			tm = measured[offs + i*d + lastJ].magnitude;
 			tp = measured[offs + i*d + lastJ].phase;
+			measured[offs + i*d + lastJ].read = i*100 + lastJ+1;
 			m = 0.0;
 			p = 0.0;
 		} else {
-			r = measured[measurementIndex[i] + 1 + lastJ].reference;
-			m = measured[measurementIndex[i] + 1 + lastJ].magnitude;
-			p = measured[measurementIndex[i] + 1 + lastJ].phase;
-			tm = measured[measurementIndex[i] + 1 + d + 2 + lastJ].magnitude;
-			tp = measured[measurementIndex[i] + 1 + d + 2 + lastJ].phase;
+			r = measured[measurementIndex[i] + 0 + lastJ].reference;
+			m = measured[measurementIndex[i] + 0 + lastJ].magnitude;
+			p = measured[measurementIndex[i] + 0 + lastJ].phase;
+			measured[measurementIndex[i] + 0 + lastJ].read = lastJ+1;
+			tm = measured[measurementIndex[i] + 0 + (d + 2) * SAMPPERMS + lastJ].magnitude;
+			tp = measured[measurementIndex[i] + 0 + (d + 2) * SAMPPERMS + lastJ].phase;
+			measured[measurementIndex[i] + 0 + (d + 2) * SAMPPERMS + lastJ].read = -lastJ-1;
 		}
 //		if (i > 4 && m > -20)
 //			m = m;
@@ -334,24 +354,58 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 
 #define SIGNAL_THRESHOLD -30	
 
+void MarkFrequency(unsigned long freq)
+{
+	int n = nextDecoded;
+	if ( nextDecoded > 0)
+		measured[nextDecoded-1].freq = freq;
+	lastFreq = freq;
+}
+
+
 void StoreMeasurement()
 {
 	int lowmatch = 0;
 	int highmatch = 0;
+	float delta4 = 0;
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
 	if (nextDecoded < MAX_MEASUREMENTS) {
+		measured[nextDecoded].freq = lastFreq;
 		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
 		measured[nextDecoded].phase = actualMeasurement.phase;
+		measured[nextDecoded].read = 0;
+		if (actualMeasurement.reference < -110)
+			actualMeasurement.reference = -100;
+		if (nextDecoded > 0)
+			measured[nextDecoded].delta = actualMeasurement.reference - measured[nextDecoded-1].reference;
+		else
+			measured[nextDecoded].delta = actualMeasurement.reference;
 		measured[nextDecoded++].reference = actualMeasurement.reference;
+
 	}
 	if (audioPower) { // No measurment indirection when measuring audioPower
-		if (lastMeasurement == 0 && actualMeasurement.reference < SIGNAL_THRESHOLD ) {
+		if (lastMeasurement == 0 && actualMeasurement.reference < SIGNAL_THRESHOLD && lastMeasurement < 1100  ) {
 			measurementIndex[lastMeasurement++] = nextDecoded;
 		}
 		return;
 	}
-	if (nextDecoded > 10  && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) ) {
+	if (nextDecoded > 5 /* && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) */ ) {
+#if 1 // new algorith for start of signal detection
+		float d1,d2,d3,d4,d5,ds5;
+		d5 = measured[nextDecoded-5].delta;
+		d4 = measured[nextDecoded-4].delta;
+		d3 = measured[nextDecoded-3].delta;
+		d2 = measured[nextDecoded-2].delta;
+		d1 = measured[nextDecoded-1].delta;
+		ds5 = d5 + d4 + d3 + d2 + d1;
+#define MIN_DELTA5 25
+		if (d3 > 10 && d2 > -2 && d1 > -2 && d3 >= d2 && d3 > d1 && d3 > d4 && d3 > d5  && lastMeasurement < 1100) {
+			float index = ((-5 * d5) + (-4 * d4) + (-3 * d3) + (-2 * d2) + (-1 * d1)) / ds5;
+			index = - 3;
+			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (d2>10?1:0) ; // + 1 after biggest step, +2 is first reliable signal
+		}
+#else
 //		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
 //		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
 //		if ( measured[nextDecoded-8].reference < SIGNAL_THRESHOLD ) lowmatch++;
@@ -391,8 +445,53 @@ void StoreMeasurement()
 			 if (measurementIndex[lastMeasurement-1] + 15 > nextDecoded - 5 )
 				nextDecoded = nextDecoded; // probably skipped one measurement, just for having a breakpoint location for debugging
 		}
+#endif
 	}
 }
+
+
+#include <string>
+
+void DumpMeasurement()
+{
+	FileStream^ fs;
+	StreamWriter^ sw;
+	fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
+	sw = gcnew StreamWriter(fs);
+	sw->WriteLine("sep=;");
+	sw->WriteLine("index; freq; ref; delta; read; mag; phase ");
+	int decoded=0;
+	int measure = 0;
+	string s;
+	while (decoded < nextDecoded) {
+		sw->Write(measure.ToString("N"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].freq.ToString("N"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].reference.ToString("N1"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].delta.ToString("N1"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].read.ToString("N1"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].magnitude.ToString("N1"));
+		sw->Write("; ");
+		sw->Write(measured[decoded].phase.ToString("N1"));
+		decoded++;
+		if (measure < lastMeasurement+1) {
+			if (measurementIndex[measure+1] == decoded) {
+				sw->Write("; ");
+				sw->Write(measure.ToString("N0"));
+				measure++;
+			}
+		}
+		sw->WriteLine("");
+}
+	sw->Flush();	
+	sw->Close();	// close VNAdecodig.csv file
+}
+
+
 
 #include <complex>
 using namespace std;  
@@ -539,55 +638,55 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 #else
 				if (audioPower) {
 					// Audio power simulation
-					if (simPoint < simMaxPoint && simStep >= simDuration ) {
+					if (simPoint < simMaxPoint && simStep/SAMPPERMS >= simDuration ) {
 						simPoint += 1;
 						if (simPoint < simMaxPoint) {
 							simStep = 0;
 							simStartF += simStepF;
 						}
 					}
-#if 0
-					if (simPoint == 0) { // Add reference signal at start to know audio level
-						simS = 0;
-						while (simS < 10) {
-							for (i = 0; i < SAMP; i++) {
-//						a = abs(tran);
-//						v = arg(tran);
-								audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
-								audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
-								simS++;
-							}
-						}
-					}
-#endif
 					for (i = 0; i < SAMP; i++) {
-//						a = abs(tran);
-//						v = arg(tran);
-						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
+						double a = abs(tran);
+						// v = arg(tran);
+						double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
+						if (abs(freq) > sampleRate / 2)
+							a = a* 0.0000000000001;
+						audio [i*2+0] = 0+(short)(32600 * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
 						if (simPoint >= simMaxPoint || simPoint < 5)
-							audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+							audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						else 
-							audio [i*2+1] = 0.00001;
+							audio [i*2+1] = (long) (0.00001 * 32600);
 						simS++;
 					}
 
 			
 				} else {
 				// Regular simulation
-				if (simPoint < simMaxPoint && simStep >= SILENCE_GAP + simDuration*2 ) {
+				if (simPoint < simMaxPoint && simStep/SAMPPERMS >= SILENCE_GAP + (simDuration+2)*2 ) {
 					simPoint += 1;
 					if (simPoint < simMaxPoint) {
 						simStep = 0;
 						simStartF += simStepF;
 					}
 				}
-				if (simStep < SILENCE_GAP ) { // Initial silence
+#if 0			// Test IF convolution filter
+				double a = abs(tran);
+				// v = arg(tran);
+				double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
+				if (abs(freq) > sampleRate / 2)
+					a = a* 0.0000000000001;
+#else
+				double freq = IFREQ;
+				double a = abs(tran);
+
+#endif
+				if (simStep/SAMPPERMS < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
 						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
 						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
-				} else if (simStep < SILENCE_GAP + simDuration ) { // Reflection
+				} else if (simStep/SAMPPERMS < SILENCE_GAP + (simDuration+2) ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(refl);
 //						v = arg(refl);
@@ -599,7 +698,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(tran);
 //						v = arg(tran);
-						audio [i*2+0] = 0+(short)(32600 * abs(tran) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * IFREQ / sampleRate + arg(tran)));
+						audio [i*2+0] = 0+(short)(32600 * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
 						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
@@ -717,7 +816,9 @@ int OpenAudio (void) {
 */
 	}
 
-	SAMP=sampleRate / 1000;		// Audio samples per dsp
+	SAMPPERMS = 1;
+	SAMP = sampleRate / 1000 / SAMPPERMS ;		// Audio samples per dsp
+
 	NUMPTS=2*SAMP*10;
 
 	for (i = 0; i < SAMP; i++) {
@@ -767,6 +868,7 @@ void StartAudioSimulation(int mode, int numPoints, int duration, long startF, lo
 	simStep = 0;
 	simStartF = startF;
 	simStepF = stepF;
+	simWidth = stepF*numPoints;
 	simBefore = cable_before;
 	simAfter = cable_after;
 	simDirection = direction;

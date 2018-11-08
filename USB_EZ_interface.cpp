@@ -397,7 +397,7 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 {
 //	String ^ t;
 	SetAudioPower(power);
-	ArmAudio(numPoints);
+	ArmAudio(numPoints,serialPort);
 	dur = duration;
 	if (! mode){
 
@@ -407,9 +407,9 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 //		Sleep(200);
 		if (!serialPort->IsOpen) serialPort->Open();
 		if (power)
-			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur));
+			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3} {4}", startF, numPoints + 10, stepF, dur, IFREQ));
 		else
-			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3}", startF, numPoints + 10, stepF, dur+2)); // add 2 duration for lead in and out
+			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3} {4}", startF, numPoints + 10, stepF, dur+2, IFREQ)); // add 2 duration for lead in and out
 		Sleep(20);
 		}
 		catch (System::Exception^ e) {
@@ -418,7 +418,7 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 		}
 
 	} else {
-		if (!power) dur += 2; // add 2 duration for lead in and out
+//		if (!power) dur += 2; // add 2 duration for lead in and out
 		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance);
 	}
 	return(true);
@@ -428,8 +428,15 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 void VNADevice::SetFreq(long startF, int direction)
 {
 	if (! mode){
-		if (!serialPort->IsOpen) serialPort->Open();
-		serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
+		try {
+			if (!serialPort->IsOpen) serialPort->Open();
+		}
+		catch (System::Exception^ e) {
+			     MessageBox::Show(e->Message, "Error");
+				 return;
+		}
+
+		if (serialPort->IsOpen) serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
 	} else {
 		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance);
 	}
@@ -485,20 +492,38 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflphase,tranphase;
 	float reflmag,tranmag;
 	float reflevel;
+	unsigned long freq;
 	int i;
+	unsigned int level;
 
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
 		
-	for (i=0; i<dur; i++) {
-		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i]) && retries < 20) {
+	for (i=0; i<((dur+2) * SAMPPERMS - 2); i++) {
+		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq) && retries < 20) {
 			Sleep(2);
 			retries++;
 		}
-		if (retries >= 20)
+		if (retries >= 100)
 			return (false);
 	}
+#if 0 // moved to form.h SerialWorker
+	if (serialPort->IsOpen) {
+		if (serialPort->BytesToRead > 0) {
+			char b = serialPort->ReadByte();
+			if (b == 'x') {
+				freq = ((unsigned long)serialPort->ReadByte());
+				freq += ((unsigned long)serialPort->ReadByte())<<8;
+				freq += ((unsigned long)serialPort->ReadByte())<<16;
+				freq += ((unsigned long)serialPort->ReadByte())<<24;
+				level = ((unsigned long)serialPort->ReadByte());
+				level += ((unsigned long)serialPort->ReadByte())<<8;
+				MarkFrequency(freq);
+			}
+		}
+	}
+#endif
 	reflmag = Median(sumreflmag,dur);
 	tranmag = Median(sumtranmag,dur);
 	reflphase = Median(sumreflphase,dur);
@@ -507,13 +532,14 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 		// mp++;
 	RxBuffer->Vref1 = DB2SHORT(reflevel);
-	
+	RxBuffer->Vref2 = level;
 	NormalizePhase(reflphase);
 	RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
 	RxBuffer->ReflMQ = DB2SHORT(reflmag);
 	NormalizePhase(tranphase);
 	RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
 	RxBuffer->TranMQLo = DB2SHORT(tranmag);
+	RxBuffer->Freq = freq;
 
 	return(rxsuccess);
 }

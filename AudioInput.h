@@ -4,6 +4,7 @@
 #define WAVEHDRBUFFER 4
 
 #define MAXNUMPTS	2*192*10 // 192kHz
+extern int SAMPPERMS;
 // For debugging
 //#define NUMPTS 2*SAMP // stereo  * 10 * SAMP
 
@@ -22,15 +23,20 @@ extern double audio_phase_transmission;
 extern bool audio_simulation;
 
 extern int OpenAudio (void);
-extern void ArmAudio(int pM);
-extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r);
+extern void ArmAudio(int pM, System::IO::Ports::SerialPort^ port);
+void MarkFrequency(unsigned long freq);
+extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr);
 extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction, int r, int c, int l);
 extern void SetAudioPower(int power);
+extern void DumpMeasurement(void);
 
 typedef struct measurementType {
 	float magnitude;
 	float phase;
 	float reference;
+	float delta;
+	unsigned long freq;
+	int read;
 } measurementType;
 
 
