@@ -15,6 +15,7 @@
 //#include "objbase.h"
 
 extern int IFREQ;
+extern int oldIFREQ;
 extern int sampleRate;
 extern int oldSampleRate;
 #define SAMPLERATES	6
@@ -309,7 +310,10 @@ private: System::Void label2_Click(System::Object^  sender, System::EventArgs^  
 		 }
 private: System::Void IFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 			IFREQ = Convert::ToInt32(this->IFreq->Text);	
-
+			if (oldIFREQ != IFREQ) {
+				OpenAudio();
+				oldIFREQ=IFREQ;
+		 }
 		 }
 
 private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {

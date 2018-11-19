@@ -122,9 +122,9 @@ int ToDisplayRectMag(double magnitude, int height, float dbScaleFactor, int refL
 
 	double dbmag;
 
-	if(magnitude < 0.0000001)
-		dbmag = 140.0;
-	else
+//	if(magnitude < 0.0000001)
+//		dbmag = 140.0;
+//	else
 		dbmag = refLevel - 20.0 * log10(magnitude);	// 0 to 100 for zero dB to -100 dB.
 
 	dbmag /= ((double)dbScaleFactor * 10.0);			// 0 to +1 for 10db/div

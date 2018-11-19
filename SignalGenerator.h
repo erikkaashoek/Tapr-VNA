@@ -23,7 +23,7 @@ namespace VNAR3 {
 			InitializeComponent();
 			VNA = VNADev;
 			freq = MINCALFREQ;
-
+			oldChecked = -1;
 			//
 			//TODO: Add the constructor code here
 			//
@@ -63,8 +63,10 @@ namespace VNAR3 {
 
 	private: long freq;
 			 long oldFreq;
-			 bool oldChecked;
+			 int oldChecked;
+			 int checked;
 	private: System::Windows::Forms::Label^  label5;
+	private: System::Windows::Forms::RadioButton^  showSpectrum;
 			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
 
 		/// <summary>
@@ -93,6 +95,7 @@ namespace VNAR3 {
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->label5 = (gcnew System::Windows::Forms::Label());
+			this->showSpectrum = (gcnew System::Windows::Forms::RadioButton());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->trackBar1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -204,7 +207,6 @@ namespace VNAR3 {
 			// timer1
 			// 
 			this->timer1->Enabled = true;
-			this->timer1->Interval = 100;
 			this->timer1->Tick += gcnew System::EventHandler(this, &SignalGenerator::timer1_Tick);
 			// 
 			// label5
@@ -216,11 +218,22 @@ namespace VNAR3 {
 			this->label5->TabIndex = 12;
 			this->label5->Text = L"Measurement:";
 			// 
+			// showSpectrum
+			// 
+			this->showSpectrum->AutoSize = true;
+			this->showSpectrum->Location = System::Drawing::Point(404, 70);
+			this->showSpectrum->Name = L"showSpectrum";
+			this->showSpectrum->Size = System::Drawing::Size(70, 17);
+			this->showSpectrum->TabIndex = 13;
+			this->showSpectrum->Text = L"Spectrum";
+			this->showSpectrum->UseVisualStyleBackColor = true;
+			// 
 			// SignalGenerator
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(686, 148);
+			this->Controls->Add(this->showSpectrum);
 			this->Controls->Add(this->label5);
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->frequency);
@@ -259,10 +272,16 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 			phase->Text = String::Format("{0}",actualMeasurement.phase);
 			reference->Text = String::Format("{0}",actualMeasurement.reference);
 			//frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
-			if (freq != oldFreq || oldChecked != showTrans->Checked) {
-				VNA->SetFreq(freq,showTrans->Checked);
+			if (showTrans->Checked)
+				checked = 1;
+			if (showRefl->Checked)
+				checked = 0;
+			if (showSpectrum->Checked)
+				checked = 2;
+			if (freq != oldFreq || oldChecked != checked) {
 				oldFreq = freq;
-				oldChecked = showTrans->Checked;
+				oldChecked = checked;
+				VNA->SetFreq(oldFreq,oldChecked);
 			}
 		 }
 private: System::Void trackBar1_Scroll(System::Object^  sender, System::EventArgs^  e) {

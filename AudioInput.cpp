@@ -32,13 +32,13 @@ typedef struct measurement {
 	float reference;
 } measurementType;
 */
-measurementType measured[MAX_MEASUREMENTS];
+volatile measurementType measured[MAX_MEASUREMENTS];
 volatile measurementType actualMeasurement;
-int measurementCount[1100];
-int measurementIndex[1100];
-int lastMeasurement;
-int maxMeasurement;
-unsigned long lastFreq;
+volatile int measurementCount[1100];
+volatile int measurementIndex[1100];
+volatile int lastMeasurement;
+volatile int maxMeasurement;
+volatile unsigned long lastFreq;
 
 bool audioStopping = false;
 
@@ -86,9 +86,11 @@ HWAVEIN      hWaveIn;
 //int sampleRate = 44100;
 int sampleRate = 192000;
 int oldSampleRate = 0;
-int IFREQ = 12000;
-
+int IFREQ = 6000;  // Invariant : IFREQ == (sampleRate / SAMP) * integer!!!!!!
+int oldIFREQ = 0;
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
+
+
 int SAMPPERMS = 1;
 // For normal operation
 int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
@@ -209,7 +211,7 @@ float min_rr = (float)1e+30;
 float factor = 1;
 int reference_signal_level=0;
 int prev_ref_signal = 0;
-
+long saved_ref_mag;
 
 //#pragma STDC FP_CONTRACT ON
 
@@ -222,6 +224,8 @@ void dsp_process(short *capture, long length)
   long long samp_c = 0;
   long long ref_s = 0;
   long long ref_c = 0;
+  long long samp_dc = 0;
+  long long ref_dc = 0;
   double ref_mag;
     double samp_mag;
 
@@ -237,36 +241,48 @@ void dsp_process(short *capture, long length)
 		samp_c += smp;
 		ref_s += ref*ref;
 		ref_c += ref;
+		samp_dc += smp;
+		ref_dc += ref;
 	} else {
 		samp_s += smp * s;
 	    samp_c += smp * c;
 		ref_s += ref * s;
 		ref_c += ref * c;
+		samp_dc += smp;
+		ref_dc += ref;
 	}
 
   }
 
-#define REFERENCE_LEVEL_REDUCTION	1  // 30 with 1.5k resistor
+#define REFERENCE_LEVEL_REDUCTION	1  // Reduction of reference level to avoid crosstalk, 20dB
 
-	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for 26dB reduced level
-	ref_c *= REFERENCE_LEVEL_REDUCTION;	
 
+	actualMeasurement.dcr = ((float)ref_dc) / len;
+	actualMeasurement.dcs = ((float)samp_dc )/ len;
   if (audioPower) {
+//	  	ref_s *= REFERENCE_LEVEL_REDUCTION*REFERENCE_LEVEL_REDUCTION;	// Compensate for reduced level
+//		ref_c *= REFERENCE_LEVEL_REDUCTION;	
 //	samp_mag = samp_s - abs(samp_c);
 
-	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len);
-	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len);
-static long saved_ref_mag;
-	  if (nextDecoded == 0)
+	  samp_mag = sqrt(((float)samp_s)/len  /* - ((float)samp_c)*samp_c/len/len  */ );
+	  ref_mag = sqrt(((float)ref_s)/len /* - ((float)ref_c)*ref_c/len/len */ ) * REFERENCE_LEVEL_REDUCTION;
+	  if (nextDecoded == 1)
 		 saved_ref_mag = (long) ref_mag;
-	  samp_mag = samp_mag * 32760L / saved_ref_mag;
+	  else if (nextDecoded < 4)
+		 saved_ref_mag = ( 3 * saved_ref_mag + (long) ref_mag) / 4;
+	  samp_mag = samp_mag; // * 32760L / saved_ref_mag; // For now do not scale measurment to reference signal
 //	  samp_phase = 0;
-	  actualMeasurement.magnitude = todb(samp_mag); 
+	  actualMeasurement.magnitude = (float) todb(samp_mag); // Scale for unknown reason
 	  actualMeasurement.phase = (float)0.0;
 	  // ref_mag = 32760*32760*10; // No reference measurement during power measurement	  
 	  actualMeasurement.reference =  todb(ref_mag);
   } else {
-	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+
+	  	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for reduced level
+		ref_c *= REFERENCE_LEVEL_REDUCTION;	
+
+	  ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+
 
 #define FASTDSP
 #ifdef FAST_DSP	
@@ -322,7 +338,7 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 {
 //	int offs;
 	if ( (!audioPower && i < lastMeasurement-1 && i < maxMeasurement) ||
-		 (audioPower && lastMeasurement > 0  && measurementIndex[0] + i*d < nextDecoded)) {
+		 (audioPower && lastMeasurement > 0  && measurementIndex[0] + i*d < nextDecoded-20 )) {
 		if (i != lastI ) {
 			lastI = i;
 			lastJ = 0;
@@ -374,6 +390,8 @@ void StoreMeasurement()
 		measured[nextDecoded].freq = lastFreq;
 		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
 		measured[nextDecoded].phase = actualMeasurement.phase;
+		measured[nextDecoded].dcs = actualMeasurement.dcs;
+		measured[nextDecoded].dcr = actualMeasurement.dcr;
 		measured[nextDecoded].read = 0;
 		if (actualMeasurement.reference < -110)
 			actualMeasurement.reference = -100;
@@ -404,6 +422,8 @@ void StoreMeasurement()
 			float index = ((-5 * d5) + (-4 * d4) + (-3 * d3) + (-2 * d2) + (-1 * d1)) / ds5;
 			index = - 3;
 			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (d2>10?1:0) ; // + 1 after biggest step, +2 is first reliable signal
+			if (measured[measurementIndex[lastMeasurement-1]].reference < -40.0) // lowest acceptable reference signal
+				lastMeasurement--; // small peak after reference disappeared.
 		}
 #else
 //		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
@@ -456,39 +476,52 @@ void DumpMeasurement()
 {
 	FileStream^ fs;
 	StreamWriter^ sw;
-	fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
-	sw = gcnew StreamWriter(fs);
-	sw->WriteLine("sep=;");
-	sw->WriteLine("index; freq; ref; delta; read; mag; phase ");
-	int decoded=0;
-	int measure = 0;
-	string s;
-	while (decoded < nextDecoded) {
-		sw->Write(measure.ToString("N"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].freq.ToString("N"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].reference.ToString("N1"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].delta.ToString("N1"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].read.ToString("N1"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].magnitude.ToString("N1"));
-		sw->Write("; ");
-		sw->Write(measured[decoded].phase.ToString("N1"));
-		decoded++;
-		if (measure < lastMeasurement+1) {
-			if (measurementIndex[measure+1] == decoded) {
-				sw->Write("; ");
-				sw->Write(measure.ToString("N0"));
-				measure++;
+	try
+	{
+		fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
+		sw = gcnew StreamWriter(fs);
+		sw->WriteLine("sep=;");
+		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; measurement ");
+		int decoded=0;
+		int measure = 0;
+		string s;
+		while (decoded < nextDecoded) {
+			sw->Write(measure.ToString("N"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].freq.ToString("N"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].reference.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].delta.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].read.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].magnitude.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].phase.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].dcr.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].dcs.ToString("N1"));
+			decoded++;
+			if (measure < lastMeasurement+1) {
+				if (measurementIndex[measure+1] == decoded) {
+					sw->Write("; ");
+					sw->Write(measure.ToString("N0"));
+					measure++;
+				}
 			}
+			sw->WriteLine("");
 		}
-		sw->WriteLine("");
-}
-	sw->Flush();	
-	sw->Close();	// close VNAdecodig.csv file
+		sw->Flush();	
+		sw->Close();	// close VNAdecodig.csv file
+	}
+	catch(System::IO::IOException^ pe)
+	{
+		MessageBox::Show(pe->Message,"Error");
+	}
+
+
 }
 
 
@@ -669,7 +702,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 						simStartF += simStepF;
 					}
 				}
-#if 0			// Test IF convolution filter
+#if 1			// Test IF convolution filter
 				double a = abs(tran);
 				// v = arg(tran);
 				double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
@@ -750,6 +783,7 @@ void CALLBACK waveInProc(HWAVEIN hwi,UINT uMsg,DWORD dwInstance,DWORD dwParam1,D
 int OpenAudio (void) {
 	int i;
 	bool again = true;
+	double a;
 
 	if (hWaveIn != NULL) {
 		audioStopping = true;
@@ -820,10 +854,13 @@ int OpenAudio (void) {
 	SAMP = sampleRate / 1000 / SAMPPERMS ;		// Audio samples per dsp
 
 	NUMPTS=2*SAMP*10;
+	a = 0.16;
+
+#define WINDOW(n) ((1.0-a)/2 - 0.5 * cos((2.0*PI*n)/(SAMP-1)) + (a/2.0)*cos((4*PI*n)/(SAMP-1)))
 
 	for (i = 0; i < SAMP; i++) {
-		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFREQ)/ sampleRate));
-		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFREQ) / sampleRate));
+		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFREQ)/ sampleRate) * WINDOW(i));
+		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFREQ) / sampleRate) * WINDOW(i));
 	}
 
 

@@ -5102,7 +5102,10 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay, Spectrum->Checked);
 			for (int m=0; m<FG->points; m++)
 			{
-    
+				if (!WorkerCollect) {
+					MessageBox::Show("Sweep aborted", "Abort", MessageBoxButtons::OK, MessageBoxIcon::Error);
+					break;
+				}
 				// calculate linear frequency spot for each sweep
 				TxBuf->TxAccum = m; 
 				freq = FG->Frequency(m);
@@ -5111,7 +5114,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					//SingleSweep->Enabled = true;		// re-enable the single sweep button
 					RecurrentSweep->Text = "Free Run";	// stop free run
 					//Refresh();							// Force a redraw of the screen	
-					if (actualMeasurement.reference < -25.0) 
+					if (actualMeasurement.reference < -40.0) 
 						MessageBox::Show("Measurement signal level too low", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
 					else if (actualMeasurement.reference > 15.0) 
 						MessageBox::Show("Measurement signal level too high", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -5248,7 +5251,8 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			else									// triggered by a single sweep
 			{
 				WorkerCollect = false;				// thread has completed a single sweep
-				SingleSweep->Enabled = true;		// re-enable the single sweep button
+				SingleSweep->Text = "SglSwp";
+//				SingleSweep->Enabled = true;		// re-enable the single sweep button
 				Refresh();							// Force a redraw of the screen	
 			}
 		}	//end	while(true)
@@ -5488,7 +5492,7 @@ private: System::Void rectItem_Click(System::Object^  sender, System::EventArgs^
 			// If in TDR mode then need to stop sweeping first
 			if (TDRItem->Checked)	
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(SingleSweep->Enabled == false))
+					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing from TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
@@ -5541,7 +5545,7 @@ private: System::Void polarItem_Click(System::Object^  sender, System::EventArgs
 			// If in TDR mode then need to stop sweeping first
 			if (TDRItem->Checked)		
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(SingleSweep->Enabled == false))
+					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing from TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
@@ -5593,7 +5597,7 @@ private: System::Void TDRItem_Click(System::Object^  sender, System::EventArgs^ 
 			// If in Polar or Rectangular mode then need to stop sweeping first
 			if ((rectItem->Checked) || (polarItem->Checked))
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(SingleSweep->Enabled == false))
+					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing to TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
@@ -6211,8 +6215,14 @@ private: System::Void storeReverse_Click(System::Object^  sender, System::EventA
 		/// Single Sweep button click handler
 private: System::Void SingleSweep_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
-			 SingleSweep->Enabled = false;		// disable control. Thread will re-enable it
-			 WorkerCollect = true;				// tell background thread to collect a sweep
+			 if (String::Compare(SingleSweep->Text,"SglSwp") == 0) {
+				 SingleSweep->Text = "Abort";
+				 WorkerCollect = true;				// tell background thread to collect a sweep
+				 // SingleSweep->Enabled = false;		// disable control. Thread will re-enable it
+			 } else {
+				 SingleSweep->Text = "SglSwp";
+				 WorkerCollect = false;				// tell background thread to collect a sweep
+			 }
 		 }
 		/// Free Run/Running button click handler
 private: System::Void RecurrentSweep_Click(System::Object^  sender, System::EventArgs^  e)
@@ -6220,13 +6230,13 @@ private: System::Void RecurrentSweep_Click(System::Object^  sender, System::Even
 			 if (String::Compare(RecurrentSweep->Text, "Free Run") == 0)
 			 {
                  RecurrentSweep->Text = "Running";
-				 SingleSweep->Enabled = false;
+				 SingleSweep->Text = "Abort";
 				 WorkerCollect = true;
 			 }
 			 else
 			 {
 				 RecurrentSweep->Text = "Free Run";
-				 SingleSweep->Enabled = true;
+				 SingleSweep->Text = "SglSwp";
 				 WorkerCollect = false;
 			 }
 		 }
@@ -6258,8 +6268,8 @@ private: System::Void SweepSpd_Click(System::Object^  sender, System::EventArgs^
 				 SweepSpd->Text = "10 ms";
 			 else if (String::Compare(SweepSpd->Text, "10 ms") == 0)
 				 SweepSpd->Text = "30 ms";
-			 else if (String::Compare(SweepSpd->Text, "30 ms") == 0)
-				 SweepSpd->Text = "100 ms";
+//			 else if (String::Compare(SweepSpd->Text, "30 ms") == 0)
+//				 SweepSpd->Text = "100 ms";
 			 else
 				 SweepSpd->Text = "1 ms";	// go to Fast mode if speed = 10 ms or anything unknown		
 		 }
@@ -6541,7 +6551,7 @@ private: System::Void SaveConfigurationMenu_Click(System::Object^  sender, Syste
 			 /// 7. Stored trace results.
 
 
-			if(!SingleSweep->Enabled)
+			if(String::Compare(SingleSweep->Text,"SglSwp") != 0)
 			{
 				MessageBox::Show("All sweeping must be stopped in order to save the configuration",
 					"Warning",MessageBoxButtons::OK, MessageBoxIcon::Warning);
@@ -6622,7 +6632,7 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 					bw->Write("slow");
 
 				bw->Write("Free Run");				//bw->Write(RecurrentSweep->Text) - force single sweep mode
-				bw->Write(SingleSweep->Enabled);
+				bw->Write(String::Compare(SingleSweep->Text,"SglSwp") != 0);
 
 				if(plotTitle)
 					bw->Write(plotTitle);
@@ -7571,6 +7581,8 @@ private: System::Void dumpMeasurementsToolStripMenuItem_Click(System::Object^  s
 			 DumpMeasurement();
 		 }
 
+#define MOUSE_WHEEL_STEP 30
+
 private: System::Void startF_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  pe) {
 	int	Xpos, Ypos;		// where the mouse points relative to our display surface
 	Xpos = pe->X;// - startF->Left;
@@ -7589,10 +7601,9 @@ private: System::Void startF_MouseDown(System::Object^  sender, System::Windows:
 	if (digit >= 7)
 		digit = 7;
 	if (pe->Delta != 0) {
-		
-		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit) * pe->Delta / 30);
-//			 if (FG->StartF() > MAXCALFREQ)  // max allowed frequency
-//					FG->SetStartF(MAXCALFREQ);
+		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit) * (int)(pe->Delta / MOUSE_WHEEL_STEP));
+		if (FG->StartF() < MINCALFREQ)  // max allowed frequency
+			FG->SetStartF(MINCALFREQ);
 		startF->Text = FG->StartF().ToString("N0");
 		return;
 	}
@@ -7628,9 +7639,9 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 		digit = 7;
 	if (pe->Delta != 0) {
 		
-		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit) * pe->Delta / 30);
-//			 if (FG->StopF() > MAXCALFREQ)  // max allowed frequency
-//					FG->SetStopF(MAXCALFREQ);
+		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit) * (int)(pe->Delta / MOUSE_WHEEL_STEP));
+		if (FG->StopF() < MINCALFREQ)  // max allowed frequency
+			FG->SetStopF(MINCALFREQ);
 		stopF->Text = FG->StopF().ToString("N0");
 		return;
 	}

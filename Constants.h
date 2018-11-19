@@ -109,7 +109,7 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 											// 6.2 degrees at 200 Khz.
 
 // #define SHORT_RANGE 3800
-#define SHORT_RANGE 30000
+#define SHORT_RANGE 32000
 
 #define MAX_PHASE	181.0
 #define MIN_PHASE   -181.0
@@ -118,8 +118,8 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 #define SHORT2PHASE(X) (((double)(X) * (MAX_PHASE - MIN_PHASE) / SHORT_RANGE ) + MIN_PHASE )
 
 #define MAX_DB	+1.0
-#define MIN_DB   -101.0
-#define DB2SHORT(X) (short)(((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB))
+#define MIN_DB   -120.0
+#define DB2SHORT(X) (short)((X)>MIN_DB?((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB):0)
 #define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )
 
 #define CALSUM	7 //number of measurements to average for calibration

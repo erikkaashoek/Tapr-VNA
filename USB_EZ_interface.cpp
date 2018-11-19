@@ -435,8 +435,9 @@ void VNADevice::SetFreq(long startF, int direction)
 			     MessageBox::Show(e->Message, "Error");
 				 return;
 		}
+		SetAudioPower((direction == 2?true:false));
 
-		if (serialPort->IsOpen) serialPort->WriteLine(String::Format("{1} {0} 1 0 5", startF, direction));
+		if (serialPort->IsOpen) serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2}", startF, direction, IFREQ));
 	} else {
 		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance);
 	}
@@ -499,13 +500,13 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
-		
+#define MAX_RETRIES	100		
 	for (i=0; i<((dur+2) * SAMPPERMS - 2); i++) {
-		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq) && retries < 20) {
+		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq) && retries < MAX_RETRIES) {
 			Sleep(2);
 			retries++;
 		}
-		if (retries >= 100)
+		if (retries >= MAX_RETRIES)
 			return (false);
 	}
 #if 0 // moved to form.h SerialWorker

@@ -36,15 +36,17 @@ typedef struct measurementType {
 	float reference;
 	float delta;
 	unsigned long freq;
+	float dcr;
+	float dcs;
 	int read;
 } measurementType;
 
 
 // Max gridsize = 1024, 1040 gives some extra data slots. 100 ms measurement means more then 200 samples point 
 #define MAX_MEASUREMENTS 1040*300
-extern measurementType measured[MAX_MEASUREMENTS];
-extern int measurementIndex[1100];
-extern int lastMeasurement;
+extern volatile measurementType measured[MAX_MEASUREMENTS];
+extern volatile int measurementIndex[1100];
+extern volatile int lastMeasurement;
 extern volatile measurementType actualMeasurement;
 extern volatile int nextDecoded;
 
