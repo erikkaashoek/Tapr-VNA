@@ -121,9 +121,9 @@ namespace VNAR3
 		int txLevel;					///< transmit level
 		int refLevel;					///< display reference level
 
-		Rectangle rect;					///< client size for render (given to us by Paint & Redraw)
-		Rectangle scopeDisp;			///< rectangular scope display area
-		Rectangle polarBox;				///< box holding the polar display
+		 System::Drawing::Rectangle rect;					///< client size for render (given to us by Paint & Redraw)
+		 System::Drawing::Rectangle scopeDisp;			///< rectangular scope display area
+		 System::Drawing::Rectangle polarBox;				///< box holding the polar display
 		float RectVertScaledB;			///< Rectangular Vertical Scale in db/division
 		int polarRadius;				///< radius of the polar display
 		int scalefactorGD;				///< Group delay scale factor.   1 means 100 psec/division
@@ -838,7 +838,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->SweepSpd->Name = L"SweepSpd";
 			this->SweepSpd->Size = System::Drawing::Size(50, 23);
 			this->SweepSpd->TabIndex = 21;
-			this->SweepSpd->Text = L"SweepSpd->Text";
+			this->SweepSpd->Text = L"1 ms";
 			this->toolTip1->SetToolTip(this->SweepSpd, L"Toggle Sweep Speed");
 			this->SweepSpd->UseVisualStyleBackColor = false;
 			this->SweepSpd->Click += gcnew System::EventHandler(this, &Form1::SweepSpd_Click);
@@ -2277,7 +2277,7 @@ private: System::String^ FreqToString(long f)
 #define PT 1
 
 	///	Draw screen bounded by rect
-private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		// rect is our clientsize
+private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect, bool printer)		// rect is our clientsize
 	{
 
 		// DpiX and DpiY are not affected by FONT SIZE or Screen Resolution, but only by
@@ -2383,7 +2383,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 		// Determine the rectangle coordinates for the scope display
 		// anchored to top/left, and leaving room for the Freq & Level controls
 
-		Rectangle tempPolarBox;					// scope display area
+		System::Drawing::Rectangle tempPolarBox;					// scope display area
 		scopeDisp.X = rect.Left + LeftMargin;			// leave some space on left side of display
 		scopeDisp.Y = rect.Top + TopMargin;			// leave some space on top of display
 		scopeDisp.Height = rect.Height - (BotMargin + TopMargin);	// leave room for controls at bottom of display
@@ -3867,7 +3867,7 @@ private: System::Void Form_Render(Graphics^ gr, Rectangle rect, bool printer)		/
 			GraphicsPath^ gpLarger = gcnew GraphicsPath();	// Holds more that unit circle
 
 			// to make polar plot larger than unit circle
-			Rectangle tempbox;
+			System::Drawing::Rectangle tempbox;
 			tempbox.X = polarBox.X -10;
 			tempbox.Y = polarBox.Y -10;
 			tempbox.Width = polarBox.Width + 20;
@@ -5114,7 +5114,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					//SingleSweep->Enabled = true;		// re-enable the single sweep button
 					RecurrentSweep->Text = "Free Run";	// stop free run
 					//Refresh();							// Force a redraw of the screen	
-					if (actualMeasurement.reference < -40.0) 
+					if (actualMeasurement.reference < -40.0)
 						MessageBox::Show("Measurement signal level too low", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
 					else if (actualMeasurement.reference > 15.0) 
 						MessageBox::Show("Measurement signal level too high", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -6804,6 +6804,7 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 					bw->Write(serialPort1->PortName);
 				else
 					bw->Write("");
+				bw->Write(selectedAudio);
 
 
 
@@ -7144,6 +7145,9 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				{
 					serialPort1->PortName = br->ReadString();
 				    serialPort1->BaudRate = 115200;
+
+					selectedAudio = (unsigned int)(br->ReadInt32());
+					OpenAudio();
 
 					serialPort1->Open();
 					serialPort1->WriteLine("3");

@@ -1640,7 +1640,7 @@ int MeasureDelayStringToCount(String^ value)
 	if(String::Compare(value, "100 ms") == 0)
 		return 100;
 
-	return 0;	// no delay if unexpected string 
+	return 1;	// no delay if unexpected string 
 };
 
 #if 0

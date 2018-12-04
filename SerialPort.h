@@ -4,13 +4,15 @@
 #include "Mockup.h"
 #include "Constants.h"
 #using <mscorlib.dll>
-
+#include <Windows.h>
+#include <MMSystem.h>
 #using<system.dll>
 
 #include "Constants.h"
 #include "AudioInput.h"
 #include "USB_EZ_interface.h"
  
+extern HWAVEIN      hWaveIn;
 
 //#include "objbase.h"
 
@@ -27,6 +29,17 @@ static int sampleRateTable [SAMPLERATES] = {
 	24000,
 	12000
 };
+
+#if 0
+extern 			MMRESULT mRes;
+extern 			HMIXER  hmx;
+extern 						MIXERLINE						mixerLine;
+	extern									MIXERLINECONTROLS mlc;
+extern MIXERCONTROL mc;
+	extern									MIXERCONTROLDETAILS mcd ;
+	extern									MIXERCONTROLDETAILS_UNSIGNED mcdu;
+#endif
+
 
 extern int OpenAudio();
 
@@ -94,6 +107,9 @@ namespace VNAR3 {
 	private: System::Windows::Forms::Label^  label4;
 	private: System::Windows::Forms::Timer^  timer1;
 	private: System::Windows::Forms::Button^  button3;
+	private: System::Windows::Forms::ComboBox^  comboBox2;
+	private: System::Windows::Forms::ComboBox^  comboBox3;
+	private: System::Windows::Forms::TrackBar^  volumeBar;
 			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
 
 			 
@@ -117,12 +133,16 @@ namespace VNAR3 {
 			this->reference = (gcnew System::Windows::Forms::TextBox());
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
+			this->comboBox2 = (gcnew System::Windows::Forms::ComboBox());
+			this->comboBox3 = (gcnew System::Windows::Forms::ComboBox());
+			this->volumeBar = (gcnew System::Windows::Forms::TrackBar());
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->volumeBar))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// comboBox1
 			// 
 			this->comboBox1->FormattingEnabled = true;
-			this->comboBox1->Location = System::Drawing::Point(67, 16);
+			this->comboBox1->Location = System::Drawing::Point(383, 12);
 			this->comboBox1->Name = L"comboBox1";
 			this->comboBox1->Size = System::Drawing::Size(143, 21);
 			this->comboBox1->TabIndex = 0;
@@ -131,7 +151,7 @@ namespace VNAR3 {
 			// OK_Button
 			// 
 			this->OK_Button->DialogResult = System::Windows::Forms::DialogResult::OK;
-			this->OK_Button->Location = System::Drawing::Point(67, 189);
+			this->OK_Button->Location = System::Drawing::Point(383, 205);
 			this->OK_Button->Name = L"OK_Button";
 			this->OK_Button->Size = System::Drawing::Size(64, 28);
 			this->OK_Button->TabIndex = 1;
@@ -142,7 +162,7 @@ namespace VNAR3 {
 			// CANCEL_Button
 			// 
 			this->CANCEL_Button->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-			this->CANCEL_Button->Location = System::Drawing::Point(146, 189);
+			this->CANCEL_Button->Location = System::Drawing::Point(462, 205);
 			this->CANCEL_Button->Name = L"CANCEL_Button";
 			this->CANCEL_Button->Size = System::Drawing::Size(64, 28);
 			this->CANCEL_Button->TabIndex = 2;
@@ -151,7 +171,7 @@ namespace VNAR3 {
 			// 
 			// button3
 			// 
-			this->button3->Location = System::Drawing::Point(67, 155);
+			this->button3->Location = System::Drawing::Point(383, 171);
 			this->button3->Name = L"button3";
 			this->button3->Size = System::Drawing::Size(143, 28);
 			this->button3->TabIndex = 3;
@@ -163,7 +183,7 @@ namespace VNAR3 {
 			this->sampleRateBox->FormattingEnabled = true;
 			this->sampleRateBox->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"192 kHz", L"96 kHz", L"48 kHz", L"44.1 kHz", 
 				L"24 kHz", L"12 kHz"});
-			this->sampleRateBox->Location = System::Drawing::Point(67, 54);
+			this->sampleRateBox->Location = System::Drawing::Point(383, 90);
 			this->sampleRateBox->Name = L"sampleRateBox";
 			this->sampleRateBox->Size = System::Drawing::Size(143, 21);
 			this->sampleRateBox->TabIndex = 4;
@@ -172,7 +192,7 @@ namespace VNAR3 {
 			// label1
 			// 
 			this->label1->AutoSize = true;
-			this->label1->Location = System::Drawing::Point(36, 57);
+			this->label1->Location = System::Drawing::Point(352, 98);
 			this->label1->Name = L"label1";
 			this->label1->Size = System::Drawing::Size(25, 13);
 			this->label1->TabIndex = 5;
@@ -180,7 +200,7 @@ namespace VNAR3 {
 			// 
 			// IFreq
 			// 
-			this->IFreq->Location = System::Drawing::Point(125, 88);
+			this->IFreq->Location = System::Drawing::Point(442, 117);
 			this->IFreq->Name = L"IFreq";
 			this->IFreq->Size = System::Drawing::Size(84, 20);
 			this->IFreq->TabIndex = 6;
@@ -189,7 +209,7 @@ namespace VNAR3 {
 			// label2
 			// 
 			this->label2->AutoSize = true;
-			this->label2->Location = System::Drawing::Point(36, 91);
+			this->label2->Location = System::Drawing::Point(352, 120);
 			this->label2->Name = L"label2";
 			this->label2->Size = System::Drawing::Size(19, 13);
 			this->label2->TabIndex = 7;
@@ -199,7 +219,7 @@ namespace VNAR3 {
 			// label3
 			// 
 			this->label3->AutoSize = true;
-			this->label3->Location = System::Drawing::Point(42, 127);
+			this->label3->Location = System::Drawing::Point(352, 146);
 			this->label3->Name = L"label3";
 			this->label3->Size = System::Drawing::Size(60, 13);
 			this->label3->TabIndex = 8;
@@ -207,7 +227,7 @@ namespace VNAR3 {
 			// 
 			// reference
 			// 
-			this->reference->Location = System::Drawing::Point(126, 124);
+			this->reference->Location = System::Drawing::Point(441, 143);
 			this->reference->Name = L"reference";
 			this->reference->Size = System::Drawing::Size(83, 20);
 			this->reference->TabIndex = 9;
@@ -215,7 +235,7 @@ namespace VNAR3 {
 			// label4
 			// 
 			this->label4->AutoSize = true;
-			this->label4->Location = System::Drawing::Point(215, 127);
+			this->label4->Location = System::Drawing::Point(530, 146);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(20, 13);
 			this->label4->TabIndex = 10;
@@ -227,13 +247,43 @@ namespace VNAR3 {
 			this->timer1->Interval = 500;
 			this->timer1->Tick += gcnew System::EventHandler(this, &SerialPort::timer1_Tick);
 			// 
+			// comboBox2
+			// 
+			this->comboBox2->FormattingEnabled = true;
+			this->comboBox2->Location = System::Drawing::Point(67, 39);
+			this->comboBox2->Name = L"comboBox2";
+			this->comboBox2->Size = System::Drawing::Size(459, 21);
+			this->comboBox2->TabIndex = 11;
+			this->comboBox2->SelectedIndexChanged += gcnew System::EventHandler(this, &SerialPort::comboBox2_SelectedIndexChanged);
+			// 
+			// comboBox3
+			// 
+			this->comboBox3->FormattingEnabled = true;
+			this->comboBox3->Location = System::Drawing::Point(135, 66);
+			this->comboBox3->Name = L"comboBox3";
+			this->comboBox3->Size = System::Drawing::Size(391, 21);
+			this->comboBox3->TabIndex = 12;
+			// 
+			// volumeBar
+			// 
+			this->volumeBar->Location = System::Drawing::Point(30, 162);
+			this->volumeBar->Maximum = 100;
+			this->volumeBar->Name = L"volumeBar";
+			this->volumeBar->Size = System::Drawing::Size(275, 45);
+			this->volumeBar->TabIndex = 13;
+			this->volumeBar->Scroll += gcnew System::EventHandler(this, &SerialPort::volumeBar_Scroll);
+			this->volumeBar->ValueChanged += gcnew System::EventHandler(this, &SerialPort::volumeBar_ValueChanged);
+			// 
 			// SerialPort
 			// 
 			this->AcceptButton = this->OK_Button;
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->CANCEL_Button;
-			this->ClientSize = System::Drawing::Size(284, 261);
+			this->ClientSize = System::Drawing::Size(551, 261);
+			this->Controls->Add(this->volumeBar);
+			this->Controls->Add(this->comboBox3);
+			this->Controls->Add(this->comboBox2);
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->reference);
 			this->Controls->Add(this->label3);
@@ -248,6 +298,7 @@ namespace VNAR3 {
 			this->Name = L"SerialPort";
 			this->Text = L"SerialPort";
 			this->Load += gcnew System::EventHandler(this, &SerialPort::SerialPort_Load);
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->volumeBar))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -262,14 +313,35 @@ namespace VNAR3 {
 					 this->comboBox1->Items->Add(System::String::Concat(s,  L""));
 
 				}
+
+				for (unsigned int i = 0; i < waveInGetNumDevs(); i++){
+					MMRESULT mRes;
+					WAVEINCAPS stWIC={0};
+					ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
+					mRes=waveInGetDevCaps(i,&stWIC,sizeof(WAVEINCAPS));
+					if (mRes == MMSYSERR_NOERROR)
+					{
+						String ^s = gcnew String(stWIC.szPname);
+//						s = stWIC.szPname;
+					 this->comboBox2->Items->Add(s);
+
+					}
+				}
+
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
+				this->comboBox2->SelectedIndex = selectedAudio;
 				this->sampleRateBox->SelectedIndex = 0;
 				this->IFreq->Text = IFREQ.ToString();
 				VNA->SetFreq(1000000,true);
+				this->volumeBar->Value = MixerGetVolume();
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
 
-				if (this->Port->IsOpen) this->Port->Close();
+				selectedAudio = this->comboBox2->SelectedIndex;
+				OpenAudio();
+
+				 
+				 if (this->Port->IsOpen) this->Port->Close();
 				Port->PortName = this->comboBox1->Text;
 				Port->BaudRate = 115200;
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
@@ -297,7 +369,6 @@ namespace VNAR3 {
 					MessageBox::Show(e->ToString(),"Open port Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 				}
-
 			 }
 private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
@@ -320,6 +391,17 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 			//magnitude->Text = String::Format("{0}",actualMeasurement.magnitude);
 			//phase->Text = String::Format("{0}",actualMeasurement.phase);
 			this->reference->Text = String::Format("{0}",actualMeasurement.reference);
+		 }
+private: System::Void comboBox2_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
+			 	selectedAudio = this->comboBox2->SelectedIndex;
+				OpenAudio();
+
+		 }
+private: System::Void volumeBar_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			 MixerSetVolume(volumeBar->Value);
+		 }
+private: System::Void volumeBar_Scroll(System::Object^  sender, System::EventArgs^  e) {
+			 MixerSetVolume(volumeBar->Value);
 		 }
 };
 }

@@ -9,6 +9,7 @@ using namespace std;
 #include <Windows.h>
 #include <MMSystem.h>
 #include <iostream>
+#include <mmreg.h>
 #include "Mockup.h"
 
 #include "AudioInput.h"
@@ -82,7 +83,7 @@ volatile int audioPower = false;
 //short temp_audio[NUMPTS];
 #endif
 HWAVEIN      hWaveIn;
-
+unsigned int selectedAudio = WAVE_MAPPER;
 //int sampleRate = 44100;
 int sampleRate = 192000;
 int oldSampleRate = 0;
@@ -95,16 +96,35 @@ int SAMPPERMS = 1;
 // For normal operation
 int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
 
-short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
+//#define SAMPLETYPE short int
+#define SAMPLETYPE  float // ' int' is a 32-bit type; I request 24-bit samples below
+SAMPLETYPE waveIn[WAVEHDRBUFFER][MAXNUMPTS];
+#define VALIDSAMPLEBITS 32
+#define SAMPLEBITS	32
+//#define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(VALIDSAMPLEBITS - 1))-8))
+#define MAXSAMPLEVALUE 0.9999999
+// #define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(15))-8))
+
 WAVEHDR      WaveInHdr[WAVEHDRBUFFER];
 MMRESULT result;
 
- // Specify recording parameters
- WAVEFORMATEX pFormat;
 
+MMRESULT mRes;
+HMIXER  hmx;
+MIXERLINE						mixerLine;
+MIXERLINECONTROLS mlc = {0};
+MIXERCONTROL mc = {0};
+MIXERCONTROLDETAILS mcd = {0};
+MIXERCONTROLDETAILS_UNSIGNED mcdu = {0};
+
+
+
+ // Specify recording parameters
+// WAVEFORMATEX pFormat;
+WAVEFORMATEXTENSIBLE pFormat;
 
  //table size 200 > 192kHz
-	 short sincos_tbl[200][2] = {
+	 SAMPLETYPE sincos_tbl[200][2] = {
 /* 5 khz 48000 s/s
   { 10533,  31029 }, { 27246,  18205 }, { 32698,  -2143 }, { 24636, -21605 },
   {  6393, -32138 }, {-14493, -29389 }, {-29389, -14493 }, {-32138,   6393 },
@@ -203,7 +223,7 @@ MMRESULT result;
 
 #include "Constants.h"
 
-#define todb(X) (20.0f * log10 ((float(X)/(float)32768)))
+#define todb(X) (20.0f * log10 ((float(X)/(float)MAXSAMPLEVALUE)))
 
 
 float max_rr = 0;
@@ -215,25 +235,26 @@ long saved_ref_mag;
 
 //#pragma STDC FP_CONTRACT ON
 
-void dsp_process(short *capture, long length)
+void dsp_process(SAMPLETYPE *capture, long length)
 {
-  short *p = capture;
+  SAMPLETYPE *p = capture;
   int len = length / 2;
   int i;
-  long long samp_s = 0;
-  long long samp_c = 0;
-  long long ref_s = 0;
-  long long ref_c = 0;
-  long long samp_dc = 0;
-  long long ref_dc = 0;
+#define SUMTYPE	double
+  SUMTYPE samp_s = 0;
+  SUMTYPE samp_c = 0;
+  SUMTYPE ref_s = 0;
+  SUMTYPE ref_c = 0;
+  SUMTYPE samp_dc = 0;
+  SUMTYPE ref_dc = 0;
   double ref_mag;
     double samp_mag;
 
   for (i = 0; i < len; i++) {
-    long long smp = (*p++ );
-    long long ref = (*p++ );
-    long s = sincos_tbl[i][0];
-    long c = sincos_tbl[i][1];
+    SUMTYPE smp = (*p++ );
+    SUMTYPE ref = (*p++ );
+    SUMTYPE s = sincos_tbl[i][0];
+    SUMTYPE c = sincos_tbl[i][1];
 
  
 	if (audioPower) {
@@ -264,17 +285,19 @@ void dsp_process(short *capture, long length)
 //		ref_c *= REFERENCE_LEVEL_REDUCTION;	
 //	samp_mag = samp_s - abs(samp_c);
 
-	  samp_mag = sqrt(((float)samp_s)/len  /* - ((float)samp_c)*samp_c/len/len  */ );
-	  ref_mag = sqrt(((float)ref_s)/len /* - ((float)ref_c)*ref_c/len/len */ ) * REFERENCE_LEVEL_REDUCTION;
+	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len );
+	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len) * REFERENCE_LEVEL_REDUCTION;
+//	  samp_mag = sqrt(((float)samp_s / len) /* - ((float)samp_c)*samp_c */);
+//	  ref_mag = sqrt(((float)ref_s / len) /* - ((float)ref_c)*ref_c */) * REFERENCE_LEVEL_REDUCTION;
 	  if (nextDecoded == 1)
 		 saved_ref_mag = (long) ref_mag;
 	  else if (nextDecoded < 4)
 		 saved_ref_mag = ( 3 * saved_ref_mag + (long) ref_mag) / 4;
-	  samp_mag = samp_mag; // * 32760L / saved_ref_mag; // For now do not scale measurment to reference signal
+	  samp_mag = samp_mag; // * MAXSAMPLEVALUE / saved_ref_mag; // For now do not scale measurment to reference signal
 //	  samp_phase = 0;
 	  actualMeasurement.magnitude = (float) todb(samp_mag); // Scale for unknown reason
 	  actualMeasurement.phase = (float)0.0;
-	  // ref_mag = 32760*32760*10; // No reference measurement during power measurement	  
+	  // ref_mag = MAXSAMPLEVALUE*MAXSAMPLEVALUE*10; // No reference measurement during power measurement	  
 	  actualMeasurement.reference =  todb(ref_mag);
   } else {
 
@@ -293,19 +316,19 @@ void dsp_process(short *capture, long length)
 
 	fast_mag = sqrt(v0*v0+v1*v1);
 	fast_phase =360.0f / 2 / PI  * atan2(v1, v0);
-	actualMeasurement.magnitude = todb(fast_mag*32760);
+	actualMeasurement.magnitude = todb(fast_mag*MAXSAMPLEVALUE);
 	actualMeasurement.phase = (float)fast_phase;
 #else
 	double ref_phase;
     double samp_phase;
 
-	samp_mag = sqrt((samp_s*(float)samp_s)+samp_c*(float)samp_c);
+	samp_mag = sqrt((samp_s*(float)samp_s)+samp_c*(float)samp_c)  ;
 	ref_phase = 360.0f / 2 / PI  * atan2((float)ref_c, (float)ref_s);
 	samp_phase = 360.0f / 2 / PI  * atan2((float)samp_c, (float)samp_s);
-	actualMeasurement.magnitude = todb((samp_mag / ref_mag )*32760);
+	actualMeasurement.magnitude = todb((samp_mag / ref_mag )*MAXSAMPLEVALUE);
 	actualMeasurement.phase = (float)ref_phase - (float)samp_phase;
 #endif
-	actualMeasurement.reference =  todb(ref_mag / 32760 / 20);
+	actualMeasurement.reference =  todb(ref_mag / 20 );
   }
 
   while (actualMeasurement.phase >= 180.0f) actualMeasurement.phase-= 360.0;
@@ -393,8 +416,8 @@ void StoreMeasurement()
 		measured[nextDecoded].dcs = actualMeasurement.dcs;
 		measured[nextDecoded].dcr = actualMeasurement.dcr;
 		measured[nextDecoded].read = 0;
-		if (actualMeasurement.reference < -110)
-			actualMeasurement.reference = -100;
+//		if (actualMeasurement.reference < -110)
+//			actualMeasurement.reference = -100;
 		if (nextDecoded > 0)
 			measured[nextDecoded].delta = actualMeasurement.reference - measured[nextDecoded-1].reference;
 		else
@@ -422,7 +445,7 @@ void StoreMeasurement()
 			float index = ((-5 * d5) + (-4 * d4) + (-3 * d3) + (-2 * d2) + (-1 * d1)) / ds5;
 			index = - 3;
 			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (d2>10?1:0) ; // + 1 after biggest step, +2 is first reliable signal
-			if (measured[measurementIndex[lastMeasurement-1]].reference < -40.0) // lowest acceptable reference signal
+			if (measured[measurementIndex[lastMeasurement-1]].reference < -50.0) // lowest acceptable reference signal
 				lastMeasurement--; // small peak after reference disappeared.
 		}
 #else
@@ -578,7 +601,7 @@ complex <double> modelTran(long freq, double bef, double res, double aft)
 VOID ProcessHeader(WAVEHDR * pHdr)
 {
 	MMRESULT mRes=0;
-	short *audio;
+	SAMPLETYPE *audio;
 	static int state = 0;
 	int i;
 	int remaining;
@@ -588,12 +611,17 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 	complex <double> refl;
 //	double v,a;
 	double pi = 3.14159265359;
+	if (pHdr->dwBytesRecorded == 0)
+		return;
 
 	//	TRACE("%d",pHdr->dwUser);
 	if(WHDR_DONE==(WHDR_DONE &pHdr->dwFlags))
 	{
 
-		audio = (short *)pHdr->lpData;
+		if (pHdr->dwBytesRecorded != (SAMPLEBITS/8) * NUMPTS )
+			MessageBox::Show("Incorrect number of audio bytes to process.", "Error");//, MB_OK | MB_ICONEXCLAMATION);
+
+		audio = (SAMPLETYPE *)pHdr->lpData;
 
 
 		remaining = NUMPTS / 2 / SAMP;
@@ -663,8 +691,8 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				for (i = 0; i < SAMP; i++) {
 					a = abs(refl);
 					v = arg(refl);
-					audio [i*2+0] = 0+(short)(32600 * abs(real(refl)) * cos(PI *2 * simS * IFREQ / sampleRate + v ));
-					audio [i*2+1] = 0+(short)(32600 * 0.1 * cos(PI *2 * (simS) * IFREQ / sampleRate)); // Reference
+					audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * abs(real(refl)) * cos(PI *2 * simS * IFREQ / sampleRate + v ));
+					audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 0.1 * cos(PI *2 * (simS) * IFREQ / sampleRate)); // Reference
 					simS++;
 					simStartF += simStepF;
 				}
@@ -684,11 +712,11 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 						double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
 						if (abs(freq) > sampleRate / 2)
 							a = a* 0.0000000000001;
-						audio [i*2+0] = 0+(short)(32600 * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
+						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
 						if (simPoint >= simMaxPoint || simPoint < 5)
-							audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+							audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						else 
-							audio [i*2+1] = (long) (0.00001 * 32600);
+							audio [i*2+1] = (SAMPLETYPE) (0.00001 * MAXSAMPLEVALUE);
 						simS++;
 					}
 
@@ -702,7 +730,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 						simStartF += simStepF;
 					}
 				}
-#if 1			// Test IF convolution filter
+#if 0			// Test IF convolution filter
 				double a = abs(tran);
 				// v = arg(tran);
 				double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
@@ -715,24 +743,24 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 #endif
 				if (simStep/SAMPPERMS < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
-						audio [i*2+1] = 0+(short)(32600 * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
+						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else if (simStep/SAMPPERMS < SILENCE_GAP + (simDuration+2) ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(refl);
 //						v = arg(refl);
-						audio [i*2+0] = 0+(short)(32600 * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
+						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(tran);
 //						v = arg(tran);
-						audio [i*2+0] = 0+(short)(32600 * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
-						audio [i*2+1] = 0+(short)(32600 * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
+						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				}
@@ -793,23 +821,34 @@ int OpenAudio (void) {
 		audioStopping = false;
 	}
 	while (again) {
-		pFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
+#if 0
+		pFormat.wFormatTag=WAVE_FORMAT_PCM; // WAVE_FORMAT_PCM;     // simple, uncompressed format
 		pFormat.nChannels=2;                    //  1=mono, 2=stereo
 		pFormat.nSamplesPerSec=sampleRate;      // 44100
 		pFormat.nAvgBytesPerSec=sampleRate*4;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
 		pFormat.nBlockAlign=4;                  // = n.Channels * wBitsPerSample/8
 		pFormat.wBitsPerSample=16;              //  16 for high quality, 8 for telephone-grade
 		pFormat.cbSize=0;
-
+#else
+		pFormat.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE; // WAVE_FORMAT_PCM;     // simple, uncompressed format
+		pFormat.Format.nChannels=2;                    //  1=mono, 2=stereo
+		pFormat.Format.nSamplesPerSec=sampleRate;      // 44100
+		pFormat.Format.wBitsPerSample=SAMPLEBITS;              //  16 for high quality, 8 for telephone-grade
+		pFormat.Format.nBlockAlign= (pFormat.Format.wBitsPerSample / 8)  * pFormat.Format.nChannels;                  // = n.Channels * wBitsPerSample/8
+		pFormat.Format.nAvgBytesPerSec=sampleRate * pFormat.Format.nBlockAlign;   // = nSamplesPerSec * n.Channels * wBitsPerSample/8
+		pFormat.Format.cbSize=22;
+		pFormat.Samples.wValidBitsPerSample = VALIDSAMPLEBITS;
+		pFormat.dwChannelMask = SPEAKER_FRONT_LEFT || SPEAKER_FRONT_RIGHT;
+		pFormat.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT; KSDATAFORMAT_SUBTYPE_PCM;
+#endif
 		WAVEINCAPS stWIC={0};
 		MMRESULT mRes;
-		int nSel = WAVE_MAPPER;
 
 		ZeroMemory(&stWIC,sizeof(WAVEINCAPS));
-		mRes=waveInGetDevCaps(nSel,&stWIC,sizeof(WAVEINCAPS));
+		mRes=waveInGetDevCaps(selectedAudio,&stWIC,sizeof(WAVEINCAPS));
 
 
-		result = waveInOpen(&hWaveIn, WAVE_MAPPER,&pFormat, (DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
+		result = waveInOpen(&hWaveIn, selectedAudio,(LPCWAVEFORMATEX) &pFormat, (DWORD_PTR)waveInProc,0L,CALLBACK_FUNCTION);
 		//            0L, 0L, WAVE_FORMAT_DIRECT);
 
 		if (result != 0) {
@@ -859,15 +898,15 @@ int OpenAudio (void) {
 #define WINDOW(n) ((1.0-a)/2 - 0.5 * cos((2.0*PI*n)/(SAMP-1)) + (a/2.0)*cos((4*PI*n)/(SAMP-1)))
 
 	for (i = 0; i < SAMP; i++) {
-		sincos_tbl[i][0] = (short)(32600 * sin( PI * 2  * i * (IFREQ)/ sampleRate) * WINDOW(i));
-		sincos_tbl[i][1] = (short)(32600 * cos( PI * 2  * i * (IFREQ) / sampleRate) * WINDOW(i));
+		sincos_tbl[i][0] = (SAMPLETYPE)(MAXSAMPLEVALUE * sin( PI * 2  * i * (IFREQ)/ sampleRate) * WINDOW(i));
+		sincos_tbl[i][1] = (SAMPLETYPE)(MAXSAMPLEVALUE * cos( PI * 2  * i * (IFREQ) / sampleRate) * WINDOW(i));
 	}
 
 
 	for (i=0; i<WAVEHDRBUFFER ; i++) {
 		// Set up and prepare header for input
 		WaveInHdr[i].lpData = (LPSTR)(waveIn[i]);
-		WaveInHdr[i].dwBufferLength = NUMPTS*2;
+		WaveInHdr[i].dwBufferLength = NUMPTS*SAMPLEBITS/8;
 		WaveInHdr[i].dwBytesRecorded=0;
 		WaveInHdr[i].dwUser = 0L;
 		WaveInHdr[i].dwFlags = 0L;
@@ -893,6 +932,10 @@ int OpenAudio (void) {
 
 	}
 	audio_delay = -1;
+//------------------------------------ get mixer data --------------------------------
+	GetMixerInfo();
+// ------------------------------------------------------------------------------------
+
 	return(0);
 }
 
@@ -919,3 +962,82 @@ void SetAudioPower(int power)
 {
 	audioPower = power;
 }
+
+void GetMixerInfo()
+{
+				if (selectedAudio >= 0 && selectedAudio < waveInGetNumDevs())
+				{
+					mRes = mixerOpen((LPHMIXER)&hmx, (UINT) hWaveIn, NULL, NULL, MIXER_OBJECTF_HWAVEIN);
+					if (mRes == MMSYSERR_NOERROR)
+					{
+						mixerLine.cbStruct = sizeof(MIXERLINE);
+						mixerLine.dwComponentType = MIXERLINE_COMPONENTTYPE_DST_WAVEIN;
+						mRes = mixerGetLineInfo((HMIXEROBJ)hmx, &mixerLine, MIXER_GETLINEINFOF_COMPONENTTYPE);
+						if (mRes == MMSYSERR_NOERROR)
+						{
+							int numSrc = mixerLine.cConnections;
+							if (numSrc)
+							{
+								for (int n = 0; n < numSrc; n++)
+								{
+									mixerLine.cbStruct = sizeof(MIXERLINE);
+									mixerLine.dwSource = n;
+
+									if (!(mRes = mixerGetLineInfo((HMIXEROBJ)hmx, &mixerLine, MIXER_GETLINEINFOF_SOURCE)))
+									{
+										//					if (mixerLine.dwComponentType != MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER)
+										//						printf("\t#%lu: %s\n", n, mixerLine.szName);
+										mixerLine.szName;
+
+										mlc.cbStruct = sizeof(MIXERLINECONTROLS);
+										mlc.dwLineID = mixerLine.dwLineID;
+										mlc.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
+										mlc.cControls = 1;
+										mlc.pamxctrl = &mc;
+										mlc.cbmxctrl = sizeof(MIXERCONTROL);
+										mRes = mixerGetLineControls((HMIXEROBJ) hmx, &mlc, MIXER_GETLINECONTROLSF_ONEBYTYPE);
+
+
+
+//										mcdu.dwValue = 0; // the volume is a number between 0 and 65535
+										mcd.cbStruct = sizeof(MIXERCONTROLDETAILS);
+										mcd.hwndOwner = 0;
+										mcd.dwControlID = mc.dwControlID;
+										mcd.paDetails = &mcdu;
+										mcd.cbDetails = sizeof(MIXERCONTROLDETAILS_UNSIGNED);
+										mcd.cChannels = 2;
+//										mRes = mixerGetControlDetails((HMIXEROBJ) hmx, &mcd, MIXER_SETCONTROLDETAILSF_VALUE);
+
+//										mcdu.dwValue = 10000; // the volume is a number between 0 and 65535
+//										mRes = mixerSetControlDetails((HMIXEROBJ) hmx, &mcd, MIXER_SETCONTROLDETAILSF_VALUE);
+
+
+
+									}
+								}
+
+								//						printf("ERROR: There are no WAVE inputs to adjust!\n");
+								//goto record;
+							}
+
+							mRes = mRes;
+
+
+						}
+					}
+				}
+
+
+}
+
+System::Void MixerSetVolume(int volume) // 0 - 100
+		 {
+			 	mcdu.dwValue = volume*655; // the volume is a number between 0 and 65535
+				mRes = mixerSetControlDetails((HMIXEROBJ) hmx, &mcd, MIXER_SETCONTROLDETAILSF_VALUE);
+		 }
+int MixerGetVolume() // 0 - 100
+		 {
+			 	//mcdu.dwValue = volume*655; // the volume is a number between 0 and 65535
+				mRes = mixerGetControlDetails((HMIXEROBJ) hmx, &mcd, MIXER_SETCONTROLDETAILSF_VALUE);
+				return(mcdu.dwValue / 655);
+		 }

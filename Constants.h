@@ -118,7 +118,7 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 #define SHORT2PHASE(X) (((double)(X) * (MAX_PHASE - MIN_PHASE) / SHORT_RANGE ) + MIN_PHASE )
 
 #define MAX_DB	+1.0
-#define MIN_DB   -120.0
+#define MIN_DB   -180.0
 #define DB2SHORT(X) (short)((X)>MIN_DB?((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB):0)
 #define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )
 

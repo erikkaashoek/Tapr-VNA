@@ -8,8 +8,6 @@ extern int SAMPPERMS;
 // For debugging
 //#define NUMPTS 2*SAMP // stereo  * 10 * SAMP
 
-extern short int waveIn[WAVEHDRBUFFER][MAXNUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
-
 //extern float decoded[1024][2];
 extern  int audio_delay;
 //extern volatile float gamma[4];
@@ -21,7 +19,7 @@ extern double audio_phase_reflection;
 extern double audio_volume_transmission;
 extern double audio_phase_transmission;
 extern bool audio_simulation;
-
+extern unsigned int selectedAudio;
 extern int OpenAudio (void);
 extern void ArmAudio(int pM, System::IO::Ports::SerialPort^ port);
 void MarkFrequency(unsigned long freq);
@@ -29,6 +27,9 @@ extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, flo
 extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction, int r, int c, int l);
 extern void SetAudioPower(int power);
 extern void DumpMeasurement(void);
+extern void GetMixerInfo();
+extern int MixerGetVolume(void);
+extern void MixerSetVolume(int);
 
 typedef struct measurementType {
 	float magnitude;

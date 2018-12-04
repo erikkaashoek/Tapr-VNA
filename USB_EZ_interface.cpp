@@ -533,7 +533,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 
 		// mp++;
 	RxBuffer->Vref1 = DB2SHORT(reflevel);
-	RxBuffer->Vref2 = level;
+//	RxBuffer->Vref2 = level;
 	NormalizePhase(reflphase);
 	RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
 	RxBuffer->ReflMQ = DB2SHORT(reflmag);
