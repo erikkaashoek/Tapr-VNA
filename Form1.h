@@ -133,7 +133,7 @@ namespace VNAR3
 		float PixelsPerGrid;			///< display pixels per grid point (freq or time)
 		int	StartIndex, StopIndex;		///< Start and stop times converted to array index
 
-		array<UInt32>^ Marker;			///< Frequency Markers
+		array<__int64>^ Marker;			///< Frequency Markers
 		array<Single>^ MarkerT;			///< Time Markers
 		CursorStatus^ cs;				///< cursor text display
 		bool ShowMarkerNumbers;			///< Marker Number Display control
@@ -2138,7 +2138,7 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 
 			PreCharge = false;			// default to integrator precharge off
 
-			Marker = gcnew array<UInt32>(5);	// allocate and initialize 5 frequency markers
+			Marker = gcnew array<__int64>(5);	// allocate and initialize 5 frequency markers
 			MarkerT = gcnew array<Single>(5);		// allocate and initialize 5 time markers
 			for (int i=0; i<5; i++)
 			{
@@ -2217,8 +2217,8 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			// debug for VS2005 but it doesn't solve the cross-thread UI access problem
 			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
 
-//			SerialCollect = false;			// nothing for worker thread to do yet
-			//SerialThread->Start();		// start up the thread
+			SerialCollect = false;			// nothing for worker thread to do yet
+			SerialThread->Start();		// start up the thread
 
 			if(OpenAudio())
 			{}
@@ -2266,7 +2266,7 @@ private: System::Void PrintAPage(Object^ pSender, PrintPageEventArgs^ pe)
 		Form_Render(pe->Graphics, pe->MarginBounds, printer);
 	}
 
-private: System::String^ FreqToString(long f)
+private: System::String^ FreqToString(__int64 f)
 		 {
 			 if (f < 1000)
 				 return (String::Concat(f.ToString("N0"), "Hz"));
@@ -2416,7 +2416,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 		if (rectItem->Checked == true ||  Spectrum->Checked)  // render screen in rectangular mode
 		{
-			gr->FillRectangle(brwhite, scopeDisp);
+//--			gr->FillRectangle(brwhite, scopeDisp);
 			gr->DrawRectangle(penBlack2, scopeDisp);
 
 			for (int i=0; i<9; i++)				// draw major grid
@@ -2616,7 +2616,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			gr->DrawString(FreqToString(FG->StopF()),	Statusfont, brBlack, botright);
 
 //			int span = FG->StopF() - FG->StartF();
-			int span = (FG->StopF() + FG->StartF())/2;
+			__int64 span = (FG->StopF() + FG->StartF())/2;
 			gr->DrawString(FreqToString(span), Statusfont, brBlack, botcenter);
 
 //			span = FG->StopF() - FG->StartF();
@@ -3208,7 +3208,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				if(s21groupdelayItem->Checked && !Spectrum->Checked)
 				{
 					double prevphs, currphs, groupdelay;
-					int prevfreq, currfreq;
+					__int64 prevfreq, currfreq;
 					int aperture, lowindex, highindex;	// aperture size, indexes representing bottom and top of aperture
 
 					if (GDAperture64->Checked)			// get aperture size from menu
@@ -4185,7 +4185,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 			PixelsPerGrid = (float)scopeDisp.Width / (float)(StopIndex - StartIndex);		// Fixed Size Display of IFFT
 
-			gr->FillRectangle(brwhite, scopeDisp);
+//--			gr->FillRectangle(brwhite, scopeDisp);
 			gr->DrawRectangle(penBlack2, scopeDisp);
 
 
@@ -4668,7 +4668,7 @@ private: System::Void Form_MouseDown(Object^ pSender, MouseEventArgs^ pe)
 			if ((Xpos >= scopeDisp.Width) || (Xpos < 0) || (Ypos > scopeDisp.Height) || (Ypos < 0))
 				return;
 
-			int Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
+			__int64 Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
 
 			MarkerMousePick = -1;			// no marker active
 			for (int i=0; i<5; i++)
@@ -4738,7 +4738,7 @@ private: System::Void Form_MouseDown(Object^ pSender, MouseEventArgs^ pe)
 			if ((Xpos >= scopeDisp.Width) || (Xpos < 0) || (Ypos > scopeDisp.Height) || (Ypos < 0))
 				return;
 
-			int Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
+			__int64 Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
 			float Ampl = -(((float)Ypos / (float)scopeDisp.Height) * (float)RectVertScaledB * 10.0f - (float)refLevel + (float)txLevel);
 			float SWR = 1.0f + (float)RectSWRScale - (((float)Ypos / (float)scopeDisp.Height) * (float)RectSWRScale);
 
@@ -4855,7 +4855,7 @@ private: System::Void Form_MouseMove(System::Object^  sender, System::Windows::F
 
 				if (rectItem->Checked || polarItem->Checked)
 				{
-					int Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
+					__int64 Freq = FG->Frequency(Xpos * FG->points / scopeDisp.Width);
 					Marker[MarkerMousePick] = Freq;		// update the Marker frequency
 				}
 				if (TDRItem->Checked)
@@ -4993,8 +4993,8 @@ private: System::Void VNA_Initialize(void)
 private: System::Void Serial_Worker(void)			// runs as a background thread
 		 {
 			 int done = false;
-			 unsigned long freq;
-			 unsigned int level;
+//			 unsigned long freq;
+//			 unsigned int level;
 			 SerialThread->Priority= System::Threading::ThreadPriority::AboveNormal;
 			 while(true)								// thread runs until terminated by program exit
 			 {
@@ -5004,8 +5004,9 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 				 }
 				 done = false;
 				 if (serialPort1->IsOpen) {
-					 while (!done) {
-						 char b = serialPort1->ReadByte();
+//					 while (!done) {
+						 String ^s = serialPort1->ReadLine();
+#if 0
 						 if (b == 'x') {
 //							 freq = ((unsigned long)serialPort1->ReadByte());
 //							 freq += ((unsigned long)serialPort1->ReadByte())<<8;
@@ -5021,8 +5022,9 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 					 while(WorkerCollect == true)		// while nothing to do
 					{
 						SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
-					}
 
+					 }
+#endif
 				 }
 //				 if(serialPort1->IsOpen) serialPort1->Close();
 			 }
@@ -5036,7 +5038,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 		VNA_RXBUFFER * RxBuf = new VNA_RXBUFFER;
 		VNA_RXBUFF_FAST * RxBufast = new VNA_RXBUFF_FAST;
 		VNA_TXBUFFER * TxBuf = new VNA_TXBUFFER;
-		unsigned long freq;
+		__int64 freq;
 
 		long Keep, TotalSize;			// Amount of exponential integrator to keep, and total integrator count
 
@@ -5108,6 +5110,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				}
 				// calculate linear frequency spot for each sweep
 				TxBuf->TxAccum = m; 
+				TxBuf->Freq2 = FG->Frequency(m);
 				freq = FG->Frequency(m);
 				if (!VNA->WriteRead(TxBuf, RxBuf, DIR_REFL)) {
 					//WorkerCollect = false;
@@ -5341,7 +5344,7 @@ private: System::Void startF_DoubleClick(System::Object^  sender, System::EventA
 				nb->set_NumericValue(FG->StartF());
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
-					int tempF = nb->get_NumericValue();
+					__int64 tempF = nb->get_NumericValue();
 					// check for legitimate values for startF
 					if (tempF >= 200000 && tempF <= 220000000)
 					{
@@ -5361,7 +5364,7 @@ private: System::Void stopF_DoubleClick(System::Object^  sender, System::EventAr
 				nb->set_NumericValue(FG->StopF());
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
-					int tempF = nb->get_NumericValue();
+					__int64 tempF = nb->get_NumericValue();
 					if (tempF >= 200000 && tempF <= 220000000)
 					{
 						FG->SetStopF(tempF);
@@ -5380,7 +5383,7 @@ private: System::Void txL_DoubleClick(System::Object^  sender, System::EventArgs
 				nb->set_NumericValue(txLevel);
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
-					int tempL = nb->get_NumericValue();
+					int tempL = (int)nb->get_NumericValue();
 					if (tempL >= -10 && tempL <= 0)
 					{
 						txLevel = tempL;
@@ -5405,7 +5408,7 @@ private: System::Void refL_DoubleClick(System::Object^  sender, System::EventArg
 				nb->set_NumericValue(refLevel);
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
-					int tempL = nb->get_NumericValue();
+					int tempL = (int)nb->get_NumericValue();
 					if (tempL >= -50 && tempL <= 50)
 					{
 						refLevel = tempL;
@@ -5948,8 +5951,8 @@ private: System::Void grid101menu_Click(System::Object^  sender, System::EventAr
 			 grid201menu->Checked = false;
 			 grid401menu->Checked = false;
 			 grid1024menu->Checked = false;
-			 int start = FG->StartF();
-			 int stop = FG->StopF();
+			 __int64 start = FG->StartF();
+			 __int64 stop = FG->StopF();
 			 FG = gcnew FrequencyGrid(100);	// Grid containing 100 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
@@ -5963,8 +5966,8 @@ private: System::Void grid201menu_Click(System::Object^  sender, System::EventAr
 			 grid201menu->Checked = true;
 			 grid401menu->Checked = false;
 			 grid1024menu->Checked = false;
-             int start = FG->StartF();
-			 int stop = FG->StopF();
+             __int64 start = FG->StartF();
+			 __int64 stop = FG->StopF();
 			 FG = gcnew FrequencyGrid(200);	// Grid containing 200 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
@@ -5978,8 +5981,8 @@ private: System::Void grid401menu_Click(System::Object^  sender, System::EventAr
 			 grid201menu->Checked = false;
 			 grid401menu->Checked = true;
 			 grid1024menu->Checked = false;
-			 int start = FG->StartF();
-			 int stop = FG->StopF();
+			 __int64 start = FG->StartF();
+			 __int64 stop = FG->StopF();
 			 FG = gcnew FrequencyGrid(400);	// Grid containing 401 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
@@ -5993,8 +5996,8 @@ private: System::Void grid1024menu_Click(System::Object^  sender, System::EventA
 			 grid201menu->Checked = false;
 			 grid401menu->Checked = false;
 			 grid1024menu->Checked = true;
-			 int start = FG->StartF();
-			 int stop = FG->StopF();
+			 __int64 start = FG->StartF();
+			 __int64 stop = FG->StopF();
 			 FG = gcnew FrequencyGrid(1020);	// Grid containing 1020 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
@@ -6886,8 +6889,8 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				this->Height = br->ReadInt32();
 
 			 // 4. Window control values (start & stop frequency, levels, fast/slow button, plot title).
-				int start  = br->ReadInt32();
-				int stop  = br->ReadInt32();
+				__int64 start  = br->ReadInt64();
+				__int64 stop  = br->ReadInt64();
 				int ferr  = br->ReadInt32();
 				int pts = br->ReadInt32();
 
@@ -7001,7 +7004,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
  			 // 6. Marker values and display properties.
 				for (int i=0; i<5; i++)
 				{
-					Marker[i] = br->ReadUInt32();
+					Marker[i] = br->ReadUInt64();
 					MarkerT[i] = br->ReadSingle();
 				}
 				ShowMarkerNumbers = br->ReadBoolean();
@@ -7160,7 +7163,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					}
 					VNA->SetFreq(1000000L, true);
 					System::Threading::Thread::Sleep(500);
-					if (actualMeasurement.reference < -25.0 || actualMeasurement.reference > 10.0) {
+					if (actualMeasurement.reference < -35.0 || actualMeasurement.reference > 10.0) {
 						MessageBox::Show("Measurement signal level out of range", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
@@ -7605,7 +7608,7 @@ private: System::Void startF_MouseDown(System::Object^  sender, System::Windows:
 	if (digit >= 7)
 		digit = 7;
 	if (pe->Delta != 0) {
-		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit) * (int)(pe->Delta / MOUSE_WHEEL_STEP));
+		FG->SetStartF(FG->StartF() + (__int64)Math::Pow(10.0, digit) * (__int64)(pe->Delta / MOUSE_WHEEL_STEP));
 		if (FG->StartF() < MINCALFREQ)  // max allowed frequency
 			FG->SetStartF(MINCALFREQ);
 		startF->Text = FG->StartF().ToString("N0");
@@ -7615,12 +7618,12 @@ private: System::Void startF_MouseDown(System::Object^  sender, System::Windows:
 		return;
 	if(pe->Button == ::MouseButtons::Left)
     {
-		FG->SetStartF(FG->StartF() + (long)Math::Pow(10.0, digit));
+		FG->SetStartF(FG->StartF() + (__int64)Math::Pow(10.0, digit));
 		startF->Text = FG->StartF().ToString("N0");
     }
 	else if(pe->Button == ::MouseButtons::Right)
     {
-		FG->SetStartF(FG->StartF() - (long)Math::Pow(10.0, digit));
+		FG->SetStartF(FG->StartF() - (__int64)Math::Pow(10.0, digit));
 		startF->Text = FG->StartF().ToString("N0");
     }
   }
@@ -7643,7 +7646,7 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 		digit = 7;
 	if (pe->Delta != 0) {
 		
-		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit) * (int)(pe->Delta / MOUSE_WHEEL_STEP));
+		FG->SetStopF(FG->StopF() + (__int64)Math::Pow(10.0, digit) * (__int64)(pe->Delta / MOUSE_WHEEL_STEP));
 		if (FG->StopF() < MINCALFREQ)  // max allowed frequency
 			FG->SetStopF(MINCALFREQ);
 		stopF->Text = FG->StopF().ToString("N0");
@@ -7653,12 +7656,12 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 		return;
 	if(pe->Button == ::MouseButtons::Left)
     {
-		FG->SetStopF(FG->StopF() + (long)Math::Pow(10.0, digit));
+		FG->SetStopF(FG->StopF() + (__int64)Math::Pow(10.0, digit));
 		stopF->Text = FG->StopF().ToString("N0");
     }
 	else if(pe->Button == ::MouseButtons::Right)
     {
-		FG->SetStopF(FG->StopF() - (long)Math::Pow(10.0, digit));
+		FG->SetStopF(FG->StopF() - (__int64)Math::Pow(10.0, digit));
 		stopF->Text = FG->StopF().ToString("N0");
     }
   }

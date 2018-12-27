@@ -61,6 +61,7 @@ private:
 	int resistance;
 	int capacitance;
 	int inductance;
+	float noise;
 	int dur;						// total duration of one side signal
 	System::IO::Ports::SerialPort^  serialPort;
 
@@ -79,9 +80,9 @@ public:
 	int State();				// -1 = no device  +1 = device OK
 	bool Start();					// Release reset of the 8051 processor on VNA
 	bool Stop();					// Halt the 8051 processor on VNA
-	bool Sweep(long startF, long stepF, int numPoints, int duration, int power);
-	void Sweep(long startF, long stepF, int numPoints, int duration);
-	void SetFreq(long startF, int direction);
+	bool Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, int power);
+	void Sweep(__int64 startF, __int64 stepF, int numPoints, int duration);
+	void SetFreq(__int64 startF, int direction);
 	bool Download(array<System::Byte>^ Codebuffer, int CodeSize, unsigned short Address );	// download code to 8051
 	bool Read(VNA_RXBUFFER * readbuf);		// Read 64 bytes of data from BULK_IN_EP2 - it blocks the
 									// calling thread, but the VNA always tries to have a buffer
@@ -97,4 +98,5 @@ public:
 	void SetResistance(int v);
 	void SetCapacitance(int v);
 	void SetInductance(int v);
+	void SetNoise(float c);
 };

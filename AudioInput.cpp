@@ -64,9 +64,9 @@ int	simPoint = 0;
 int	simMaxPoint = 0;
 int	simDuration = 3;
 int	simStep = 0;
-long simStartF;
-long simStepF;
-long simWidth;
+__int64 simStartF;
+__int64 simStepF;
+__int64 simWidth;
 int simBefore;
 int simAfter;
 int simDirection;
@@ -74,6 +74,7 @@ long simS = 0;
 int simR;
 int simC;
 int simL;
+float simN;
 
 volatile int audioPower = false;
 
@@ -87,12 +88,12 @@ unsigned int selectedAudio = WAVE_MAPPER;
 //int sampleRate = 44100;
 int sampleRate = 192000;
 int oldSampleRate = 0;
-int IFREQ = 6000;  // Invariant : IFREQ == (sampleRate / SAMP) * integer!!!!!!
+
+int SAMPPERMS = 1;
+int IFREQ = 4000;  // Invariant : IFREQ == (sampleRate / SAMP) * integer!!!!!!
 int oldIFREQ = 0;
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
 
-
-int SAMPPERMS = 1;
 // For normal operation
 int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
 
@@ -101,9 +102,6 @@ int NUMPTS=2*192*10; // stereo  * 10 * SAMP, maximum value
 SAMPLETYPE waveIn[WAVEHDRBUFFER][MAXNUMPTS];
 #define VALIDSAMPLEBITS 32
 #define SAMPLEBITS	32
-//#define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(VALIDSAMPLEBITS - 1))-8))
-#define MAXSAMPLEVALUE 0.9999999
-// #define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(15))-8))
 
 WAVEHDR      WaveInHdr[WAVEHDRBUFFER];
 MMRESULT result;
@@ -223,9 +221,6 @@ WAVEFORMATEXTENSIBLE pFormat;
 
 #include "Constants.h"
 
-#define todb(X) (20.0f * log10 ((float(X)/(float)MAXSAMPLEVALUE)))
-
-
 float max_rr = 0;
 float min_rr = (float)1e+30;
 float factor = 1;
@@ -240,15 +235,14 @@ void dsp_process(SAMPLETYPE *capture, long length)
   SAMPLETYPE *p = capture;
   int len = length / 2;
   int i;
-#define SUMTYPE	double
   SUMTYPE samp_s = 0;
   SUMTYPE samp_c = 0;
   SUMTYPE ref_s = 0;
   SUMTYPE ref_c = 0;
   SUMTYPE samp_dc = 0;
   SUMTYPE ref_dc = 0;
-  double ref_mag;
-    double samp_mag;
+  SUMTYPE ref_mag;
+  SUMTYPE samp_mag;
 
   for (i = 0; i < len; i++) {
     SUMTYPE smp = (*p++ );
@@ -274,6 +268,12 @@ void dsp_process(SAMPLETYPE *capture, long length)
 	}
 
   }
+
+  	actualMeasurement.samp_s = samp_s;
+  	actualMeasurement.samp_c = samp_c;
+  	actualMeasurement.ref_s = ref_s;
+  	actualMeasurement.ref_c = ref_c;
+ 
 
 #define REFERENCE_LEVEL_REDUCTION	1  // Reduction of reference level to avoid crosstalk, 20dB
 
@@ -307,7 +307,7 @@ void dsp_process(SAMPLETYPE *capture, long length)
 	  ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
 
 
-#define FASTDSP
+#define FAST_DSP
 #ifdef FAST_DSP	
 	  double fast_mag, v0,v1;
 	double fast_phase;
@@ -336,6 +336,9 @@ void dsp_process(SAMPLETYPE *capture, long length)
 }
 
 
+
+
+
 typedef enum audioStates { AS_NOCHANGE, AS_ARMED, AS_STARTED, AS_SIGNAL, AS_SILENCE, AS_STOPPING, AS_FINISHED };
 audioStates audioState = AS_ARMED;
 audioStates nextState = AS_NOCHANGE;
@@ -353,11 +356,47 @@ void ArmAudio(int mP, System::IO::Ports::SerialPort^ port)
 	nextDecoded = 0;
 }
 
+void Process(int start, int len)
+{
+	SUMTYPE samp_s = 0;
+	SUMTYPE samp_c = 0;
+	SUMTYPE ref_s = 0;
+	SUMTYPE ref_c = 0;
+	SUMTYPE samp_dc = 0;
+	SUMTYPE ref_dc = 0;
+	SUMTYPE ref_mag;
+	double fast_mag, v0,v1;
+	double fast_phase;
+	int i;
+
+	
+	for (i = 0; i < len; i++) {
+		samp_s += measured[start+i].samp_s;
+		samp_c += measured[start+i].samp_c;
+		ref_s += measured[start+i].ref_s;
+		ref_c += measured[start+i].ref_c;
+	}
+
+
+	v0 = (samp_c*(float)ref_c + samp_s*(float)ref_s) / ((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+	v1 = (samp_s*(float)ref_c - samp_c*(float)ref_s) / ((ref_s*(float)ref_s)+ref_c*(float)ref_c);
+
+	fast_mag = sqrt(v0*v0+v1*v1);
+	fast_phase =360.0f / 2 / PI  * atan2(v1, v0);
+
+	measured[start].magnitude = todb(fast_mag*MAXSAMPLEVALUE);
+	measured[start].phase = (float)fast_phase;
+
+	ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c) / len;
+
+	measured[start].reference =  todb(ref_mag/20);
+}
+
 int lastI=-1;
 int lastJ=-1;
 bool lastRefl = false;
 
-bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr)
+bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr, int avSamp)
 {
 //	int offs;
 	if ( (!audioPower && i < lastMeasurement-1 && i < maxMeasurement) ||
@@ -375,7 +414,17 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 			m = 0.0;
 			p = 0.0;
 		} else {
-			r = measured[measurementIndex[i] + 0 + lastJ].reference;
+#if 0
+			if (lastJ == 0) {
+				Process(measurementIndex[i], avSamp);
+				Process(measurementIndex[i]+ (d + 2) * SAMPPERMS, avSamp);
+			}
+#endif
+			if (fr < 300000000L)
+				r = measured[measurementIndex[i] + 0 + lastJ].reference;
+			else
+				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)20.0; // Harmonic mixing
+
 			m = measured[measurementIndex[i] + 0 + lastJ].magnitude;
 			p = measured[measurementIndex[i] + 0 + lastJ].phase;
 			measured[measurementIndex[i] + 0 + lastJ].read = lastJ+1;
@@ -410,11 +459,15 @@ void StoreMeasurement()
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
 	if (nextDecoded < MAX_MEASUREMENTS) {
-		measured[nextDecoded].freq = lastFreq;
+	  	measured[nextDecoded].samp_s = actualMeasurement.samp_s;
+		measured[nextDecoded].samp_c = actualMeasurement.samp_c;
+  		measured[nextDecoded].ref_s = actualMeasurement.ref_s;
+  		measured[nextDecoded].ref_c = actualMeasurement.ref_c;
 		measured[nextDecoded].magnitude = actualMeasurement.magnitude;
 		measured[nextDecoded].phase = actualMeasurement.phase;
 		measured[nextDecoded].dcs = actualMeasurement.dcs;
 		measured[nextDecoded].dcr = actualMeasurement.dcr;
+		measured[nextDecoded].freq = lastFreq;
 		measured[nextDecoded].read = 0;
 //		if (actualMeasurement.reference < -110)
 //			actualMeasurement.reference = -100;
@@ -504,7 +557,7 @@ void DumpMeasurement()
 		fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
 		sw = gcnew StreamWriter(fs);
 		sw->WriteLine("sep=;");
-		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; measurement ");
+		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; samp_s; samp_c; ref_s;ref_c ; measurement");
 		int decoded=0;
 		int measure = 0;
 		string s;
@@ -513,19 +566,27 @@ void DumpMeasurement()
 			sw->Write("; ");
 			sw->Write(measured[decoded].freq.ToString("N"));
 			sw->Write("; ");
-			sw->Write(measured[decoded].reference.ToString("N1"));
+			sw->Write(measured[decoded].reference.ToString("N3"));
 			sw->Write("; ");
 			sw->Write(measured[decoded].delta.ToString("N1"));
 			sw->Write("; ");
 			sw->Write(measured[decoded].read.ToString("N1"));
 			sw->Write("; ");
-			sw->Write(measured[decoded].magnitude.ToString("N1"));
+			sw->Write(measured[decoded].magnitude.ToString("N3"));
 			sw->Write("; ");
-			sw->Write(measured[decoded].phase.ToString("N1"));
+			sw->Write(measured[decoded].phase.ToString("N3"));
 			sw->Write("; ");
 			sw->Write(measured[decoded].dcr.ToString("N1"));
 			sw->Write("; ");
 			sw->Write(measured[decoded].dcs.ToString("N1"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].samp_s.ToString("N6"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].samp_c.ToString("N6"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].ref_s.ToString("N6"));
+			sw->Write("; ");
+			sw->Write(measured[decoded].ref_c.ToString("N6"));
 			decoded++;
 			if (measure < lastMeasurement+1) {
 				if (measurementIndex[measure+1] == decoded) {
@@ -558,9 +619,10 @@ using namespace std;
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
 #define CAPACITANCE	1/(2.0*PI*freq*pow(10,simC/20.0)/1e13)
 #define RESISTANCE pow(10, (simR - 50.0)/20.0)*Z0
+#define NOISE (float)((0.5 - (rand() % 1000)/1000.0) * simN )
 
 
-complex <double> modelLoadRefl(long freq)
+complex <double> modelLoadRefl(__int64 freq)
 {
 //	long f = freq;
 //	double ind = INDUCTANCE;
@@ -571,7 +633,7 @@ complex <double> modelLoadRefl(long freq)
 	return( (Zl - Zs)/(Zl +Zs) );	// Reflection due to mismatch
 }
 
-complex <double> modelLoadTran(long freq, double res)
+complex <double> modelLoadTran(__int64 freq, double res)
 {
 	if (res < 50.0) {
 		return ( polar(1 - (50.0-res)/50.0, 0.0) );
@@ -583,7 +645,7 @@ complex <double> modelLoadTran(long freq, double res)
 }
 
 	complex <double> debugC;
-complex <double> modelRefl(long freq, double bef, double res, double aft)
+complex <double> modelRefl(__int64 freq, double bef, double res, double aft)
 {
 	double del1 = bef/10./160e6, del2 = aft/10./160e6;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq) * polar(1.,del1*freq*2*PI) ;
@@ -591,7 +653,7 @@ complex <double> modelRefl(long freq, double bef, double res, double aft)
 	return(r);
 }
 
-complex <double> modelTran(long freq, double bef, double res, double aft)
+complex <double> modelTran(__int64 freq, double bef, double res, double aft)
 {
 	double del1 = bef/10./160e6, del2 = aft/10./160e6;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadTran(freq,res) * polar(1.,del2*freq*2*PI) ;
@@ -618,8 +680,8 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 	if(WHDR_DONE==(WHDR_DONE &pHdr->dwFlags))
 	{
 
-		if (pHdr->dwBytesRecorded != (SAMPLEBITS/8) * NUMPTS )
-			MessageBox::Show("Incorrect number of audio bytes to process.", "Error");//, MB_OK | MB_ICONEXCLAMATION);
+		//if (pHdr->dwBytesRecorded != (SAMPLEBITS/8) * NUMPTS )
+		//	MessageBox::Show("Incorrect number of audio bytes to process.", "Error");//, MB_OK | MB_ICONEXCLAMATION);
 
 		audio = (SAMPLETYPE *)pHdr->lpData;
 
@@ -709,7 +771,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 					for (i = 0; i < SAMP; i++) {
 						double a = abs(tran);
 						// v = arg(tran);
-						double freq = (simPoint -1 - simMaxPoint/2) * simStepF;
+						double freq = (simPoint -1 - simMaxPoint/2) * (double) simStepF;
 						if (abs(freq) > sampleRate / 2)
 							a = a* 0.0000000000001;
 						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
@@ -741,26 +803,28 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				double a = abs(tran);
 
 #endif
+
+
 				if (simStep/SAMPPERMS < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
-						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
-						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else if (simStep/SAMPPERMS < SILENCE_GAP + (simDuration+2) ) { // Reflection
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(refl);
 //						v = arg(refl);
-						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * abs(refl) * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 *  (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * abs(refl) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				} else { // Transmission
 					for (i = 0; i < SAMP; i++) {
 //						a = abs(tran);
 //						v = arg(tran);
-						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
-						audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * a * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
 						simS++;
 					}
 				}
@@ -812,6 +876,7 @@ int OpenAudio (void) {
 	int i;
 	bool again = true;
 	double a;
+	int wholeIF;
 
 	if (hWaveIn != NULL) {
 		audioStopping = true;
@@ -889,13 +954,16 @@ int OpenAudio (void) {
 */
 	}
 
-	SAMPPERMS = 1;
+//	SAMPPERMS = 1;
 	SAMP = sampleRate / 1000 / SAMPPERMS ;		// Audio samples per dsp
+	wholeIF = sampleRate / SAMP;
+	IFREQ = ((int)(IFREQ / wholeIF)) * wholeIF; // Ensure one SAMP contains complete sin/cos
 
-	NUMPTS=2*SAMP*10;
+	NUMPTS=2*SAMP*10; // samples per buffer from audio input
 	a = 0.16;
 
-#define WINDOW(n) ((1.0-a)/2 - 0.5 * cos((2.0*PI*n)/(SAMP-1)) + (a/2.0)*cos((4*PI*n)/(SAMP-1)))
+//#define WINDOW(n) ((1.0-a)/2 - 0.5 * cos((2.0*PI*n)/(SAMP-1)) + (a/2.0)*cos((4*PI*n)/(SAMP-1)))
+#define WINDOW(n) 1
 
 	for (i = 0; i < SAMP; i++) {
 		sincos_tbl[i][0] = (SAMPLETYPE)(MAXSAMPLEVALUE * sin( PI * 2  * i * (IFREQ)/ sampleRate) * WINDOW(i));
@@ -939,7 +1007,7 @@ int OpenAudio (void) {
 	return(0);
 }
 
-void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF, int cable_before, int cable_after, int direction, int r, int c, int l)
+void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF, int cable_before, int cable_after, int direction, int r, int c, int l, float n)
 {
 	simMode = mode;
 	simPoint = 0;
@@ -956,6 +1024,7 @@ void StartAudioSimulation(int mode, int numPoints, int duration, long startF, lo
 	simR = r;
 	simC = c;
 	simL = l;
+	simN = n;
 }
 
 void SetAudioPower(int power)

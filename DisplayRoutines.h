@@ -60,9 +60,9 @@ double BufferAmpPhaseComp(double phaseDegrees, int Frequency);
 public ref class FrequencyGrid
 {
 private:
-	array<Int32>^ FrequencyIndex;		///< Grid of frequencies to measure
-	int startFreq;						///< Starting (lowest) Frequency of grid
-	int stopFreq;						///< Stopping (highest) Frequency of grid
+	array<__int64>^ FrequencyIndex;		///< Grid of frequencies to measure
+	__int64 startFreq;						///< Starting (lowest) Frequency of grid
+	__int64 stopFreq;						///< Stopping (highest) Frequency of grid
 	int indexer;						///< internal variable to index through grid
 	double delta;						///< Frequency separation between points in the grid
 public:
@@ -71,14 +71,14 @@ public:
 
 public:
 	FrequencyGrid(int numPoints);		///< Constructor, allocate array
-	void SetStartF(int start);			///< Set start frequency of grid
-	void SetStopF(int stop);			///< Set stop frequency of grid
-	int Frequency(int gridpoint);		///< convert gridpoint to it's frequency
-	long long int DDS(int Frequency);	///< Derive DDS divisor value from Frequency
-	int GridPoint(int Frequency);		///< convert Frequency to gridpoint
+	void SetStartF(__int64 start);			///< Set start frequency of grid
+	void SetStopF(__int64 stop);			///< Set stop frequency of grid
+	__int64 Frequency(int gridpoint);		///< convert gridpoint to it's frequency
+	long long int DDS(__int64 Frequency);	///< Derive DDS divisor value from Frequency
+	int GridPoint(__int64 Frequency);		///< convert Frequency to gridpoint
 	int Points();						///< get number of points in grid
-	int StartF();						///< get start frequency of grid
-	int StopF();						///< get stop frequency of grid
+	__int64 StartF();						///< get start frequency of grid
+	__int64 StopF();						///< get stop frequency of grid
 	int Ferror();						///< get Frequency error
 	void set_Ferror(int FreqError);		///< set Frequency error
 
@@ -108,9 +108,9 @@ public:
 
 	InstrumentCalDataSet(String^ StartUpDir);
 /// resolve reflected measured data set to Magnitude and Phase
-void ResolveReflPolar(MeasurementSet^ dataPoint, int Freq, double& rmag, double& rphs, bool CouplerComp);
+void ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, double& rphs, bool CouplerComp);
 /// resolve transmitted measured data set to Magnitude and Phase
-void ResolveTranPolar(MeasurementSet^ dataPoint, int Freq, double& rmag, double& rphs);
+void ResolveTranPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, double& rphs);
 /// get frequency of calibration grid point
 long GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 };
@@ -120,10 +120,10 @@ long GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 void CalToErrorTerms(InstrumentCalDataSet^ Cal);
 
 /// Convert measured S11 into actual S11 via Fixture calibration
-void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs);
+void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs);
 
 /// Convert measured S21 into actual S21 via Foixture calibration
-void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs);
+void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs);
 
 /// Load calibration data from a previously saved file
 bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal);

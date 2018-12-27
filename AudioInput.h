@@ -23,13 +23,16 @@ extern unsigned int selectedAudio;
 extern int OpenAudio (void);
 extern void ArmAudio(int pM, System::IO::Ports::SerialPort^ port);
 void MarkFrequency(unsigned long freq);
-extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr);
-extern void StartAudioSimulation(int mode, int numPoints, int duration, long startF, long stepF,int cable_before, int cable_after, int direction, int r, int c, int l);
+extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr,int avSamp);
+extern void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF,int cable_before, int cable_after, int direction, int r, int c, int l, float n);
 extern void SetAudioPower(int power);
 extern void DumpMeasurement(void);
 extern void GetMixerInfo();
 extern int MixerGetVolume(void);
 extern void MixerSetVolume(int);
+
+
+#define SUMTYPE	float
 
 typedef struct measurementType {
 	float magnitude;
@@ -40,6 +43,10 @@ typedef struct measurementType {
 	float dcr;
 	float dcs;
 	int read;
+	SUMTYPE samp_s;
+    SUMTYPE samp_c;
+    SUMTYPE ref_s;
+    SUMTYPE ref_c;
 } measurementType;
 
 

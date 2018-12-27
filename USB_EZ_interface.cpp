@@ -388,12 +388,12 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
-void VNADevice::Sweep(long startF, long stepF, int numPoints, int duration)
+void VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration)
 {
 	Sweep(startF, stepF, numPoints, duration, false);
 }
 
-bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int power)
+bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, int power)
 {
 //	String ^ t;
 	SetAudioPower(power);
@@ -419,13 +419,13 @@ bool VNADevice::Sweep(long startF, long stepF, int numPoints, int duration, int 
 
 	} else {
 //		if (!power) dur += 2; // add 2 duration for lead in and out
-		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance);
+		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance, noise);
 	}
 	return(true);
 	// mp = 0;
 }
 
-void VNADevice::SetFreq(long startF, int direction)
+void VNADevice::SetFreq(__int64 startF, int direction)
 {
 	if (! mode){
 		try {
@@ -439,7 +439,7 @@ void VNADevice::SetFreq(long startF, int direction)
 
 		if (serialPort->IsOpen) serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2}", startF, direction, IFREQ));
 	} else {
-		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance);
+		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance, noise);
 	}
 }
 
@@ -493,16 +493,18 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflphase,tranphase;
 	float reflmag,tranmag;
 	float reflevel;
-	unsigned long freq;
+	unsigned long freq = (unsigned long)TxBuffer->Freq2;
 	int i;
 	unsigned int level;
-
+	int availableSamples = ((dur+2) * SAMPPERMS - 2);
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
 //	return true;
 #define MAX_RETRIES	100		
-	for (i=0; i<((dur+2) * SAMPPERMS - 2); i++) {
-		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq) && retries < MAX_RETRIES) {
+//	i = 0;
+	for (i=0; i<availableSamples; i++) 
+	{
+		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq, availableSamples) && retries < MAX_RETRIES) {
 			Sleep(2);
 			retries++;
 		}
@@ -525,12 +527,19 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 		}
 	}
 #endif
-	reflmag = Median(sumreflmag,dur);
-	tranmag = Median(sumtranmag,dur);
-	reflphase = Median(sumreflphase,dur);
-	tranphase = Median(sumtranphase,dur);
-	reflevel = Median(sumreflevel,dur);
-
+#if 0
+	reflmag = Median(sumreflmag,availableSamples);
+	tranmag = Median(sumtranmag,availableSamples);
+	reflphase = Median(sumreflphase,availableSamples);
+	tranphase = Median(sumtranphase,availableSamples);
+	reflevel = Median(sumreflevel,availableSamples);
+#else
+	reflmag = sumreflmag[0];
+	tranmag = sumtranmag[0];
+	reflphase = sumreflphase[0];
+	tranphase = sumtranphase[0];
+	reflevel = sumreflevel[0];
+#endif
 		// mp++;
 	RxBuffer->Vref1 = DB2SHORT(reflevel);
 //	RxBuffer->Vref2 = level;
@@ -568,4 +577,8 @@ void VNADevice::SetCapacitance(int l) {
 
 void VNADevice::SetInductance(int l) {
 	inductance = l;
+}
+
+void VNADevice::SetNoise(float c) {
+	noise = c;
 }

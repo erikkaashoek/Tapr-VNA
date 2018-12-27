@@ -219,26 +219,26 @@ FrequencyGrid::FrequencyGrid(int numPoints)
 	if (numPoints > 1024)
 		throw gcnew System::IndexOutOfRangeException("FrequencyGrid constructor: numpoints out of range");
 
-	FrequencyIndex = gcnew array<Int32>(numPoints);
+	FrequencyIndex = gcnew array<__int64>(numPoints);
 	startFreq = 200000;
 	stopFreq = 120000000;
 	points = numPoints;
 	Build();
 };
 // Set start frequency of grid
-void FrequencyGrid::SetStartF(int start)
+void FrequencyGrid::SetStartF(__int64 start)
 	{
 		startFreq = start;
 		Build();
 	}
 // Set stop frequency of grid
-void FrequencyGrid::SetStopF(int stop)
+void FrequencyGrid::SetStopF(__int64 stop)
 {
 	stopFreq = stop;
 	Build();
 }
 // Convert gridpoint to it's frequency
-int FrequencyGrid::Frequency(int gridpoint)
+__int64 FrequencyGrid::Frequency(int gridpoint)
 {
 	/// if gridpoint is out of range, clip to actual frequency range
 
@@ -251,7 +251,7 @@ int FrequencyGrid::Frequency(int gridpoint)
 	
 }
 // Derive DDS divisor value (as 64-bit integer) from Frequency
-long long int FrequencyGrid::DDS(int Frequency)
+__int64 FrequencyGrid::DDS(__int64 Frequency)
 {
 
 /// Calculate the 48-bit synthesizer accumulator value from Frequency
@@ -277,7 +277,7 @@ long long int FrequencyGrid::DDS(int Frequency)
 }
 /// Find nearest gridpoint to Frequency
 /// \result is GridPoint Number or -1 if error
-int FrequencyGrid::GridPoint(int Frequency)	
+int FrequencyGrid::GridPoint(__int64 Frequency)	
 {
 
 	if (((double)Frequency > stopFreq) || ((double)Frequency < startFreq))
@@ -289,8 +289,8 @@ int FrequencyGrid::GridPoint(int Frequency)
 	return(iresult);
 }
 int FrequencyGrid::Points() { return points; }		/// get number of points in grid
-int FrequencyGrid::StartF() { return startFreq; }	/// get start frequency of grid
-int FrequencyGrid::StopF() { return stopFreq; }		/// get stop frequency of grid
+__int64 FrequencyGrid::StartF() { return startFreq; }	/// get start frequency of grid
+__int64 FrequencyGrid::StopF() { return stopFreq; }		/// get stop frequency of grid
 int FrequencyGrid::Ferror() { return ferror; }		/// get Frequency error of the reference clock
 void FrequencyGrid::set_Ferror(int f) { ferror = f; }	/// set Frequency error of the reference clock
 
@@ -301,7 +301,7 @@ void FrequencyGrid::Build(void)
 
 	// build the frequency grid
 	for (int i = 0; i<points; i++)
-		FrequencyIndex[i] = startFreq + (int)((double)i * delta);
+		FrequencyIndex[i] = startFreq + (__int64)((double)i * delta);
 }
 
 
@@ -510,7 +510,7 @@ long InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode)	/
 
 
 // Resolve reflected measured data set to Linear Magnitude and Phase in Degrees
-void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequency, double& rmagLin, double& rphsDegr,
+void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Frequency, double& rmagLin, double& rphsDegr,
 			bool CouplerComp)
 {
 	double magnitudeDB, phase, magnitudeLin;
@@ -554,7 +554,7 @@ void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, int Frequ
 }
 
 // Resolve transmitted measured data set to Magnitude and Phase
-void InstrumentCalDataSet::ResolveTranPolar(MeasurementSet^ dataPoint, int Frequency, double& rmag, double& rphs)
+void InstrumentCalDataSet::ResolveTranPolar(MeasurementSet^ dataPoint, __int64 Frequency, double& rmag, double& rphs)
 {
 	double magnitudeDB, phase, magnitudeLin;
 
@@ -620,7 +620,7 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 };
 
 // Convert measured S11 into actual S11 via fixture calibration
-void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs)
+void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs)
 {
 	// Modified 02-07-2010 to select Linear(f) or Log(f) fixture calibration 
 
@@ -653,7 +653,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
-		double exactIndex = Math::Log10(Frequency/MINCALFREQ)/LogFreqIncrement;
+		double exactIndex = Math::Log10((double)Frequency/MINCALFREQ)/LogFreqIncrement;
 		i = (int)exactIndex;									// Cal frequency index directly below ours
 		j=i+1;													// Cal frequency index directly above ours
 		
@@ -733,7 +733,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, int Frequency, bool ReflExtn, double 
 	rsltphs = fphase;
 }
 // Convert measured S21 into actual S21 via fixture calibration
-void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs)
+void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs)
 {
 	// Modified 02-07-2010 to select Linear(f) or Log(f) fixture calibration 
 
@@ -766,7 +766,7 @@ void CorrectS21(InstrumentCalDataSet^ Cal, int Frequency, double measmag, double
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
-		double exactIndex = Math::Log10(Frequency/MINCALFREQ)/LogFreqIncrement;
+		double exactIndex = Math::Log10((double)Frequency/MINCALFREQ)/LogFreqIncrement;
 		i = (int)exactIndex;									// Cal frequency index directly below ours
 		j=i+1;													// Cal frequency index directly above ours
 		

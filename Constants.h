@@ -121,5 +121,12 @@ enum ReflMeas { MagQ, PhaseI, PhaseQ };		///< Array index for storing reflection
 #define MIN_DB   -180.0
 #define DB2SHORT(X) (short)((X)>MIN_DB?((X) - MIN_DB) * SHORT_RANGE / (MAX_DB - MIN_DB):0)
 #define SHORT2DB(X) (((double)(X) * (MAX_DB - MIN_DB) / SHORT_RANGE ) + MIN_DB )
+//#define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(VALIDSAMPLEBITS - 1))-8))
+#define MAXSAMPLEVALUE 0.9999999
+// #define MAXSAMPLEVALUE ((int)((((unsigned long)1)<<(15))-8))
+
+#define todb(X) (20.0f * log10 ((float(X)/(float)MAXSAMPLEVALUE)))
+#define toLin(X)  ( pow((float)10,(float)(X/20.0)) * (float) MAXSAMPLEVALUE)
+
 
 #define CALSUM	7 //number of measurements to average for calibration

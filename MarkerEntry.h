@@ -43,18 +43,18 @@ namespace VNAR3
 	public ref class MarkerEntry : public System::Windows::Forms::Form
 	{
 
-	public: array<UInt32>^ MarkerF;				// Our caller retrieves the changed markers 
+	public: array<__int64>^ MarkerF;				// Our caller retrieves the changed markers 
 	public: array<Single>^ MarkerT;				// by reading these values before disposing of the class
 
 	private: System::Windows::Forms::GroupBox^  groupBox1;
 	private: System::Windows::Forms::GroupBox^  groupBox2;
 
 	public: 
-		MarkerEntry(array<UInt32>^ MarkerFIn, array<Single>^ MarkerTIn)	///< Array of Markers (frequency, time of each marker)
+		MarkerEntry(array<__int64>^ MarkerFIn, array<Single>^ MarkerTIn)	///< Array of Markers (frequency, time of each marker)
 		{
 			InitializeComponent();
 
-			MarkerF = gcnew array<UInt32>(5);
+			MarkerF = gcnew array<__int64>(5);
 			MarkerT = gcnew array<Single>(5);
 
 			for (int i=0; i<5; i++)							// read in marker frequencies

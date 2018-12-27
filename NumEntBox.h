@@ -139,14 +139,14 @@ public ref class NumEntBox : public System::Windows::Forms::Form
 	
 	
 	public:
-	    void set_NumericValue(int number)   { NumberBox->Text = number.ToString(); } // display existing value
+	    void set_NumericValue(__int64 number)   { NumberBox->Text = number.ToString(); } // display existing value
 
-		int get_NumericValue()						// retrieve value that user entered
+		__int64 get_NumericValue()						// retrieve value that user entered
 		{ 
-			int n;
-			try										// make sure it's an integer number
+			__int64 n;
+			try										// make sure it's an long number
 			{
-				n = Convert::ToInt32(NumberBox->Text);	
+				n = Convert::ToInt64(NumberBox->Text);	
 			}
 			catch (System::FormatException^ pe)
 			{

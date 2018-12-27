@@ -1,4 +1,5 @@
 #pragma once
+#include "Constants.h" 
 
 #include "USB_EZ_interface.h"
 //#include <Windows.h>
@@ -32,6 +33,9 @@ namespace VNAR3 {
 	public: 
 	private: System::Windows::Forms::TextBox^  CText;
 	private: System::Windows::Forms::TextBox^  LText;
+	private: System::Windows::Forms::TrackBar^  noiseLevel;
+	private: System::Windows::Forms::Label^  label10;
+	private: System::Windows::Forms::TextBox^  NText;
 	public: 
 			 int cable_after;
 	
@@ -112,11 +116,15 @@ namespace VNAR3 {
 			this->RText = (gcnew System::Windows::Forms::TextBox());
 			this->CText = (gcnew System::Windows::Forms::TextBox());
 			this->LText = (gcnew System::Windows::Forms::TextBox());
+			this->noiseLevel = (gcnew System::Windows::Forms::TrackBar());
+			this->label10 = (gcnew System::Windows::Forms::Label());
+			this->NText = (gcnew System::Windows::Forms::TextBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Capacitance))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Inductance))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->noiseLevel))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// radioButton1
@@ -331,12 +339,42 @@ namespace VNAR3 {
 			this->LText->Size = System::Drawing::Size(56, 20);
 			this->LText->TabIndex = 21;
 			// 
+			// noiseLevel
+			// 
+			this->noiseLevel->Location = System::Drawing::Point(229, 282);
+			this->noiseLevel->Maximum = 0;
+			this->noiseLevel->Minimum = -100;
+			this->noiseLevel->Name = L"noiseLevel";
+			this->noiseLevel->Size = System::Drawing::Size(177, 45);
+			this->noiseLevel->TabIndex = 22;
+			this->noiseLevel->Value = -60;
+			this->noiseLevel->Scroll += gcnew System::EventHandler(this, &Mockup::noiseLevel_Scroll);
+			// 
+			// label10
+			// 
+			this->label10->AutoSize = true;
+			this->label10->Location = System::Drawing::Point(141, 281);
+			this->label10->Name = L"label10";
+			this->label10->Size = System::Drawing::Size(34, 13);
+			this->label10->TabIndex = 23;
+			this->label10->Text = L"Noise";
+			// 
+			// NText
+			// 
+			this->NText->Location = System::Drawing::Point(289, 307);
+			this->NText->Name = L"NText";
+			this->NText->Size = System::Drawing::Size(56, 20);
+			this->NText->TabIndex = 24;
+			// 
 			// Mockup
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
 			this->ClientSize = System::Drawing::Size(434, 339);
+			this->Controls->Add(this->NText);
+			this->Controls->Add(this->label10);
+			this->Controls->Add(this->noiseLevel);
 			this->Controls->Add(this->LText);
 			this->Controls->Add(this->CText);
 			this->Controls->Add(this->RText);
@@ -367,6 +405,7 @@ namespace VNAR3 {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Capacitance))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Inductance))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->noiseLevel))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -429,6 +468,11 @@ private: System::Void Inductance_ValueChanged(System::Object^  sender, System::E
 		 }
 
 private: System::Void label8_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void noiseLevel_Scroll(System::Object^  sender, System::EventArgs^  e) {
+//			float n = toLin(noiseLevel->Value);
+			NText->Text = String::Format("{0}dB",noiseLevel->Value.ToString("G5"));
+			this->VNA->SetNoise(toLin(noiseLevel->Value));
 		 }
 };
 }

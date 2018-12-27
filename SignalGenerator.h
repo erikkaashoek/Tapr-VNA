@@ -61,8 +61,8 @@ namespace VNAR3 {
 	protected: 
 
 
-	private: long freq;
-			 long oldFreq;
+	private: __int64 freq;
+			 __int64 oldFreq;
 			 int oldChecked;
 			 int checked;
 	private: System::Windows::Forms::Label^  label5;
@@ -286,7 +286,7 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 		 }
 private: System::Void trackBar1_Scroll(System::Object^  sender, System::EventArgs^  e) {
 //			 freq = MINCALFREQ + (long long)(MAXCALFREQ - MINCALFREQ) * trackBar1->Value / trackBar1 ->Maximum;
-			 freq = (long) pow((float)10.0, (float) ((log10f(7*MAXCALFREQ) - log10f(MINCALFREQ)) * trackBar1->Value / trackBar1 ->Maximum + log10f(MINCALFREQ)));
+			 freq = (__int64) pow((float)10.0, (float) ((log10f(10*(__int64)MAXCALFREQ) - log10f(MINCALFREQ)) * trackBar1->Value / trackBar1 ->Maximum + log10f(MINCALFREQ)));
 			 frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
 //			VNA->SetFreq(freq,showRefl->Checked);
 		 }
@@ -297,7 +297,7 @@ private: System::Void SignalGenerator_Load(System::Object^  sender, System::Even
 private: System::Void frequency_Leave(System::Object^  sender, System::EventArgs^  e) {
 			 try										// make sure it's an integer number
 			{
-				freq = (int)(Convert::ToDouble(frequency->Text) * 1000000);
+				freq = (long)(Convert::ToDouble(frequency->Text) * 1000000);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
 				else if (freq > 7*MAXCALFREQ)
@@ -326,7 +326,7 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 			return;
 			 try										// make sure it's an integer number
 			{
-				freq = (int)(Convert::ToDouble(frequency->Text)*1000000.0);
+				freq = (long)(Convert::ToDouble(frequency->Text)*1000000.0);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
 				else if (freq > 7*MAXCALFREQ)
@@ -352,13 +352,13 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 private: System::Void frequency_Enter(System::Object^  sender, System::EventArgs^  e) {
 		 try										// make sure it's an integer number
 			{
-				freq = (int)(Convert::ToDouble(frequency->Text)*1000000.0);
+				freq = (long)(Convert::ToDouble(frequency->Text)*1000000.0);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
 				else if (freq > 7*MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
-					trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (7*MAXCALFREQ - MINCALFREQ);
+					trackBar1->Value =(int) ((__int64)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (7*MAXCALFREQ - MINCALFREQ);
 					//VNA->SetFreq(freq,showRefl->Checked);
 
 				}
