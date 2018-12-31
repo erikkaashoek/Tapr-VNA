@@ -40,6 +40,7 @@ volatile int measurementIndex[1100];
 volatile int lastMeasurement;
 volatile int maxMeasurement;
 volatile unsigned long lastFreq;
+int refLevel = -30;
 
 bool audioStopping = false;
 
@@ -286,7 +287,7 @@ void dsp_process(SAMPLETYPE *capture, long length)
 //	samp_mag = samp_s - abs(samp_c);
 
 	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len );
-	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len) * REFERENCE_LEVEL_REDUCTION;
+	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len) / toLin(refLevel);
 //	  samp_mag = sqrt(((float)samp_s / len) /* - ((float)samp_c)*samp_c */);
 //	  ref_mag = sqrt(((float)ref_s / len) /* - ((float)ref_c)*ref_c */) * REFERENCE_LEVEL_REDUCTION;
 	  if (nextDecoded == 1)
@@ -301,8 +302,8 @@ void dsp_process(SAMPLETYPE *capture, long length)
 	  actualMeasurement.reference =  todb(ref_mag);
   } else {
 
-	  	ref_s *= REFERENCE_LEVEL_REDUCTION;	// Compensate for reduced level
-		ref_c *= REFERENCE_LEVEL_REDUCTION;	
+	  	ref_s /= toLin(refLevel);	// Compensate for reduced level
+		ref_c /= toLin(refLevel);	
 
 	  ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
 
@@ -776,7 +777,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 							a = a* 0.0000000000001;
 						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
 						if (simPoint >= simMaxPoint || simPoint < 5)
-							audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+							audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate)) * toLin(refLevel); // Reference
 						else 
 							audio [i*2+1] = (SAMPLETYPE) (0.00001 * MAXSAMPLEVALUE);
 						simS++;
@@ -808,7 +809,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				if (simStep/SAMPPERMS < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))*toLin(refLevel); // Reference
 						simS++;
 					}
 				} else if (simStep/SAMPPERMS < SILENCE_GAP + (simDuration+2) ) { // Reflection
@@ -816,7 +817,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(refl);
 //						v = arg(refl);
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * abs(refl) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI * 2 * simS * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI * 2 * simS * IFREQ / sampleRate))*toLin(refLevel); // Reference
 						simS++;
 					}
 				} else { // Transmission
@@ -824,7 +825,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(tran);
 //						v = arg(tran);
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * a * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI *2 * (simS) * IFREQ / sampleRate))/REFERENCE_LEVEL_REDUCTION; // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI *2 * (simS) * IFREQ / sampleRate))*toLin(refLevel); // Reference
 						simS++;
 					}
 				}

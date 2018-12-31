@@ -6808,7 +6808,8 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 				else
 					bw->Write("");
 				bw->Write(selectedAudio);
-
+				bw->Write(refLevel);
+				bw->Write(IFREQ);
 
 
 			}
@@ -7180,7 +7181,8 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					SerialPortBox->ShowDialog();
 
 				}
-
+				refLevel = br->ReadInt32();
+				IFREQ = br->ReadInt32();
 			}
 			catch(System::IO::IOException^ /* pe */)	// Don't bother warning the user ...
 			{											// They probably don't care anyway
