@@ -297,10 +297,10 @@ private: System::Void SignalGenerator_Load(System::Object^  sender, System::Even
 private: System::Void frequency_Leave(System::Object^  sender, System::EventArgs^  e) {
 			 try										// make sure it's an integer number
 			{
-				freq = (long)(Convert::ToDouble(frequency->Text) * 1000000);
+				freq = (__int64)(Convert::ToDouble(frequency->Text) * 1000000);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > 7*MAXCALFREQ)
+				else if (freq > 70.0*MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					// trackBar1->Value = ((long long)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (MAXCALFREQ - MINCALFREQ);
@@ -326,10 +326,10 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 			return;
 			 try										// make sure it's an integer number
 			{
-				freq = (long)(Convert::ToDouble(frequency->Text)*1000000.0);
+				freq = (__int64)(Convert::ToDouble(frequency->Text)*1000000.0);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > 7*MAXCALFREQ)
+				else if (freq > 70.0*MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					trackBar1->Value = (int) ((log10((float)freq) - log10f(MINCALFREQ)) * trackBar1 ->Maximum /(log10f(7*MAXCALFREQ) - log10f(MINCALFREQ)) );
@@ -352,10 +352,10 @@ private: System::Void frequency_TextChanged(System::Object^  sender, System::Eve
 private: System::Void frequency_Enter(System::Object^  sender, System::EventArgs^  e) {
 		 try										// make sure it's an integer number
 			{
-				freq = (long)(Convert::ToDouble(frequency->Text)*1000000.0);
+				freq = (__int64)(Convert::ToDouble(frequency->Text)*1000000.0);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > 7*MAXCALFREQ)
+				else if (freq > 70.0*MAXCALFREQ)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					trackBar1->Value =(int) ((__int64)(freq - MINCALFREQ)) * trackBar1 ->Maximum / (7*MAXCALFREQ - MINCALFREQ);
