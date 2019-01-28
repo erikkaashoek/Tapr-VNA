@@ -99,6 +99,8 @@ namespace VNAR3
 	private: System::Windows::Forms::Label^  statTermF;
 	private: System::Windows::Forms::Label^  statOpenF;
 	private: System::Windows::Forms::Label^  statShortF;
+	private: System::Windows::Forms::Label^  label8;
+	private: System::Windows::Forms::TextBox^  minFreq;
 
 
 
@@ -142,6 +144,8 @@ namespace VNAR3
 			this->statTermF = (gcnew System::Windows::Forms::Label());
 			this->statOpenF = (gcnew System::Windows::Forms::Label());
 			this->statShortF = (gcnew System::Windows::Forms::Label());
+			this->label8 = (gcnew System::Windows::Forms::Label());
+			this->minFreq = (gcnew System::Windows::Forms::TextBox());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -382,7 +386,7 @@ namespace VNAR3
 			// 
 			this->label7->AutoSize = true;
 			this->label7->BackColor = System::Drawing::Color::Transparent;
-			this->label7->Location = System::Drawing::Point(112, 153);
+			this->label7->Location = System::Drawing::Point(112, 167);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(156, 13);
 			this->label7->TabIndex = 22;
@@ -390,11 +394,10 @@ namespace VNAR3
 			// 
 			// maxFreq
 			// 
-			this->maxFreq->Location = System::Drawing::Point(408, 150);
+			this->maxFreq->Location = System::Drawing::Point(408, 163);
 			this->maxFreq->Name = L"maxFreq";
 			this->maxFreq->Size = System::Drawing::Size(184, 20);
 			this->maxFreq->TabIndex = 23;
-			this->maxFreq->TextChanged += gcnew System::EventHandler(this, &Calibration::maxFreq_TextChanged);
 			this->maxFreq->Leave += gcnew System::EventHandler(this, &Calibration::maxFreq_Leave);
 			// 
 			// statThruF
@@ -437,6 +440,24 @@ namespace VNAR3
 			this->statShortF->TabIndex = 27;
 			this->statShortF->Visible = false;
 			// 
+			// label8
+			// 
+			this->label8->AutoSize = true;
+			this->label8->BackColor = System::Drawing::Color::Transparent;
+			this->label8->Location = System::Drawing::Point(112, 140);
+			this->label8->Name = L"label8";
+			this->label8->Size = System::Drawing::Size(153, 13);
+			this->label8->TabIndex = 28;
+			this->label8->Text = L"Minimum Calibration Frequency";
+			// 
+			// minFreq
+			// 
+			this->minFreq->Location = System::Drawing::Point(408, 137);
+			this->minFreq->Name = L"minFreq";
+			this->minFreq->Size = System::Drawing::Size(184, 20);
+			this->minFreq->TabIndex = 29;
+			this->minFreq->Leave += gcnew System::EventHandler(this, &Calibration::minFreq_Leave);
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -444,6 +465,8 @@ namespace VNAR3
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
 			this->ClientSize = System::Drawing::Size(640, 492);
+			this->Controls->Add(this->minFreq);
+			this->Controls->Add(this->label8);
 			this->Controls->Add(this->statShortF);
 			this->Controls->Add(this->statOpenF);
 			this->Controls->Add(this->statTermF);
@@ -510,7 +533,7 @@ namespace VNAR3
 				{
 					// Compute spot frequency
 
-					int Fdesired;
+					__int64 Fdesired;
 					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
@@ -528,7 +551,7 @@ namespace VNAR3
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 
-					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
+					Cal->ResolveReflPolar(calPoint, Fdesired, rmag, rphs, true);
 
 					// convert it to rectangular
 					double fx = fmagnitude * cos(fphase * DEGR2RAD);
@@ -570,7 +593,7 @@ namespace VNAR3
 				{
 					// Compute spot frequency
 
-					int Fdesired;
+					__int64 Fdesired;
 					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i;  //FG->DDS(Fdesired);		
@@ -588,7 +611,7 @@ namespace VNAR3
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 
-					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
+					Cal->ResolveReflPolar(calPoint, Fdesired, rmag, rphs, true);
 
 					// convert it to rectangular
 					double fx = fmagnitude * cos(fphase * DEGR2RAD);
@@ -631,7 +654,7 @@ namespace VNAR3
 				{
 					// Compute spot frequency
 
-					int Fdesired;
+					__int64 Fdesired;
 					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i; //FG->DDS(Fdesired);		
@@ -648,7 +671,7 @@ namespace VNAR3
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 
-					Cal->ResolveReflPolar(calPoint, (int)Fdesired, rmag, rphs, true);
+					Cal->ResolveReflPolar(calPoint, Fdesired, rmag, rphs, true);
 
 					// convert it to rectangular
 					double fx = fmagnitude * cos(fphase * DEGR2RAD);
@@ -692,8 +715,8 @@ namespace VNAR3
 				{
 					// Compute spot frequency
 
-					int Fdesired;
-					Fdesired = (i, LogFreqButton->Checked);
+					__int64 Fdesired;
+					Fdesired = Cal->GetFreqFromFixtureCalGrid(i, LogFreqButton->Checked);
 
 					TxBuf->TxAccum = i; // FG->DDS(Fdesired);
 
@@ -723,7 +746,7 @@ namespace VNAR3
 					calPoint->TranPILow = RxBuf->TranPILow;
 					calPoint->TranPQLow = RxBuf->TranPQLow;
 
-					Cal->ResolveTranPolar(calPoint, (int)Fdesired, rmag, rphs);
+					Cal->ResolveTranPolar(calPoint, Fdesired, rmag, rphs);
 
 					// convert it to rectangular
 					double fx = fmagnitude * cos(fphase * DEGR2RAD);
@@ -786,19 +809,20 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 			 Refresh();
 		 }
 
-private: System::Void maxFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
-		 }
+
 private: System::Void Calibration_Load(System::Object^  sender, System::EventArgs^  e) {
+			 minFreq->Text = String::Format("{0}",Cal->minCalFreq);
 			 maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
 		 }
+
 private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
-			int freq;
+			__int64 freq;
 			 try										// make sure it's an integer number
 			{
-				freq = Convert::ToInt32(maxFreq->Text);
+				freq = Convert::ToInt64(maxFreq->Text);
 				if (freq < MINCALFREQ) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > MAXCALFREQ*5)
+				else if (freq > MAXCALFREQ*(__int64)50)
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					Cal->maxCalFreq = freq;
@@ -812,6 +836,30 @@ private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^ 
 			{
 				MessageBox::Show(pe->Message, "Error");
 			}
+
+		 }
+private: System::Void minFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
+		__int64 freq;
+			 try										// make sure it's an integer number
+			{
+				freq = Convert::ToInt64(minFreq->Text);
+				if (freq < MINCALFREQ) 
+					MessageBox::Show("Frequency too low", "Error");
+				else if (freq > MAXCALFREQ*(__int64)50)
+					MessageBox::Show("Frequency too high", "Error");
+				else {
+					Cal->minCalFreq = freq;
+				}
+			}
+			catch (System::FormatException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
+			catch (System::OverflowException^ pe)
+			{
+				MessageBox::Show(pe->Message, "Error");
+			}
+
 
 		 }
 };

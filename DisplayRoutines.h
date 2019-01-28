@@ -101,7 +101,7 @@ public:
 	array<Double>^ S11openReal, ^S11openImag;
 	array<Double>^ S11termReal, ^S11termImag;
 	bool FixtureCalLogFreqMode;
-	long maxCalFreq;
+	__int64 minCalFreq, maxCalFreq;
 
 	int FreqError;					// Internal Crystal Frequency Error
 	double reflTimeDelayEquivalent; // Equivalent time delay of reflection cable go and return (for RefExtn - not enabled)
@@ -112,7 +112,7 @@ void ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, dou
 /// resolve transmitted measured data set to Magnitude and Phase
 void ResolveTranPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, double& rphs);
 /// get frequency of calibration grid point
-long GetFreqFromFixtureCalGrid(long index, bool Freqmode);
+__int64 GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 };
 
 
