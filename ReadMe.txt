@@ -17,5 +17,7 @@ An example implementation uses (see Schematic in doc folder):
  
  The PC software builds on  Microsoft Visual C++ 2010 Express (free) and probably also on the newer free versions
  The Arduino SW is normal arduino C++ and does run on any Arduino UNO or NANO or similar
+ 
+ VNAR4.zip contains a ready to run executable (no installation needed). Due to the build in simulator (the mockup dialog) you can run and test the program without HW
 
 
