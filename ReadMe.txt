@@ -1,5 +1,5 @@
 This project is a continuation of the TAPR VNA 3.1.
-It combines SW and HW designs from various VNA projects (in particular NanoVNA for the HW design and the DSP IF) to come with a cheap and simple design capable to measure from 1 MHz (or below) to at least 700MHz. It also can do TDR to check cables on short and open
+It combines SW and HW designs from various VNA projects (in particular NanoVNA for the HW design and the DSP IF and the DG8SAQ VNWA for the resistive bridge design) to come with a cheap and simple design capable to measure from 1 MHz (or below) to at least 700MHz. It also can do TDR to check cables on short and open
 
 Main changes are (see VNA current pridge.pdf in Doc folder):
 - Using Arduino and SI5351 (on 5$ ebay breakout module) to generate test signal and 5kHz offset mixing signal. Both can be square wave as the mixing removes all unwanted harmonics (like Nano VNA)
@@ -10,8 +10,8 @@ Main changes are (see VNA current pridge.pdf in Doc folder):
 
 An example implementation uses (see Schematic in doc folder):
  - PC with this SW
- - Auduino module controlled by serial line steering the SI5351 to sweep and the transmission/reflection switch
- - Resistor based reflection bridge and 50 ohm transmission sink
+ - Auduino module controlled by USB steering the SI5351 to sweep and the transmission/reflection switch
+ - Resistor based reflection bridge and 50 ohm transmission sink, both according to DG8SAQ VNWA
  - 3 SA612 + ompamps to create the reference (left audio channel), reflection and transmission (right audio channel) audio IF signals
  - two FET's and two npn transistors to switch between reflection and transmission for right audio channel.
  
