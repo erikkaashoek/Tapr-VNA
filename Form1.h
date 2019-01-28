@@ -5495,7 +5495,7 @@ private: System::Void rectItem_Click(System::Object^  sender, System::EventArgs^
 			// If in TDR mode then need to stop sweeping first
 			if (TDRItem->Checked)	
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
+					(String::Compare(SingleSweep->Text,"Abort") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing from TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
@@ -5548,7 +5548,7 @@ private: System::Void polarItem_Click(System::Object^  sender, System::EventArgs
 			// If in TDR mode then need to stop sweeping first
 			if (TDRItem->Checked)		
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
+					(String::Compare(SingleSweep->Text,"Abort") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing from TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
@@ -5600,7 +5600,7 @@ private: System::Void TDRItem_Click(System::Object^  sender, System::EventArgs^ 
 			// If in Polar or Rectangular mode then need to stop sweeping first
 			if ((rectItem->Checked) || (polarItem->Checked))
 				if ((String::Compare(RecurrentSweep->Text, "Running") == 0) ||
-					(String::Compare(SingleSweep->Text,"SglSwp") == 0))
+					(String::Compare(SingleSweep->Text,"Abort") == 0))
 				{
 					MessageBox::Show("Note: Must stop all sweeping before changing to TDR view. \n\r"
 						"Disable Recurrent Sweep or allow Single Sweep Mode to complete.","Stop Sweeping",
