@@ -380,7 +380,11 @@ namespace VNAR3 {
 				OpenAudio();
 
 				 
-				 if (this->Port->IsOpen) this->Port->Close();
+				 if (this->Port->IsOpen) {  
+					 this->Port->Close();
+					 System::Threading::Thread::Sleep(2000);
+				 }
+
 				Port->PortName = this->comboBox1->Text;
 				Port->BaudRate = 115200;
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
@@ -391,19 +395,21 @@ namespace VNAR3 {
 //        this->Port->Handshake = SetPortHandshake(_serialPort->Handshake);
 				try {
 					this->Port->Open();
+					 System::Threading::Thread::Sleep(2000);
+					this->Port->ReadExisting();
 					this->Port->WriteLine("3");
-					 System::Threading::Thread::Sleep(500);
+					 System::Threading::Thread::Sleep(2000);
 					String ^reply = this->Port->ReadExisting();
 					if (!reply->StartsWith("TAPR VNA v4")) {
 						MessageBox::Show("No VNA connected to this port", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    this->DialogResult = System::Windows::Forms::DialogResult::None;
 					}
-					if (this->Port->IsOpen) this->Port->Close();
+					//if (this->Port->IsOpen) this->Port->Close();
 
 					delete reply;
 				}
-				catch (Exception^)
+				catch (Exception^ e)
 				{
 					MessageBox::Show(e->ToString(),"Open port Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);

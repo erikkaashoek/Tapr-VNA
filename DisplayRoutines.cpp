@@ -637,6 +637,8 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 		delta = (Cal->maxCalFreq - Cal->minCalFreq)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
 
 		i = (int)(((double)Frequency - Cal->minCalFreq) / delta);	// Cal frequency directly below ours
+		if (i < 0)
+			i = 0;
 		if (i >= (int)NUMCALPTS)
 			i = (int)NUMCALPTS - 1;
 		j = i+1;												// Cal frequency directly above ours
@@ -867,8 +869,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 
 		try 
 		{
-			Cal->maxCalFreq = (long) br->ReadDouble();
-			Cal->minCalFreq = (long) br->ReadDouble();
+			Cal->maxCalFreq = (__int64) br->ReadDouble();
+			Cal->minCalFreq = (__int64) br->ReadDouble();
 		}
 		catch( Exception^ /* e */ )	// Don't bother warning the user ...
 		{											// They probably don't care anyway

@@ -395,6 +395,8 @@ private: System::Windows::Forms::CheckBox^  Spectrum;
 private: System::Windows::Forms::Label^  label7;
 private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuItem1;
 private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMenuItem;
+private: System::Windows::Forms::TrackBar^  MIndex;
+private: System::Windows::Forms::Button^  AddMarkerButton;
 
 
 
@@ -597,7 +599,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->serialPort1 = (gcnew System::IO::Ports::SerialPort(this->components));
 			this->Spectrum = (gcnew System::Windows::Forms::CheckBox());
+			this->MIndex = (gcnew System::Windows::Forms::TrackBar());
+			this->AddMarkerButton = (gcnew System::Windows::Forms::Button());
 			this->menuStrip1->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->MIndex))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// stopFdown
@@ -2057,6 +2062,29 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->Spectrum->UseVisualStyleBackColor = true;
 			this->Spectrum->CheckedChanged += gcnew System::EventHandler(this, &Form1::Spectrum_CheckedChanged);
 			// 
+			// MIndex
+			// 
+			this->MIndex->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left) 
+				| System::Windows::Forms::AnchorStyles::Right));
+			this->MIndex->Location = System::Drawing::Point(145, 318);
+			this->MIndex->Maximum = 1023;
+			this->MIndex->Name = L"MIndex";
+			this->MIndex->Size = System::Drawing::Size(790, 45);
+			this->MIndex->TabIndex = 32;
+			this->MIndex->TickStyle = System::Windows::Forms::TickStyle::None;
+			this->MIndex->ValueChanged += gcnew System::EventHandler(this, &Form1::MIndex_ValueChanged);
+			// 
+			// AddMarkerButton
+			// 
+			this->AddMarkerButton->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->AddMarkerButton->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"AddMarkerButton.Image")));
+			this->AddMarkerButton->Location = System::Drawing::Point(133, 318);
+			this->AddMarkerButton->Name = L"AddMarkerButton";
+			this->AddMarkerButton->Size = System::Drawing::Size(15, 14);
+			this->AddMarkerButton->TabIndex = 33;
+			this->AddMarkerButton->UseVisualStyleBackColor = true;
+			this->AddMarkerButton->Click += gcnew System::EventHandler(this, &Form1::AddMarkerButton_Click);
+			// 
 			// Form1
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -2064,8 +2092,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 431);
+			this->Controls->Add(this->AddMarkerButton);
 			this->Controls->Add(this->Spectrum);
-			this->Controls->Add(this->label7);
 			this->Controls->Add(this->stopF);
 			this->Controls->Add(this->startF);
 			this->Controls->Add(this->label6);
@@ -2095,6 +2123,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->label3);
 			this->Controls->Add(this->menuStrip1);
+			this->Controls->Add(this->MIndex);
+			this->Controls->Add(this->label7);
 			this->MainMenuStrip = this->menuStrip1;
 			this->MinimumSize = System::Drawing::Size(600, 300);
 			this->Name = L"Form1";
@@ -2108,6 +2138,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 			this->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseUp);
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->MIndex))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -2641,7 +2672,9 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				gr->DrawString("Uncalibrated", Warningfont, brGray, unCalText);
 #endif
 			if(!calCheckBox->Checked)
-				gr->DrawString("Fixture Uncompensated", Warningfont, brGray, unFixComp);
+				gr->DrawString("Uncalibrated", Warningfont, brGray, unFixComp);
+			else
+				gr->DrawString(FixtureCalFileName, Warningfont, brGray, unFixComp );
 
 			if(ExcessRxNoiseIngress(trace, FG->points) && (s21magItem->Checked || s21phsItem->Checked
 				|| s21groupdelayItem->Checked))
@@ -4556,12 +4589,15 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 									{
 										String^ exponent = gcnew String("");
 										complex <double> Zt (R, jX), Zr (R, 0.0), Zc, one(1.0,0.0), Rt, Rr,Rc ;
+#if 1									// Calculate parallel C
 										Rt = one / Zt;
 										jX = (float)( 1 / imag(Rt));
-										//Zc = one/((one/Zt)-(one/Zr));
-										//jX = imag(Zc);
+#else									// calculate series C
+										Zc = one/((one/Zt)-(one/Zr));
+										jX = (float)imag(Zc);
 										// negative series reactance .. compute Cseries
-										//jX = -jX;
+										jX = -jX;
+#endif
 										double Cs = 1.0 / ( 2.0 * Math::PI * FG->Frequency(index) * jX);
 										// format Cs as pF, nF, or uF
 										if (Cs < 0.000000001)	// pF
@@ -5003,10 +5039,12 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 					 SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
 				 }
 				 done = false;
+#if 0
+
 				 if (serialPort1->IsOpen) {
 //					 while (!done) {
 						 String ^s = serialPort1->ReadLine();
-#if 0
+
 						 if (b == 'x') {
 //							 freq = ((unsigned long)serialPort1->ReadByte());
 //							 freq += ((unsigned long)serialPort1->ReadByte())<<8;
@@ -5024,14 +5062,32 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 						SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
 
 					 }
-#endif
 				 }
 //				 if(serialPort1->IsOpen) serialPort1->Close();
+#endif
 			 }
-
 		 }
+		 private: System::Void AddMarkerButton_Click(System::Object^  sender, System::EventArgs^  e) {
+			for (int i=0; i<5; i++)
+			{
+				if (Marker[i] == 0)			// if mouse picks where no marker is present
+				{							// find an idle marker
+					Marker[i] = FG->Frequency((int)MIndex->Value * FG->points / (MIndex ->Maximum +1));
+					Refresh();
+					break;
+				}
+			}
 
-		/// Background thread that reads & writes VNA hardware
+				  }
+
+private: System::Void MIndex_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+				int i;
+				i = MIndex->Value * FG->points / (MIndex ->Maximum +1);
+				Marker[0] = FG->Frequency(i);
+				Refresh();
+			}
+
+				  /// Background thread that reads & writes VNA hardware
 private: System::Void VNA_Worker(void)			// runs as a background thread
 		{
 
@@ -7154,8 +7210,10 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					OpenAudio();
 
 					serialPort1->Open();
-					serialPort1->WriteLine("3");
-					 System::Threading::Thread::Sleep(500);
+					 System::Threading::Thread::Sleep(1000);
+					 serialPort1->ReadExisting();
+					 serialPort1->WriteLine("3");
+					 System::Threading::Thread::Sleep(1000);
 					String ^reply = serialPort1->ReadExisting();
 					if (!reply->StartsWith("TAPR VNA v4")) {
 						MessageBox::Show("No VNA connected to stored port", "Error",
@@ -7169,9 +7227,9 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
 					}
-					if (serialPort1->IsOpen) serialPort1->Close();
-
-
+					//if (serialPort1->IsOpen) serialPort1->Close();
+					refLevel = br->ReadInt32();
+					IFREQ = br->ReadInt32();
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
 				{											// They probably don't care anyway
@@ -7181,8 +7239,6 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					SerialPortBox->ShowDialog();
 
 				}
-				refLevel = br->ReadInt32();
-				IFREQ = br->ReadInt32();
 			}
 			catch(System::IO::IOException^ /* pe */)	// Don't bother warning the user ...
 			{											// They probably don't care anyway

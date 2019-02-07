@@ -286,8 +286,12 @@ private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e
 		 }
 private: System::Void trackBar1_Scroll(System::Object^  sender, System::EventArgs^  e) {
 //			 freq = MINCALFREQ + (long long)(MAXCALFREQ - MINCALFREQ) * trackBar1->Value / trackBar1 ->Maximum;
-			 freq = (__int64) pow((float)10.0, (float) ((log10f(10*(__int64)MAXCALFREQ) - log10f(MINCALFREQ)) * trackBar1->Value / trackBar1 ->Maximum + log10f(MINCALFREQ)));
-			 frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
+			// freq = (__int64) pow((float)10.0, (float) (log10f( ( (float) (15*(__int64)MAXCALFREQ)) - log10f((float)MINCALFREQ)) * trackBar1->Value / trackBar1 ->Maximum + log10f(MINCALFREQ)));
+			 freq = (__int64) pow((float)10.0, (float) ((
+				 log10f((float)14.6*(__int64)MAXCALFREQ) - 
+				 log10f((float)MINCALFREQ)) 
+				 * trackBar1->Value / trackBar1 ->Maximum + log10f((float)MINCALFREQ)));
+			frequency->Text = String::Format("{0}",(freq/1000000.0).ToString("G6"));
 //			VNA->SetFreq(freq,showRefl->Checked);
 		 }
 private: System::Void SignalGenerator_Load(System::Object^  sender, System::EventArgs^  e) {

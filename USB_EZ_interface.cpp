@@ -405,7 +405,12 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
 //		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
 //		Sleep(200);
-		if (!serialPort->IsOpen) serialPort->Open();
+		if (!serialPort->IsOpen) { 
+			serialPort->Open();
+			Sleep(1000);
+
+		}
+		serialPort->ReadExisting();
 		if (power)
 			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3} {4}", startF, numPoints + 10, stepF, dur, IFREQ));
 		else
@@ -429,15 +434,28 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 {
 	if (! mode){
 		try {
-			if (!serialPort->IsOpen) serialPort->Open();
-		}
+			if (!serialPort->IsOpen) {
+				serialPort->Open();
+				Sleep(1000);
+				serialPort->ReadExisting();
+
+			}
+			SetAudioPower((direction == 2?true:false));
+			if (serialPort->IsOpen) {
+				serialPort->ReadExisting();
+				serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2}", startF, direction, IFREQ));
+			}
+		}	
 		catch (System::Exception^ e) {
 			     MessageBox::Show(e->Message, "Error");
+				serialPort->Close();
+				Sleep(2000);
+				serialPort->Open();
+				Sleep(2000);
+				serialPort->ReadExisting();
+
 				 return;
 		}
-		SetAudioPower((direction == 2?true:false));
-
-		if (serialPort->IsOpen) serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2}", startF, direction, IFREQ));
 	} else {
 		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance, noise);
 	}
