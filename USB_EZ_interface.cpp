@@ -513,7 +513,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflevel;
 	unsigned long freq = (unsigned long)TxBuffer->Freq2;
 	int i;
-	unsigned int level;
+//	unsigned int level;
 	int availableSamples = ((dur+2) * SAMPPERMS - 2);
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
