@@ -820,9 +820,9 @@ private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^ 
 			 try										// make sure it's an integer number
 			{
 				freq = Convert::ToInt64(maxFreq->Text);
-				if (freq < MINCALFREQ) 
+				if (freq < VNA->GetMinFreq()) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > MAXCALFREQ*(__int64)50)
+				else if (freq > VNA->GetMaxFreq())
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					Cal->maxCalFreq = freq;
@@ -843,9 +843,9 @@ private: System::Void minFreq_Leave(System::Object^  sender, System::EventArgs^ 
 			 try										// make sure it's an integer number
 			{
 				freq = Convert::ToInt64(minFreq->Text);
-				if (freq < MINCALFREQ) 
+				if (freq <  VNA->GetMinFreq()) 
 					MessageBox::Show("Frequency too low", "Error");
-				else if (freq > MAXCALFREQ*(__int64)50)
+				else if (freq > VNA->GetMaxFreq())
 					MessageBox::Show("Frequency too high", "Error");
 				else {
 					Cal->minCalFreq = freq;

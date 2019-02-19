@@ -2151,7 +2151,7 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			FG->SetStopF(200000000);		// Default stop frequency to 100 MHz.
 			FrequencyDigitIndex = 0;		// Initialize digit selector to one_hertz position
 
-			CalData = gcnew InstrumentCalDataSet(AllUsersDataPath);		// Allocate calibration data set
+			CalData = gcnew InstrumentCalDataSet(AllUsersDataPath, VNA);		// Allocate calibration data set
 			FG->ferror = CalData->FreqError;	// Load our internal crystal error
 
 			txLevel = 0;				// default to 0 dbm
@@ -5323,32 +5323,32 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 private: System::Void startFup_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStartF(FG->StartF() + (int)Math::Pow(10.0, FrequencyDigitIndex));
-//			 if (FG->StartF() > MAXCALFREQ)  // max allowed frequency
-//					FG->SetStartF(MAXCALFREQ);
+			 if (FG->StartF() > VNA->GetMaxFreq())  // max allowed frequency
+					FG->SetStartF(VNA->GetMaxFreq());
 			 startF->Text = FG->StartF().ToString("N0");
 		 }
 		/// Start Frequency Down (decrement) button click event handler
 private: System::Void startFdown_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStartF(FG->StartF() - (int)Math::Pow(10.0, FrequencyDigitIndex));
-			 if (FG->StartF() <= MINCALFREQ) // min allowed frequency
-				FG->SetStartF(MINCALFREQ);
+			 if (FG->StartF() <= VNA->GetMinFreq()) // min allowed frequency
+				FG->SetStartF(VNA->GetMinFreq());
 			 startF->Text = FG->StartF().ToString("N0");
 		 }
 		/// Stop Frequency Up (increment) button click event handler
 private: System::Void stopFup_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStopF(FG->StopF() + (int)Math::Pow(10.0, FrequencyDigitIndex));
-//			 if (FG->StopF() > MAXCALFREQ)  // max allowed frequency
-//					FG->SetStopF(MAXCALFREQ);
+			 if (FG->StopF() > VNA->GetMaxFreq())  // max allowed frequency
+					FG->SetStopF(VNA->GetMaxFreq());
 			 stopF->Text = FG->StopF().ToString("N0");
 		 }
 		/// Stop Frequency Down (decrement) button click event handler
 private: System::Void stopFdown_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
 			 FG->SetStopF(FG->StopF() - (int)Math::Pow(10.0, FrequencyDigitIndex));
-			 if (FG->StopF() <= MINCALFREQ) // min allowed frequency
-				FG->SetStopF(MINCALFREQ);
+			 if (FG->StopF() <= VNA->GetMinFreq()) // min allowed frequency
+				FG->SetStopF(VNA->GetMinFreq());
 			 stopF->Text = FG->StopF().ToString("N0");
 		 }
 		/// Increase Transmit Level button event handler
@@ -6866,8 +6866,8 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 				bw->Write(selectedAudio);
 				bw->Write(refLevel);
 				bw->Write(IFREQ);
-
-
+				bw->Write((int)(VNA->GetMinFreq()/1000));
+				bw->Write((int)(VNA->GetMaxFreq()/1000));
 			}
 			catch(System::IO::IOException^ pe)
 			{
@@ -7207,6 +7207,12 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 				    serialPort1->BaudRate = 115200;
 
 					selectedAudio = (unsigned int)(br->ReadInt32());
+					refLevel = br->ReadInt32();
+					IFREQ = br->ReadInt32();
+					VNA->SetMinFreq(br->ReadInt32() * (__int64) 1000);
+					VNA->SetMaxFreq(br->ReadInt32() * (__int64) 1000);
+
+
 					OpenAudio();
 
 					serialPort1->Open();
@@ -7228,8 +7234,6 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					    throw; 
 					}
 					//if (serialPort1->IsOpen) serialPort1->Close();
-					refLevel = br->ReadInt32();
-					IFREQ = br->ReadInt32();
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
 				{											// They probably don't care anyway
@@ -7667,8 +7671,8 @@ private: System::Void startF_MouseDown(System::Object^  sender, System::Windows:
 		digit = 7;
 	if (pe->Delta != 0) {
 		FG->SetStartF(FG->StartF() + (__int64)Math::Pow(10.0, digit) * (__int64)(pe->Delta / MOUSE_WHEEL_STEP));
-		if (FG->StartF() < MINCALFREQ)  // max allowed frequency
-			FG->SetStartF(MINCALFREQ);
+		if (FG->StartF() < VNA->GetMinFreq())  // max allowed frequency
+			FG->SetStartF(VNA->GetMinFreq());
 		startF->Text = FG->StartF().ToString("N0");
 		return;
 	}
@@ -7705,8 +7709,8 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 	if (pe->Delta != 0) {
 		
 		FG->SetStopF(FG->StopF() + (__int64)Math::Pow(10.0, digit) * (__int64)(pe->Delta / MOUSE_WHEEL_STEP));
-		if (FG->StopF() < MINCALFREQ)  // max allowed frequency
-			FG->SetStopF(MINCALFREQ);
+		if (FG->StopF() < VNA->GetMinFreq())  // max allowed frequency
+			FG->SetStopF(VNA->GetMinFreq());
 		stopF->Text = FG->StopF().ToString("N0");
 		return;
 	}

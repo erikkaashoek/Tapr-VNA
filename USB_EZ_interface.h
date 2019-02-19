@@ -61,7 +61,10 @@ private:
 	int resistance;
 	int capacitance;
 	int inductance;
+	int hardware;
 	float noise;
+	__int64 minHWFreq;
+	__int64 maxHWFreq;
 	int dur;						// total duration of one side signal
 	System::IO::Ports::SerialPort^  serialPort;
 
@@ -98,5 +101,10 @@ public:
 	void SetResistance(int v);
 	void SetCapacitance(int v);
 	void SetInductance(int v);
+	void SelectHardware(int h);
 	void SetNoise(float c);
+	void SetMaxFreq(__int64 f);
+	void SetMinFreq(__int64 f);
+	__int64 GetMinFreq();
+	__int64 GetMaxFreq();
 };

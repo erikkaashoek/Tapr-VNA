@@ -307,7 +307,7 @@ void FrequencyGrid::Build(void)
 
 // InstrumentCalDataSet Constructor - allocate memory for Calibration Data
 //   Also holds specific fixture calibration data - if any. 
-InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)	
+InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev)	
 {
 //	RxDet = gcnew Detector();		// construct AD8702 objects
 //	RxDet->name = "REFL";
@@ -317,6 +317,8 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 
 //	DirCoupler = gcnew DirectionalCoupler();		/// Holds Directional coupler error model
 
+	VNA = VNADev;			///< VNA hardware device
+
 	EdReal = gcnew array<Double>(1024); EdImag = gcnew array<Double>(1024);
 	EsReal = gcnew array<Double>(1024); EsImag = gcnew array<Double>(1024);
 	EtReal = gcnew array<Double>(1024); EtImag = gcnew array<Double>(1024);
@@ -325,8 +327,8 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir)
 	S11openReal = gcnew array<Double>(1024); S11openImag = gcnew array<Double>(1024);
 	S11termReal = gcnew array<Double>(1024); S11termImag = gcnew array<Double>(1024);
 	FixtureCalLogFreqMode = false;					// Default to Linear Frequency mode for Fixture Cal
-	maxCalFreq = MAXCALFREQ;
-	minCalFreq =    MINCALFREQ;
+	maxCalFreq = VNA->GetMaxFreq();
+	minCalFreq =    VNA->GetMinFreq();
 
 // Try to read in the detector.ica file to pre-load the Detector calibration constants
 // If the file does not exist, warn user to run detector cal first
@@ -492,7 +494,7 @@ __int64 InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode
 			FreqIncrement = Math::Pow(10,Math::Log10((double)maxCalFreq/(double)minCalFreq)/(NUMCALPTS-1));
 
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (/* Convert::ToInt32*/(__int64) (minCalFreq * Math::Pow(FreqIncrement, index)));
+				return (/* Convert::ToInt32*/(__int64) ((double)minCalFreq * Math::Pow(FreqIncrement, index)));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
@@ -502,7 +504,7 @@ __int64 InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode
 //			long temp;
 //			temp = (long) (minCalFreq + (index * (((double)maxCalFreq) - minCalFreq)/(NUMCALPTS-1)));
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (/* Convert::ToInt32 */(__int64) (minCalFreq + (index * (((double)maxCalFreq) - minCalFreq)/(NUMCALPTS-1)))); // WATCH OVERFLOW!!!!!!!!
+				return (/* Convert::ToInt32 */(__int64) ((double)minCalFreq + (index * (((double)maxCalFreq) - (double)minCalFreq)/(NUMCALPTS-1)))); // WATCH OVERFLOW!!!!!!!!
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromFixtureCalGrid: index is invalid ");	// bad index value
@@ -634,9 +636,9 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 		// There are 1024 fixture calibration frequencies linearly spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 		
-		delta = (Cal->maxCalFreq - Cal->minCalFreq)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
+		delta = ((double)Cal->maxCalFreq - (double)Cal->minCalFreq)/ (NUMCALPTS - 1.0);	// frequency separation of cal points
 
-		i = (int)(((double)Frequency - Cal->minCalFreq) / delta);	// Cal frequency directly below ours
+		i = (int)(((double)Frequency - (double)Cal->minCalFreq) / delta);	// Cal frequency directly below ours
 		if (i < 0)
 			i = 0;
 		if (i >= (int)NUMCALPTS)
@@ -645,7 +647,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequnecy
 
-		position = (((double)Frequency - Cal->minCalFreq) / delta) - i ;	// fractional position between i and j
+		position = (((double)Frequency - (double)Cal->minCalFreq) / delta) - i ;	// fractional position between i and j
 	}
 	else														// Log(f) interpolation
 	{
@@ -656,15 +658,15 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
-		double exactIndex = Math::Log10((double)Frequency/Cal->minCalFreq)/LogFreqIncrement;
+		double exactIndex = Math::Log10((double)Frequency/(double)Cal->minCalFreq)/LogFreqIncrement;
 		i = (int)exactIndex;									// Cal frequency index directly below ours
 		j=i+1;													// Cal frequency index directly above ours
 		
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequency
 
-		double Flow = Cal->minCalFreq * Math::Pow(FreqIncrement, i);
-		double Fhigh =  Cal->minCalFreq * Math::Pow(FreqIncrement, j);
+		double Flow = (double)Cal->minCalFreq * Math::Pow(FreqIncrement, i);
+		double Fhigh =  (double)Cal->minCalFreq * Math::Pow(FreqIncrement, j);
 
 		if (abs(Fhigh - Flow) < 1e-6)
 			position = 0.0;										// Supress interpolation at the end points
@@ -749,16 +751,16 @@ void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, do
 		// There are 1024 fixture calibration frequencies linearly spaced. Find the two adjacent to the
 		// measured frequency. Linearly interpolate (real, imag) between the two cal points.
 
-		delta = (Cal->maxCalFreq - Cal->minCalFreq)/ (NUMCALPTS - 1);		// frequency separation of cal points
+		delta = ((double)Cal->maxCalFreq - (double)Cal->minCalFreq)/ (NUMCALPTS - 1);		// frequency separation of cal points
 
-		i = (int)(((double)Frequency - Cal->minCalFreq) / delta);	// Cal frequency directly below ours
+		i = (int)(((double)Frequency - (double)Cal->minCalFreq) / delta);	// Cal frequency directly below ours
 		if (i >= (int)NUMCALPTS)
 			i = (int)NUMCALPTS - 1;
 		j = i+1;												// Cal frequency directly above ours
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequnecy
 
-		position = (((double)Frequency - Cal->minCalFreq) / delta) - i ;	// fractional position between i and j
+		position = (((double)Frequency - (double)Cal->minCalFreq) / delta) - i ;	// fractional position between i and j
 	}
 	else														// Log(f) interpolation
 	{
@@ -769,15 +771,15 @@ void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, do
 		double FreqIncrement = Math::Pow(10, LogFreqIncrement);
 
 		// compute index equivalent to the frequency
-		double exactIndex = Math::Log10((double)Frequency/Cal->minCalFreq)/LogFreqIncrement;
+		double exactIndex = Math::Log10((double)Frequency/(double)Cal->minCalFreq)/LogFreqIncrement;
 		i = (int)exactIndex;									// Cal frequency index directly below ours
 		j=i+1;													// Cal frequency index directly above ours
 		
 		if(j >= (int)NUMCALPTS)
 			j = (int)NUMCALPTS - 1;								// In case we are close to MAX cal frequency
 
-		double Flow = Cal->minCalFreq * Math::Pow(FreqIncrement, i);
-		double Fhigh =  Cal->minCalFreq * Math::Pow(FreqIncrement, j);
+		double Flow = (double)Cal->minCalFreq * Math::Pow(FreqIncrement, i);
+		double Fhigh =  (double)Cal->minCalFreq * Math::Pow(FreqIncrement, j);
 
 		if (abs(Fhigh - Flow) < 1e-6)
 			position = 0.0;										// supress interpolation at the end points

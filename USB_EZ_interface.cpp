@@ -210,6 +210,7 @@ VNADevice::VNADevice(System::IO::Ports::SerialPort^  port)
 	mode = 0;
 	lastFreq = 0;
 	lastDir = -1;
+	hardware = 0;
 };
 	/// Destructor for VNADevice
 VNADevice::~VNADevice()
@@ -412,9 +413,9 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 		}
 		serialPort->ReadExisting();
 		if (power)
-			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3} {4}", startF, numPoints + 10, stepF, dur, IFREQ));
+			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur, IFREQ, hardware));
 		else
-			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3} {4}", startF, numPoints + 10, stepF, dur+2, IFREQ)); // add 2 duration for lead in and out
+			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur+2, IFREQ, hardware)); // add 2 duration for lead in and out
 		Sleep(20);
 		}
 		catch (System::Exception^ e) {
@@ -443,7 +444,7 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 			SetAudioPower((direction == 2?true:false));
 			if (serialPort->IsOpen) {
 				serialPort->ReadExisting();
-				serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2}", startF, direction, IFREQ));
+				serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
 			}
 		}	
 		catch (System::Exception^ e) {
@@ -513,7 +514,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflevel;
 	unsigned long freq = (unsigned long)TxBuffer->Freq2;
 	int i;
-//	unsigned int level;
+	//unsigned int level;
 	int availableSamples = ((dur+2) * SAMPPERMS - 2);
 //	int reply = TxBuffer->ReplyType;
 	int retries=0;
@@ -599,4 +600,24 @@ void VNADevice::SetInductance(int l) {
 
 void VNADevice::SetNoise(float c) {
 	noise = c;
+}
+
+void VNADevice::SetMinFreq(__int64 f) {
+	minHWFreq = f;
+}
+
+void VNADevice::SelectHardware(int h) {
+	hardware = h;
+}
+
+void VNADevice::SetMaxFreq(__int64 f) {
+	maxHWFreq = f;
+}
+
+__int64 VNADevice::GetMaxFreq() {
+	return(maxHWFreq);
+}
+
+__int64 VNADevice::GetMinFreq() {
+	return(minHWFreq);
 }

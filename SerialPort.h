@@ -114,6 +114,16 @@ namespace VNAR3 {
 	private: System::Windows::Forms::Label^  label5;
 	private: System::Windows::Forms::TextBox^  refLevelBox;
 	private: System::Windows::Forms::Label^  label6;
+	private: System::Windows::Forms::Label^  label7;
+	private: System::Windows::Forms::TextBox^  minFreqBox;
+	private: System::Windows::Forms::TextBox^  maxFreqBox;
+	private: System::Windows::Forms::Label^  label8;
+	private: System::Windows::Forms::Label^  label9;
+	private: System::Windows::Forms::Label^  label10;
+	private: System::Windows::Forms::Label^  label11;
+	private: System::Windows::Forms::Label^  label12;
+	private: System::Windows::Forms::Label^  label13;
+	private: System::Windows::Forms::TextBox^  hardwareBox;
 
 			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
 
@@ -144,6 +154,16 @@ namespace VNAR3 {
 			this->label5 = (gcnew System::Windows::Forms::Label());
 			this->refLevelBox = (gcnew System::Windows::Forms::TextBox());
 			this->label6 = (gcnew System::Windows::Forms::Label());
+			this->label7 = (gcnew System::Windows::Forms::Label());
+			this->minFreqBox = (gcnew System::Windows::Forms::TextBox());
+			this->maxFreqBox = (gcnew System::Windows::Forms::TextBox());
+			this->label8 = (gcnew System::Windows::Forms::Label());
+			this->label9 = (gcnew System::Windows::Forms::Label());
+			this->label10 = (gcnew System::Windows::Forms::Label());
+			this->label11 = (gcnew System::Windows::Forms::Label());
+			this->label12 = (gcnew System::Windows::Forms::Label());
+			this->label13 = (gcnew System::Windows::Forms::Label());
+			this->hardwareBox = (gcnew System::Windows::Forms::TextBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->volumeBar))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -189,8 +209,8 @@ namespace VNAR3 {
 			// sampleRateBox
 			// 
 			this->sampleRateBox->FormattingEnabled = true;
-			this->sampleRateBox->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"192 kHz", L"96 kHz", L"48 kHz", L"44.1 kHz", 
-				L"24 kHz", L"12 kHz"});
+			this->sampleRateBox->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"192 kHz", L"  96 kHz", L"  48 kHz", L" 4.1 kHz", 
+				L"  24 kHz", L"  12 kHz"});
 			this->sampleRateBox->Location = System::Drawing::Point(383, 90);
 			this->sampleRateBox->Name = L"sampleRateBox";
 			this->sampleRateBox->Size = System::Drawing::Size(143, 21);
@@ -212,6 +232,8 @@ namespace VNAR3 {
 			this->IFreq->Name = L"IFreq";
 			this->IFreq->Size = System::Drawing::Size(84, 20);
 			this->IFreq->TabIndex = 6;
+			this->IFreq->Text = L"10000";
+			this->IFreq->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			this->IFreq->TextChanged += gcnew System::EventHandler(this, &SerialPort::IFreq_TextChanged);
 			// 
 			// label2
@@ -239,6 +261,7 @@ namespace VNAR3 {
 			this->reference->Name = L"reference";
 			this->reference->Size = System::Drawing::Size(83, 20);
 			this->reference->TabIndex = 9;
+			this->reference->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// label4
 			// 
@@ -274,7 +297,7 @@ namespace VNAR3 {
 			// 
 			// volumeBar
 			// 
-			this->volumeBar->Location = System::Drawing::Point(30, 162);
+			this->volumeBar->Location = System::Drawing::Point(30, 205);
 			this->volumeBar->Maximum = 100;
 			this->volumeBar->Name = L"volumeBar";
 			this->volumeBar->Size = System::Drawing::Size(275, 45);
@@ -298,6 +321,8 @@ namespace VNAR3 {
 			this->refLevelBox->Name = L"refLevelBox";
 			this->refLevelBox->Size = System::Drawing::Size(83, 20);
 			this->refLevelBox->TabIndex = 15;
+			this->refLevelBox->Text = L"0";
+			this->refLevelBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			this->refLevelBox->TextChanged += gcnew System::EventHandler(this, &SerialPort::refLevelBox_TextChanged);
 			// 
 			// label6
@@ -309,6 +334,99 @@ namespace VNAR3 {
 			this->label6->TabIndex = 16;
 			this->label6->Text = L"Audio input:";
 			// 
+			// label7
+			// 
+			this->label7->AutoSize = true;
+			this->label7->Location = System::Drawing::Point(352, 15);
+			this->label7->Name = L"label7";
+			this->label7->Size = System::Drawing::Size(29, 13);
+			this->label7->TabIndex = 17;
+			this->label7->Text = L"Port:";
+			// 
+			// minFreqBox
+			// 
+			this->minFreqBox->Location = System::Drawing::Point(116, 117);
+			this->minFreqBox->Name = L"minFreqBox";
+			this->minFreqBox->Size = System::Drawing::Size(84, 20);
+			this->minFreqBox->TabIndex = 18;
+			this->minFreqBox->Text = L"0.1";
+			this->minFreqBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			// 
+			// maxFreqBox
+			// 
+			this->maxFreqBox->Location = System::Drawing::Point(116, 143);
+			this->maxFreqBox->Name = L"maxFreqBox";
+			this->maxFreqBox->Size = System::Drawing::Size(84, 20);
+			this->maxFreqBox->TabIndex = 19;
+			this->maxFreqBox->Text = L"4400";
+			this->maxFreqBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			// 
+			// label8
+			// 
+			this->label8->AutoSize = true;
+			this->label8->Location = System::Drawing::Point(27, 120);
+			this->label8->Name = L"label8";
+			this->label8->Size = System::Drawing::Size(73, 13);
+			this->label8->TabIndex = 20;
+			this->label8->Text = L"Min HW Freq:";
+			this->label8->Click += gcnew System::EventHandler(this, &SerialPort::label8_Click);
+			// 
+			// label9
+			// 
+			this->label9->AutoSize = true;
+			this->label9->Location = System::Drawing::Point(27, 146);
+			this->label9->Name = L"label9";
+			this->label9->Size = System::Drawing::Size(76, 13);
+			this->label9->TabIndex = 21;
+			this->label9->Text = L"Max HW Freq:";
+			// 
+			// label10
+			// 
+			this->label10->AutoSize = true;
+			this->label10->Location = System::Drawing::Point(206, 120);
+			this->label10->Name = L"label10";
+			this->label10->Size = System::Drawing::Size(29, 13);
+			this->label10->TabIndex = 22;
+			this->label10->Text = L"MHz";
+			// 
+			// label11
+			// 
+			this->label11->AutoSize = true;
+			this->label11->Location = System::Drawing::Point(206, 146);
+			this->label11->Name = L"label11";
+			this->label11->Size = System::Drawing::Size(29, 13);
+			this->label11->TabIndex = 23;
+			this->label11->Text = L"MHz";
+			// 
+			// label12
+			// 
+			this->label12->AutoSize = true;
+			this->label12->Location = System::Drawing::Point(206, 93);
+			this->label12->Name = L"label12";
+			this->label12->Size = System::Drawing::Size(20, 13);
+			this->label12->TabIndex = 24;
+			this->label12->Tag = L"";
+			this->label12->Text = L"dB";
+			// 
+			// label13
+			// 
+			this->label13->AutoSize = true;
+			this->label13->Location = System::Drawing::Point(27, 174);
+			this->label13->Name = L"label13";
+			this->label13->Size = System::Drawing::Size(56, 13);
+			this->label13->TabIndex = 25;
+			this->label13->Text = L"Hardware:";
+			this->label13->Click += gcnew System::EventHandler(this, &SerialPort::label13_Click);
+			// 
+			// hardwareBox
+			// 
+			this->hardwareBox->Location = System::Drawing::Point(116, 171);
+			this->hardwareBox->Name = L"hardwareBox";
+			this->hardwareBox->Size = System::Drawing::Size(83, 20);
+			this->hardwareBox->TabIndex = 26;
+			this->hardwareBox->Text = L"0";
+			this->hardwareBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			// 
 			// SerialPort
 			// 
 			this->AcceptButton = this->OK_Button;
@@ -316,6 +434,16 @@ namespace VNAR3 {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->CANCEL_Button;
 			this->ClientSize = System::Drawing::Size(551, 261);
+			this->Controls->Add(this->hardwareBox);
+			this->Controls->Add(this->label13);
+			this->Controls->Add(this->label12);
+			this->Controls->Add(this->label11);
+			this->Controls->Add(this->label10);
+			this->Controls->Add(this->label9);
+			this->Controls->Add(this->label8);
+			this->Controls->Add(this->maxFreqBox);
+			this->Controls->Add(this->minFreqBox);
+			this->Controls->Add(this->label7);
 			this->Controls->Add(this->label6);
 			this->Controls->Add(this->refLevelBox);
 			this->Controls->Add(this->label5);
@@ -373,6 +501,8 @@ namespace VNAR3 {
 				this->IFreq->Text = IFREQ.ToString();
 				VNA->SetFreq(1000000,true);
 				this->volumeBar->Value = MixerGetVolume();
+				this->minFreqBox->Text = (VNA->GetMinFreq()/1000000.0).ToString();
+				this->maxFreqBox->Text = (VNA->GetMaxFreq()/1000000.0).ToString();
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
 
@@ -388,6 +518,9 @@ namespace VNAR3 {
 				Port->PortName = this->comboBox1->Text;
 				Port->BaudRate = 115200;
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
+				VNA->SetMinFreq((__int64) ( Convert::ToDouble(this->minFreqBox->Text)*1000000.0));
+				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));
+				VNA->SelectHardware(Convert::ToInt32(this->hardwareBox->Text));
 
 //        this->Port->Parity = SetPortParity(_serialPort->Parity);
 //        this->Port->DataBits = SetPortDataBits(_serialPort->DataBits);
@@ -455,6 +588,10 @@ private: System::Void refLevelBox_TextChanged(System::Object^  sender, System::E
 			 refLevel = Convert::ToInt32(this->refLevelBox->Text);	
 			}
 		 catch (Exception^) { }
+		 }
+private: System::Void label8_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void label13_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
 };
 }

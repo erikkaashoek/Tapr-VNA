@@ -26,6 +26,8 @@
 
 #include "stdafx.h"
 //#include "DirectionalCoupler.h"
+#include "USB_EZ_interface.h"
+
 //#include "Detector.h"
 #include "DataDisplay.h"
 #using <mscorlib.dll>
@@ -102,11 +104,14 @@ public:
 	array<Double>^ S11termReal, ^S11termImag;
 	bool FixtureCalLogFreqMode;
 	__int64 minCalFreq, maxCalFreq;
+	VNADevice^ VNA;
 
 	int FreqError;					// Internal Crystal Frequency Error
 	double reflTimeDelayEquivalent; // Equivalent time delay of reflection cable go and return (for RefExtn - not enabled)
 
-	InstrumentCalDataSet(String^ StartUpDir);
+	InstrumentCalDataSet(String^ StartUpDir, 
+					 VNADevice^ VNADev			///< VNA Hardware Device
+						);
 /// resolve reflected measured data set to Magnitude and Phase
 void ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, double& rphs, bool CouplerComp);
 /// resolve transmitted measured data set to Magnitude and Phase
