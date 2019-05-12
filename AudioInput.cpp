@@ -40,8 +40,8 @@ volatile int measurementIndex[1100];
 volatile int lastMeasurement;
 volatile int maxMeasurement;
 volatile unsigned long lastFreq;
-int refLevel = -30;
-
+int audioRefLevel = -30;
+int mark = 0;
 bool audioStopping = false;
 
 //static System::IO::Ports::SerialPort^ serialPort;
@@ -92,7 +92,6 @@ int oldSampleRate = 0;
 
 int SAMPPERMS = 1;
 int IFREQ = 4000;  // Invariant : IFREQ == (sampleRate / SAMP) * integer!!!!!!
-int oldIFREQ = 0;
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
 
 // For normal operation
@@ -287,7 +286,7 @@ void dsp_process(SAMPLETYPE *capture, long length)
 //	samp_mag = samp_s - abs(samp_c);
 
 	  samp_mag = sqrt(((float)samp_s)/len - ((float)samp_c)*samp_c/len/len );
-	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len) / toLin(refLevel);
+	  ref_mag = sqrt(((float)ref_s)/len - ((float)ref_c)*ref_c/len/len) / toLin(audioRefLevel);
 //	  samp_mag = sqrt(((float)samp_s / len) /* - ((float)samp_c)*samp_c */);
 //	  ref_mag = sqrt(((float)ref_s / len) /* - ((float)ref_c)*ref_c */) * REFERENCE_LEVEL_REDUCTION;
 	  if (nextDecoded == 1)
@@ -302,8 +301,8 @@ void dsp_process(SAMPLETYPE *capture, long length)
 	  actualMeasurement.reference =  todb(ref_mag);
   } else {
 
-	  	ref_s /= toLin(refLevel);	// Compensate for reduced level
-		ref_c /= toLin(refLevel);	
+	  	ref_s /= toLin(audioRefLevel);	// Compensate for reduced level
+		ref_c /= toLin(audioRefLevel);	
 
 	  ref_mag = sqrt((ref_s*(float)ref_s)+ref_c*(float)ref_c);
 
@@ -445,18 +444,24 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 
 void MarkFrequency(unsigned long freq)
 {
-	int n = nextDecoded;
-	if ( nextDecoded > 0)
-		measured[nextDecoded-1].freq = freq;
-	lastFreq = freq;
+	measured[mark++].freq = freq;
 }
 
+void MarkFrequency(void)
+{
+	mark = 0;
+}
+
+double average_step=0;
 
 void StoreMeasurement()
 {
 	int lowmatch = 0;
 	int highmatch = 0;
 	float delta4 = 0;
+	int found = false;
+	if (nextDecoded ==0)
+		average_step = 0.0;
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
 	if (nextDecoded < MAX_MEASUREMENTS) {
@@ -477,7 +482,6 @@ void StoreMeasurement()
 		else
 			measured[nextDecoded].delta = actualMeasurement.reference;
 		measured[nextDecoded++].reference = actualMeasurement.reference;
-
 	}
 	if (audioPower) { // No measurment indirection when measuring audioPower
 		if (lastMeasurement == 0 && actualMeasurement.reference < SIGNAL_THRESHOLD && lastMeasurement < 1100  ) {
@@ -485,23 +489,108 @@ void StoreMeasurement()
 		}
 		return;
 	}
-	if (nextDecoded > 5 /* && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 10 < nextDecoded )) */ ) {
+//	if (lastMeasurement > maxMeasurement)
+//		return; // Don't bother to store
+	if (nextDecoded > 20 && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 8 < nextDecoded )) ) {
 #if 1 // new algorith for start of signal detection
-		float d1,d2,d3,d4,d5,ds5;
+#if 0
+		float d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,ds1,ds2,ds3;
+		d10 = measured[nextDecoded-10].delta;
+		d9 = measured[nextDecoded-9].delta;
+		d8 = measured[nextDecoded-8].delta;
+		d7 = measured[nextDecoded-7].delta;
+		d6 = measured[nextDecoded-6].delta;
+		d5 = measured[nextDecoded-5].delta;
+		d4 = measured[nextDecoded-4].delta;
+		d3 = measured[nextDecoded-3].delta;
+		d2 = measured[nextDecoded-2].delta;
+		d1 = measured[nextDecoded-1].delta;
+#define S_NOISE	3.0
+#define S_STEP	5.0
+#define S_DISTANCE 3
+		ds1 = -d10-d9-d8-d7+d6+d5;
+		ds2 = -d10-d9-d8+d7+d6+d5;
+		ds3 = -d10-d9+d8+d7+d6+d5;
+		if ((lastMeasurement == 0 || measurementIndex[lastMeasurement-1] <  nextDecoded - 5 - (average_step == 0.0? S_DISTANCE : average_step - 3)) && //Minimum gap with previous signal start
+			(ds1>S_STEP || ds2>S_STEP || ds3>S_STEP) &&																		// Minimum off/on signal
+			abs(d5)>S_NOISE && abs(d4) < S_NOISE && abs(d3)<S_NOISE && abs(d2)<S_NOISE && abs(d1)<S_NOISE) { // Stable signal
+			measurementIndex[lastMeasurement++] = nextDecoded - 5; 
+			found = true;
+//			if (lastMeasurement > 10 && (measurementIndex[lastMeasurement-1]- measurementIndex[lastMeasurement-2]) > average_step + 2) {
+//				return;
+//			}
+
+		}
+
+		if (lastMeasurement > 10 && average_step > 0.0 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + 5*average_step)) { // Give up
+			return;
+		}
+
+#define B_NOISE	12.0
+		if (average_step > 0 && lastMeasurement > 10 && (nextDecoded - 7 > measurementIndex[lastMeasurement-1] + average_step 
+			&& abs(d5)>B_NOISE && abs(d4) < B_NOISE && abs(d3)<B_NOISE && abs(d2)<B_NOISE && abs(d1)<B_NOISE)
+			) {
+			measurementIndex[lastMeasurement++] = nextDecoded - 7; 
+			found = true;
+			return;
+		} else { 
+			if (!found && lastMeasurement > 10 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + average_step + 3)) {
+				return;
+			}
+		}
+
+
+#else
+		float d1,d2,d3,d4,d5,ds5,d6,d7,d8,d9,d10;
+		d10 = measured[nextDecoded-10].delta;
+		d9 = measured[nextDecoded-9].delta;
+		d8 = measured[nextDecoded-8].delta;
+		d7 = measured[nextDecoded-7].delta;
+		d6 = measured[nextDecoded-6].delta;
 		d5 = measured[nextDecoded-5].delta;
 		d4 = measured[nextDecoded-4].delta;
 		d3 = measured[nextDecoded-3].delta;
 		d2 = measured[nextDecoded-2].delta;
 		d1 = measured[nextDecoded-1].delta;
 		ds5 = d5 + d4 + d3 + d2 + d1;
-#define MIN_DELTA5 25
 		if (d3 > 10 && d2 > -2 && d1 > -2 && d3 >= d2 && d3 > d1 && d3 > d4 && d3 > d5  && lastMeasurement < 1100) {
 			float index = ((-5 * d5) + (-4 * d4) + (-3 * d3) + (-2 * d2) + (-1 * d1)) / ds5;
 			index = - 3;
 			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (d2>10?1:0) ; // + 1 after biggest step, +2 is first reliable signal
 			if (measured[measurementIndex[lastMeasurement-1]].reference < -50.0) // lowest acceptable reference signal
 				lastMeasurement--; // small peak after reference disappeared.
+			else
+				found = true;
 		}
+
+		if (lastMeasurement > 10 && average_step > 0.0 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + 5*average_step)) { // Give up
+			return;
+		}
+
+#define B_NOISE	4.0
+		if (average_step > 0 && lastMeasurement > 10 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + average_step -2 )
+			&& abs(d5)>B_NOISE && abs(d4) < B_NOISE && abs(d3)<B_NOISE && abs(d2)<B_NOISE && abs(d1)<B_NOISE
+			) {
+			measurementIndex[lastMeasurement++] = nextDecoded - 5; 
+			found = true;
+			return;
+		} else
+		if (average_step > 0 && lastMeasurement > 10 && (nextDecoded - 7 >= measurementIndex[lastMeasurement-1] + average_step)
+//			&& abs(d5)>B_NOISE 
+			&& abs(d6) < B_NOISE && abs(d5) < B_NOISE && abs(d4) < B_NOISE && abs(d3)<B_NOISE // && abs(d2)<B_NOISE && abs(d1)<B_NOISE
+			) {
+			measurementIndex[lastMeasurement++] = nextDecoded - 7; 
+			found = true;
+			return;
+		} else { 
+			if (!found && lastMeasurement > 10 && (nextDecoded - 8 >= measurementIndex[lastMeasurement-1] + average_step)) {
+				measurementIndex[lastMeasurement++] = nextDecoded - 8 - 1; 
+				return;
+			}
+		}
+
+
+#endif
 #else
 //		if ( measured[nextDecoded-10].reference < SIGNAL_THRESHOLD ) lowmatch++;
 //		if ( measured[nextDecoded-9].reference < SIGNAL_THRESHOLD ) lowmatch++;
@@ -543,19 +632,28 @@ void StoreMeasurement()
 				nextDecoded = nextDecoded; // probably skipped one measurement, just for having a breakpoint location for debugging
 		}
 #endif
+
+	}
+	if (found) {
+		if (lastMeasurement > 2) {
+			if (average_step == 0) {
+				average_step = measurementIndex[lastMeasurement-1]- measurementIndex[lastMeasurement-2];
+			} else
+				average_step = (average_step * 3 + measurementIndex[lastMeasurement-1]- measurementIndex[lastMeasurement-2])/4;
+		}
 	}
 }
 
 
 #include <string>
 
-void DumpMeasurement()
+void DumpMeasurement(String^ outfile)
 {
 	FileStream^ fs;
 	StreamWriter^ sw;
 	try
 	{
-		fs = gcnew FileStream("VNAdecoded.csv", FileMode::Create, FileAccess::Write);
+		fs = gcnew FileStream(outfile, FileMode::Create, FileAccess::Write);
 		sw = gcnew StreamWriter(fs);
 		sw->WriteLine("sep=;");
 		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; samp_s; samp_c; ref_s;ref_c ; measurement");
@@ -777,7 +875,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 							a = a* 0.0000000000001;
 						audio [i*2+0] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * a * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
 						if (simPoint >= simMaxPoint || simPoint < 5)
-							audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate)) * toLin(refLevel); // Reference
+							audio [i*2+1] = 0+(SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * (1 - (rand() % 1000)/1000.0*0.00001) * cos(PI *2 * (simS) * freq / sampleRate)) * toLin(audioRefLevel); // Reference
 						else 
 							audio [i*2+1] = (SAMPLETYPE) (0.00001 * MAXSAMPLEVALUE);
 						simS++;
@@ -809,7 +907,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 				if (simStep/SAMPPERMS < SILENCE_GAP ) { // Initial silence
 					for (i = 0; i < SAMP; i++) {
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * ((simS+0))  * IFREQ / sampleRate));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))*toLin(refLevel); // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 0.0000000000000000000001 * sin(PI * 2 * (simS) * IFREQ / sampleRate))*toLin(audioRefLevel); // Reference
 						simS++;
 					}
 				} else if (simStep/SAMPPERMS < SILENCE_GAP + (simDuration+2) ) { // Reflection
@@ -817,7 +915,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(refl);
 //						v = arg(refl);
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * abs(refl) * cos(PI * 2 * simS * IFREQ / sampleRate + arg(refl) ));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI * 2 * simS * IFREQ / sampleRate))*toLin(refLevel); // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI * 2 * simS * IFREQ / sampleRate))*toLin(audioRefLevel); // Reference
 						simS++;
 					}
 				} else { // Transmission
@@ -825,7 +923,7 @@ VOID ProcessHeader(WAVEHDR * pHdr)
 //						a = abs(tran);
 //						v = arg(tran);
 						audio [i*2+0] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * a * cos(PI *2 * simS * freq / sampleRate + arg(tran)));
-						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI *2 * (simS) * IFREQ / sampleRate))*toLin(refLevel); // Reference
+						audio [i*2+1] = NOISE + (SAMPLETYPE)(MAXSAMPLEVALUE * 1.0 * cos(PI *2 * (simS) * IFREQ / sampleRate))*toLin(audioRefLevel); // Reference
 						simS++;
 					}
 				}

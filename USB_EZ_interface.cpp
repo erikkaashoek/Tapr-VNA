@@ -221,7 +221,7 @@ VNADevice::~VNADevice()
 bool VNADevice::Init(void)						
 {
 	GetHandle();
-//	this->SetFreq(1000000L, true);
+//	this->SetFreq(50000000L, true);
 
 // Code between these two markers is new experimental code
 
@@ -411,11 +411,11 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 			Sleep(1000);
 
 		}
-		serialPort->ReadExisting();
+		//serialPort->ReadExisting();
 		if (power)
-			serialPort->WriteLine(String::Format("2 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur, IFREQ, hardware));
+			serialPort->WriteLine(String::Format("F2 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur, IFREQ, hardware));
 		else
-			serialPort->WriteLine(String::Format("0 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur+2, IFREQ, hardware)); // add 2 duration for lead in and out
+			serialPort->WriteLine(String::Format("F0 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur+2, IFREQ, hardware)); // add 2 duration for lead in and out
 		Sleep(20);
 		}
 		catch (System::Exception^ e) {
@@ -438,22 +438,23 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 			if (!serialPort->IsOpen) {
 				serialPort->Open();
 				Sleep(1000);
-				serialPort->ReadExisting();
+				//serialPort->ReadExisting();
 
 			}
 			SetAudioPower((direction == 2?true:false));
 			if (serialPort->IsOpen) {
-				serialPort->ReadExisting();
-				serialPort->WriteLine(String::Format("{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
+				//serialPort->ReadExi-sting();
+//				String ^t = String::Format("{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware);
+				serialPort->WriteLine(String::Format("F{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
 			}
 		}	
 		catch (System::Exception^ e) {
 			     MessageBox::Show(e->Message, "Error");
-				serialPort->Close();
-				Sleep(2000);
-				serialPort->Open();
-				Sleep(2000);
-				serialPort->ReadExisting();
+//				serialPort->Close();
+//				Sleep(1000);
+//				serialPort->Open();
+//				Sleep(1000);
+				//serialPort->ReadExisting();
 
 				 return;
 		}
@@ -567,7 +568,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	RxBuffer->ReflMQ = DB2SHORT(reflmag);
 	NormalizePhase(tranphase);
 	RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
-	RxBuffer->TranMQLo = DB2SHORT(tranmag);
+	RxBuffer->TranMQ = DB2SHORT(tranmag);
 	RxBuffer->Freq = freq;
 
 	return(rxsuccess);
@@ -610,6 +611,10 @@ void VNADevice::SelectHardware(int h) {
 	hardware = h;
 }
 
+int VNADevice::GetHardware() {
+	return(hardware);
+}
+
 void VNADevice::SetMaxFreq(__int64 f) {
 	maxHWFreq = f;
 }
@@ -620,4 +625,21 @@ __int64 VNADevice::GetMaxFreq() {
 
 __int64 VNADevice::GetMinFreq() {
 	return(minHWFreq);
+}
+
+void VNADevice::SetAudioRefLevel(int r) {
+	audioRefLevel = r;
+}
+
+int VNADevice::GetAudioRefLevel() {
+	return(audioRefLevel);
+}
+
+void VNADevice::SetIF(int r) {
+	IFREQ = r;
+	OpenAudio();
+}
+
+int VNADevice::GetIF() {
+	return(IFREQ);
 }

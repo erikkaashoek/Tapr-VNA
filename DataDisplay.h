@@ -74,7 +74,7 @@ typedef struct _VNA_RXBUFFER {
 	unsigned short Vref2a;		///< Voltage Reference 2
 	unsigned short FwdMQ;		///< Forward Magnitude Q
 	unsigned short FwdPQ;		///< Forward Phase Q
-	unsigned short TranMQLo;	///< Transmission Magnitude Q Lo count received
+	unsigned short TranMQ;	///< Transmission Magnitude Q Lo count received
 	unsigned short TranMQMid;	///< Transmission Magnitude Q Mid count received - only used for SLOW reads
 	unsigned short TranPILow;	///< Transmission Phase I with low reference level
 	unsigned short TranPQLow;	///< Transmission Phase Q with low reference level
@@ -133,7 +133,7 @@ typedef struct _VNA_RXBUFF_FAST {	// Gives 4 reading sets per USB packet
 				//trace9[m] = RxBuf->TranPQ;
 
 				//trace10[m] = RxBuf->Vref2;
-				//trace11[m] = RxBuf->TranMQLo;
+				//trace11[m] = RxBuf->TranMQ;
 				//trace12[m] = RxBuf->TranMQMid;
 
 				//trace13[m] = RxBuf->TranPILow;
@@ -151,7 +151,7 @@ public ref struct MeasurementSet {
 	unsigned short TranPI;				///< Transmission Phase I (trace 8)
 	unsigned short TranPQ;				///< Transmission Phase Q (trace 9)
 	unsigned short Vref2;				///< Reference voltage 2 (trace10)
-	unsigned short TranMQLo;			///< Transmission Magnitude Q Low (trace 11)
+	unsigned short TranMQ;			///< Transmission Magnitude Q Low (trace 11)
 	unsigned short TranMQMid;			///< Transmission Magnitude Q Mid (trace 12)
 	unsigned short TranPILow;			///< Transmission Phase I Low ref level (trace 13)
 	unsigned short TranPQLow;			///< Transmission Phase Q Low ref level (trace 14)

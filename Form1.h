@@ -132,7 +132,7 @@ namespace VNAR3
 
 		float PixelsPerGrid;			///< display pixels per grid point (freq or time)
 		int	StartIndex, StopIndex;		///< Start and stop times converted to array index
-
+		int vnaFound;
 		array<__int64>^ Marker;			///< Frequency Markers
 		array<Single>^ MarkerT;			///< Time Markers
 		CursorStatus^ cs;				///< cursor text display
@@ -2205,6 +2205,17 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			// Add the page handler
 			pdoc->PrintPage += gcnew PrintPageEventHandler(this, &Form1::PrintAPage);
 
+			SerialThreadDelegate = gcnew ThreadStart(this, &Form1::Serial_Worker);
+			SerialThread = gcnew Thread(SerialThreadDelegate);
+			SerialThread->IsBackground = true;
+			SerialThread->Name = "Serial Thread";
+
+			// debug for VS2005 but it doesn't solve the cross-thread UI access problem
+			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
+
+			SerialCollect = false;			// nothing for worker thread to do yet
+			SerialThread->Start();		// start up the thread
+
 
 			// Open configuration from last time VNAR was run, or from commandline if there's an argument passed
 			OpenFileDialog^ startfile = gcnew OpenFileDialog();
@@ -2240,16 +2251,6 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 											// explicitly stop the VNAWorkerThread before terminating,
 											// normally using Environment::Exit
 
-			SerialThreadDelegate = gcnew ThreadStart(this, &Form1::Serial_Worker);
-			SerialThread = gcnew Thread(SerialThreadDelegate);
-			SerialThread->IsBackground = true;
-			SerialThread->Name = "Serial Thread";
-
-			// debug for VS2005 but it doesn't solve the cross-thread UI access problem
-			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
-
-			SerialCollect = false;			// nothing for worker thread to do yet
-			SerialThread->Start();		// start up the thread
 
 			if(OpenAudio())
 			{}
@@ -2702,7 +2703,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			fs = gcnew FileStream("VNAdebug.csv", FileMode::Create, FileAccess::Write);
 			sw = gcnew StreamWriter(fs);
 			sw->WriteLine("sep=,");
-			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQLo, ReflPI, ReflPQ, ReflMQ, Ref");
+			sw->WriteLine("Frequency, TranPI, TranPQ, TranPILow, TranPQLow, TranMQHi, TranMQMid, TranMQ, ReflPI, ReflPQ, ReflMQ, Ref");
 #endif
 #ifdef DUMPRAWDECODING			// Dump raw traces to a file for debugging
 			FileStream^ fs;
@@ -2900,7 +2901,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				sw->Write(", ");
 				sw->Write(trace[i]->TranMQMid.ToString("N1"));
 				sw->Write(", ");
-				sw->Write(trace[i]->TranMQLo.ToString("N1"));
+				sw->Write(trace[i]->TranMQ.ToString("N1"));
 				sw->Write(", ");
 				sw->Write(trace[i]->ReflPI.ToString("N1"));
 				sw->Write(", ");
@@ -5034,18 +5035,20 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 			 SerialThread->Priority= System::Threading::ThreadPriority::AboveNormal;
 			 while(true)								// thread runs until terminated by program exit
 			 {
-				 while(WorkerCollect == false)		// while nothing to do
-				 {
-					 SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
-				 }
-				 done = false;
-#if 0
+//				 while(WorkerCollect == false)		// while nothing to do
+//				 {
+//					 SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
+//				 }
+//				 done = false;
+#if 1
 
 				 if (serialPort1->IsOpen) {
 //					 while (!done) {
-						 String ^s = serialPort1->ReadLine();
+					 try {
+						String ^s = serialPort1->ReadLine();
 
-						 if (b == 'x') {
+						 if (s[0] == 'x') {
+							 int level,  freq;
 //							 freq = ((unsigned long)serialPort1->ReadByte());
 //							 freq += ((unsigned long)serialPort1->ReadByte())<<8;
 //							 freq += ((unsigned long)serialPort1->ReadByte())<<16;
@@ -5054,20 +5057,26 @@ private: System::Void Serial_Worker(void)			// runs as a background thread
 							 level += ((unsigned long)serialPort1->ReadByte())<<8;
 								freq = level;
 							 MarkFrequency(freq);
-						 } else if (b == 'e')
+						 } else if (s[0] == '{')
+						 {
+							 MarkFrequency();
+						 } else if (s[0] == '}')
+						 {
 							 done = true;
+						 } else if (s->StartsWith("TAPR VNA v4")) {
+							vnaFound = true;
+						 }
 					 }
-					 while(WorkerCollect == true)		// while nothing to do
-					{
-						SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
-
-					 }
-				 }
-//				 if(serialPort1->IsOpen) serialPort1->Close();
+					 catch (Exception^ /* pe */ ) {}
+	//				 if(serialPort1->IsOpen) serialPort1->Close();
+				 } else 
 #endif
-			 }
+				 {
+				 		SerialThread->Sleep(10);	// go to sleep for 50 milliseconds (since nothing to do)
+				 }
+			}
 		 }
-		 private: System::Void AddMarkerButton_Click(System::Object^  sender, System::EventArgs^  e) {
+ private: System::Void AddMarkerButton_Click(System::Object^  sender, System::EventArgs^  e) {
 			for (int i=0; i<5; i++)
 			{
 				if (Marker[i] == 0)			// if mouse picks where no marker is present
@@ -5133,7 +5142,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			ITrace[i]->TranMQHi = trace[i]->TranMQHi;
 			ITrace[i]->TranPI = trace[i]->TranPI;
 			ITrace[i]->TranPQ = trace[i]->TranPQ;
-			ITrace[i]->TranMQLo = trace[i]->TranMQLo;
+			ITrace[i]->TranMQ = trace[i]->TranMQ;
 			ITrace[i]->TranMQMid = trace[i]->TranMQMid;
 			ITrace[i]->TranPILow = trace[i]->TranPILow;
 			ITrace[i]->TranPQLow = trace[i]->TranPQLow;
@@ -5241,7 +5250,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				trace[m]->TranPQ = RxBuf->TranPQ;
 				trace[m]->Vref2 = RxBuf->Vref2;
 
-				trace[m]->TranMQLo = RxBuf->TranMQLo;
+				trace[m]->TranMQ = RxBuf->TranMQ;
 				trace[m]->TranMQMid = RxBuf->TranMQMid;
 
 				// New 09-30-2007
@@ -5294,7 +5303,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				trace[i]->TranMQHi = (unsigned short)(((long)ITrace[i]->TranMQHi * Keep + (long)trace[i]->TranMQHi ) / TotalSize);
 				trace[i]->TranPI = (unsigned short)(((long)ITrace[i]->TranPI * Keep + (long)trace[i]->TranPI ) / TotalSize);
 				trace[i]->TranPQ = (unsigned short)(((long)ITrace[i]->TranPQ * Keep + (long)trace[i]->TranPQ ) / TotalSize);
-				trace[i]->TranMQLo = (unsigned short)(((long)ITrace[i]->TranMQLo * Keep + (long)trace[i]->TranMQLo ) / TotalSize);
+				trace[i]->TranMQ = (unsigned short)(((long)ITrace[i]->TranMQ * Keep + (long)trace[i]->TranMQ ) / TotalSize);
 				trace[i]->TranMQMid = (unsigned short)(((long)ITrace[i]->TranMQMid * Keep + (long)trace[i]->TranMQMid) / TotalSize);
 				trace[i]->TranPILow = (unsigned short)(((long)ITrace[i]->TranPILow * Keep + (long)trace[i]->TranPILow) / TotalSize);
 				trace[i]->TranPQLow = (unsigned short)(((long)ITrace[i]->TranPQLow * Keep + (long)trace[i]->TranPQLow) / TotalSize);
@@ -6497,7 +6506,7 @@ private: System::Void StoreMenuItem_Click(System::Object^  sender, System::Event
 				 traceSto[i]->TranPI = trace[i]->TranPI;
 				 traceSto[i]->TranPQ = trace[i]->TranPQ;
 				 traceSto[i]->Vref2 = trace[i]->Vref2;
-				 traceSto[i]->TranMQLo = trace[i]->TranMQLo;
+				 traceSto[i]->TranMQ = trace[i]->TranMQ;
 				 traceSto[i]->TranMQMid = trace[i]->TranMQMid;
 				 traceSto[i]->TranPILow = trace[i]->TranPILow;
 				 traceSto[i]->TranPQLow = trace[i]->TranPQLow;
@@ -6519,7 +6528,7 @@ private: System::Void RecallMenuItem_Click(System::Object^  sender, System::Even
 				 trace[i]->TranPI = traceSto[i]->TranPI;
 				 trace[i]->TranPQ = traceSto[i]->TranPQ;
 				 trace[i]->Vref2 = traceSto[i]->Vref2;
-				 trace[i]->TranMQLo = traceSto[i]->TranMQLo;
+				 trace[i]->TranMQ = traceSto[i]->TranMQ;
 				 trace[i]->TranMQMid = traceSto[i]->TranMQMid;
 				 trace[i]->TranPILow = traceSto[i]->TranPILow;
 				 trace[i]->TranPQLow = traceSto[i]->TranPQLow;
@@ -6793,7 +6802,7 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 					bw->Write(trace[i]->TranPI);
 					bw->Write(trace[i]->TranPQ);
 					bw->Write(trace[i]->Vref2);
-					bw->Write(trace[i]->TranMQLo);
+					bw->Write(trace[i]->TranMQ);
 					bw->Write(trace[i]->TranMQMid);
 					//bw->Write(trace[i]->TranPILow);
 					//bw->Write(trace[i]->TranPQLow);	// New 3-23-2006
@@ -6808,7 +6817,7 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 					bw->Write(traceSto[i]->TranPI);
 					bw->Write(traceSto[i]->TranPQ);
 					bw->Write(traceSto[i]->Vref2);
-					bw->Write(traceSto[i]->TranMQLo);
+					bw->Write(traceSto[i]->TranMQ);
 					bw->Write(traceSto[i]->TranMQMid);
 					//bw->Write(traceSto[i]->TranPILow);
 					//bw->Write(traceSto[i]->TranPQLow);	// New 3-23-2006
@@ -6868,6 +6877,8 @@ private: System::Void WriteConfiguration(SaveFileDialog^ outfile)
 				bw->Write(IFREQ);
 				bw->Write((int)(VNA->GetMinFreq()/1000));
 				bw->Write((int)(VNA->GetMaxFreq()/1000));
+				bw->Write(VNA->GetHardware());
+				bw->Write(VNA->GetAudioRefLevel());
 			}
 			catch(System::IO::IOException^ pe)
 			{
@@ -7086,7 +7097,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					trace[i]->TranPI = br->ReadInt16();
 					trace[i]->TranPQ = br->ReadInt16();
 					trace[i]->Vref2 = br->ReadInt16();
-					trace[i]->TranMQLo = br->ReadInt16();
+					trace[i]->TranMQ = br->ReadInt16();
 					trace[i]->TranMQMid = br->ReadInt16();	// New 3-23-2006
 					trace[i]->TranPILow = 0;		// New 10-02-2007. Default to zero, read in later if available
 					trace[i]->TranPQLow = 0;	
@@ -7101,7 +7112,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					traceSto[i]->TranPI = br->ReadInt16();
 					traceSto[i]->TranPQ = br->ReadInt16();
 					traceSto[i]->Vref2 = br->ReadInt16();
-					traceSto[i]->TranMQLo = br->ReadInt16();
+					traceSto[i]->TranMQ = br->ReadInt16();
 					traceSto[i]->TranMQMid = br->ReadInt16();	// New 3-23-2006
 
 					traceSto[i]->TranPILow = 0;	// New 10-02-2007. Default to zero, read in later if available
@@ -7208,31 +7219,34 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 
 					selectedAudio = (unsigned int)(br->ReadInt32());
 					refLevel = br->ReadInt32();
-					IFREQ = br->ReadInt32();
+					int ifr = br->ReadInt32();
 					VNA->SetMinFreq(br->ReadInt32() * (__int64) 1000);
 					VNA->SetMaxFreq(br->ReadInt32() * (__int64) 1000);
+					VNA->SelectHardware(br->ReadInt32());
+					VNA->SetAudioRefLevel(br->ReadInt32());
 
-
+					VNA->SetIF(ifr);
 					OpenAudio();
-
+					FindVNA();
+#if 0
 					serialPort1->Open();
+				     vnaFound = false;
+					 serialPort1->WriteLine("F3");
 					 System::Threading::Thread::Sleep(1000);
-					 serialPort1->ReadExisting();
-					 serialPort1->WriteLine("3");
-					 System::Threading::Thread::Sleep(1000);
-					String ^reply = serialPort1->ReadExisting();
-					if (!reply->StartsWith("TAPR VNA v4")) {
+					// String ^reply = serialPort1->ReadExisting();
+					if (!vnaFound) {
 						MessageBox::Show("No VNA connected to stored port", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
 					}
-					VNA->SetFreq(1000000L, true);
+					VNA->SetFreq(50000000L, true);
 					System::Threading::Thread::Sleep(500);
-					if (actualMeasurement.reference < -35.0 || actualMeasurement.reference > 10.0) {
+					if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
 						MessageBox::Show("Measurement signal level out of range", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
 					}
+#endif
 					//if (serialPort1->IsOpen) serialPort1->Close();
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
@@ -7241,6 +7255,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 //									 MessageBoxButtons::OK, MessageBoxIcon::Information);
 					SerialPortBox = gcnew SerialPort (serialPort1, VNA);
 					SerialPortBox->ShowDialog();
+					FindVNA();
 
 				}
 			}
@@ -7290,6 +7305,36 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 			Refresh();
 		 };
 
+private: System::Void FindVNA()
+		 {
+				try 
+				{
+					serialPort1->Open();
+				     vnaFound = false;
+					 serialPort1->WriteLine("F3");
+					 System::Threading::Thread::Sleep(1000);
+					if (!vnaFound) {
+						MessageBox::Show("No VNA connected to port", "Error",
+						 MessageBoxButtons::OK, MessageBoxIcon::Error);
+					    throw; 
+					}
+					VNA->SetFreq(50000000L, true);
+					System::Threading::Thread::Sleep(500);
+					if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
+						MessageBox::Show("Measurement signal level out of range", "Error",
+						 MessageBoxButtons::OK, MessageBoxIcon::Error);
+					    throw; 
+					}
+					//if (serialPort1->IsOpen) serialPort1->Close();
+				}
+				catch( Exception^ /* e */ )	// Don't bother warning the user ...
+				{											// They probably don't care anyway
+//					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
+//									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+					SerialPortBox = gcnew SerialPort (serialPort1, VNA);
+					SerialPortBox->ShowDialog();
+				}
+		 }
 private: System::Single GetVerticalScaleFactor(System::Void)
 		 {
 			if (Scale10dB->Checked)	return 10.0f;
@@ -7606,6 +7651,7 @@ private: System::Void audioDevicesToolStripMenuItem_Click(System::Object^  sende
 private: System::Void serialPortToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 			 SerialPortBox = gcnew SerialPort (serialPort1, VNA);
 			 SerialPortBox->ShowDialog();
+			 FindVNA();
 		 }
 private: System::Void label10_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
@@ -7647,7 +7693,14 @@ private: System::Void Spectrum_CheckedChanged(System::Object^  sender, System::E
 		 }
 
 private: System::Void dumpMeasurementsToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-			 DumpMeasurement();
+			SaveFileDialog^ outfile;	///< Saved File Structure
+			outfile = gcnew SaveFileDialog();
+			outfile->Filter = "dump files (*.csv)|*.csv";
+			outfile->AddExtension = true;
+			if (outfile->ShowDialog() == ::DialogResult::OK)
+			{
+				DumpMeasurement(outfile->FileName);
+			}
 		 }
 
 #define MOUSE_WHEEL_STEP 30

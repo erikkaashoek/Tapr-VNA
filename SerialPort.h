@@ -17,8 +17,7 @@ extern HWAVEIN      hWaveIn;
 //#include "objbase.h"
 
 extern int IFREQ;
-extern int refLevel;
-extern int oldIFREQ;
+extern int audioRefLevel;
 extern int sampleRate;
 extern int oldSampleRate;
 #define SAMPLERATES	6
@@ -123,7 +122,8 @@ namespace VNAR3 {
 	private: System::Windows::Forms::Label^  label11;
 	private: System::Windows::Forms::Label^  label12;
 	private: System::Windows::Forms::Label^  label13;
-	private: System::Windows::Forms::TextBox^  hardwareBox;
+	private: System::Windows::Forms::ComboBox^  hardwareBox;
+
 
 			 VNADevice^ VNA;					///< Vector Network Analyzer hardware object
 
@@ -163,7 +163,7 @@ namespace VNAR3 {
 			this->label11 = (gcnew System::Windows::Forms::Label());
 			this->label12 = (gcnew System::Windows::Forms::Label());
 			this->label13 = (gcnew System::Windows::Forms::Label());
-			this->hardwareBox = (gcnew System::Windows::Forms::TextBox());
+			this->hardwareBox = (gcnew System::Windows::Forms::ComboBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->volumeBar))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -420,12 +420,13 @@ namespace VNAR3 {
 			// 
 			// hardwareBox
 			// 
+			this->hardwareBox->FormattingEnabled = true;
+			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(2) {L"SI5351", L"ADF4351"});
 			this->hardwareBox->Location = System::Drawing::Point(116, 171);
 			this->hardwareBox->Name = L"hardwareBox";
-			this->hardwareBox->Size = System::Drawing::Size(83, 20);
-			this->hardwareBox->TabIndex = 26;
-			this->hardwareBox->Text = L"0";
-			this->hardwareBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			this->hardwareBox->Size = System::Drawing::Size(83, 21);
+			this->hardwareBox->TabIndex = 27;
+			this->hardwareBox->Text = L"SI5351";
 			// 
 			// SerialPort
 			// 
@@ -496,13 +497,15 @@ namespace VNAR3 {
 
 				this->comboBox1->SelectedIndex = this->comboBox1->Items->Count-1;
 				this->comboBox2->SelectedIndex = selectedAudio;
-				this->refLevelBox->Text = refLevel.ToString();
+				this->refLevelBox->Text = audioRefLevel.ToString();
 				this->sampleRateBox->SelectedIndex = 0;
-				this->IFreq->Text = IFREQ.ToString();
-				VNA->SetFreq(1000000,true);
+				int ifr = VNA->GetIF();
+				this->IFreq->Text = ifr.ToString();
+				VNA->SetFreq(50000000L,true);
 				this->volumeBar->Value = MixerGetVolume();
 				this->minFreqBox->Text = (VNA->GetMinFreq()/1000000.0).ToString();
 				this->maxFreqBox->Text = (VNA->GetMaxFreq()/1000000.0).ToString();
+				this->hardwareBox->SelectedIndex = VNA->GetHardware();
 			 }
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
 
@@ -520,17 +523,18 @@ namespace VNAR3 {
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
 				VNA->SetMinFreq((__int64) ( Convert::ToDouble(this->minFreqBox->Text)*1000000.0));
 				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));
-				VNA->SelectHardware(Convert::ToInt32(this->hardwareBox->Text));
+				VNA->SelectHardware(Convert::ToInt32(this->hardwareBox->SelectedIndex));
 
 //        this->Port->Parity = SetPortParity(_serialPort->Parity);
 //        this->Port->DataBits = SetPortDataBits(_serialPort->DataBits);
 //        this->Port->StopBits = SetPortStopBits(_serialPort->StopBits);
 //        this->Port->Handshake = SetPortHandshake(_serialPort->Handshake);
+#if 0
 				try {
 					this->Port->Open();
 					 System::Threading::Thread::Sleep(2000);
 					this->Port->ReadExisting();
-					this->Port->WriteLine("3");
+					this->Port->WriteLine("F3");
 					 System::Threading::Thread::Sleep(2000);
 					String ^reply = this->Port->ReadExisting();
 					if (!reply->StartsWith("TAPR VNA v4")) {
@@ -547,6 +551,7 @@ namespace VNAR3 {
 					MessageBox::Show(e->ToString(),"Open port Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 				}
+#endif
 			 }
 private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
@@ -558,11 +563,7 @@ private: System::Void sampleRateBox_SelectedIndexChanged(System::Object^  sender
 private: System::Void label2_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
 private: System::Void IFreq_TextChanged(System::Object^  sender, System::EventArgs^  e) {
-			IFREQ = Convert::ToInt32(this->IFreq->Text);	
-			if (oldIFREQ != IFREQ) {
-				OpenAudio();
-				oldIFREQ=IFREQ;
-		 }
+			VNA->SetIF(Convert::ToInt32(this->IFreq->Text));	
 		 }
 
 private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
@@ -585,7 +586,7 @@ private: System::Void label5_Click(System::Object^  sender, System::EventArgs^  
 		 }
 private: System::Void refLevelBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 		try {
-			 refLevel = Convert::ToInt32(this->refLevelBox->Text);	
+			 audioRefLevel = Convert::ToInt32(this->refLevelBox->Text);	
 			}
 		 catch (Exception^) { }
 		 }

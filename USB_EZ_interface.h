@@ -102,9 +102,15 @@ public:
 	void SetCapacitance(int v);
 	void SetInductance(int v);
 	void SelectHardware(int h);
+	int GetHardware();
+	void SetAudioRefLevel(int h);
+	int GetAudioRefLevel();
 	void SetNoise(float c);
 	void SetMaxFreq(__int64 f);
 	void SetMinFreq(__int64 f);
 	__int64 GetMinFreq();
 	__int64 GetMaxFreq();
+	void VNADevice::SetIF(int r);
+	int VNADevice::GetIF();
+
 };

@@ -1,5 +1,9 @@
 #pragma once
 #include "Constants.h"
+
+using namespace std;  
+#include <stdlib.h>
+
 #include "AudioInput.h"
 #include "USB_EZ_interface.h"
  

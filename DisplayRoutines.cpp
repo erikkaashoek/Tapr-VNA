@@ -562,10 +562,10 @@ void InstrumentCalDataSet::ResolveTranPolar(MeasurementSet^ dataPoint, __int64 F
 	double magnitudeDB, phase, magnitudeLin;
 
 
-	magnitudeDB = SHORT2DB(dataPoint->TranMQLo);
+	magnitudeDB = SHORT2DB(dataPoint->TranMQ);
 	phase = SHORT2PHASE(dataPoint->TranPQ);
 	
-	//magnitudeDB = TxDet->MagTodBTran(Frequency, dataPoint->TranMQHi, dataPoint->TranMQLo, dataPoint->TranMQMid);
+	//magnitudeDB = TxDet->MagTodBTran(Frequency, dataPoint->TranMQHi, dataPoint->TranMQ, dataPoint->TranMQMid);
 
 	//phase = TxDet->IQtoDegrees(dataPoint->TranPI, dataPoint->TranPQ, Frequency, magnitudeDB, dataPoint->TranPILow, dataPoint->TranPQLow);
 
@@ -786,6 +786,9 @@ void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, do
 		else
 			position = ((double)Frequency - Flow) / (Fhigh - Flow);
 	}
+	if (i < 0) i = 0;
+	if (j < 0) j = 0;
+
 
 	realpart = Cal->ThReal[i] + ((Cal->ThReal[j] - Cal->ThReal[i]) * position);		// interpolate between calibration points
 	imagpart = Cal->ThImag[i] + ((Cal->ThImag[j] - Cal->ThImag[i]) * position);
@@ -873,6 +876,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 		{
 			Cal->maxCalFreq = (__int64) br->ReadDouble();
 			Cal->minCalFreq = (__int64) br->ReadDouble();
+			Cal->VNA->SetAudioRefLevel(br->ReadInt32());
+			Cal->VNA->SetIF(br->ReadInt32());
 		}
 		catch( Exception^ /* e */ )	// Don't bother warning the user ...
 		{											// They probably don't care anyway
@@ -974,6 +979,8 @@ void SaveCalDataSet(SaveFileDialog^ outfile, InstrumentCalDataSet^ Cal)
 		}
 		bw->Write((double)(Cal->maxCalFreq));
 		bw->Write((double)(Cal->minCalFreq));
+		bw->Write(Cal->VNA->GetAudioRefLevel());
+		bw->Write(Cal->VNA->GetIF());
     }
 	catch(System::IO::IOException^ pe)
 	{
@@ -1524,9 +1531,9 @@ void DeGlitch(array<MeasurementSet^>^ dataSet, int count)
 		dataSet[i+3]->TranPQ = ExpectedValue(copy, i, PHASEMODE);
 
 	for(int i=0; i<count; i++)
-		copy[i] = dataSet[i]->TranMQLo;
+		copy[i] = dataSet[i]->TranMQ;
 	for(int i=0; i<(count-7); i++)
-		dataSet[i+3]->TranMQLo = ExpectedValue(copy, i, AMPLMODE);
+		dataSet[i+3]->TranMQ = ExpectedValue(copy, i, AMPLMODE);
 
 	for(int i=0; i<count; i++)
 		copy[i] = dataSet[i]->TranMQMid;
@@ -1704,7 +1711,7 @@ bool ExcessRxNoiseIngress(array<MeasurementSet^>^ trace, int points)
 	for(int i=15; i<(points-15); i++)
 	{
 		UInt16 Mid = trace[i]->TranMQMid;
-		UInt16 Lo = trace[i]->TranMQLo;
+		UInt16 Lo = trace[i]->TranMQ;
 		UInt16 Hi = trace[i]->TranMQHi;
 
 		if(Mid >= 2300 && Mid < 3300)
