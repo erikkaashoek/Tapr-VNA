@@ -74,6 +74,7 @@ int simDirection;
 long simS = 0;
 int simR;
 int simC;
+int simSC;
 int simL;
 float simN;
 
@@ -717,6 +718,7 @@ using namespace std;
 
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
 #define CAPACITANCE	1/(2.0*PI*freq*pow(10,simC/20.0)/1e13)
+#define SOURCECAPACITANCE	1/(2.0*PI*freq*pow(10,simSC/20.0)/1e13)
 #define RESISTANCE pow(10, (simR - 50.0)/20.0)*Z0
 #define NOISE (float)((0.5 - (rand() % 1000)/1000.0) * simN )
 
@@ -727,8 +729,9 @@ complex <double> modelLoadRefl(__int64 freq)
 //	double ind = INDUCTANCE;
 //	double cap = CAPACITANCE;
 //	res = pow(10, (res - 50.0)/20.0)*Z0;
-	complex <double> Zl (0.0, -INDUCTANCE), Zr(RESISTANCE, 0.0) , Zc(0.0, + CAPACITANCE) , Zs ( Z0, 0.0);
+	complex <double> Zl (0.0, -INDUCTANCE), Zr(RESISTANCE, 0.0) , Zc(0.0, + CAPACITANCE) , Zsc(0.0, + SOURCECAPACITANCE) , Zs ( Z0, 0.0);
 	Zl = Zl + (Zr * Zc)/(Zr + Zc); // L series with R/C
+	Zl = (Zl * Zsc)/(Zl + Zsc); // Source capacitance parallel to total load
 	return( (Zl - Zs)/(Zl +Zs) );	// Reflection due to mismatch
 }
 
@@ -1106,7 +1109,7 @@ int OpenAudio (void) {
 	return(0);
 }
 
-void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF, int cable_before, int cable_after, int direction, int r, int c, int l, float n)
+void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF, int cable_before, int cable_after, int direction, int r, int c, int sc, int l, float n)
 {
 	simMode = mode;
 	simPoint = 0;
@@ -1122,6 +1125,7 @@ void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF,
 	simS = 0;
 	simR = r;
 	simC = c;
+	simSC = sc;
 	simL = l;
 	simN = n;
 }

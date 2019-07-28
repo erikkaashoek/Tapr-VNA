@@ -425,7 +425,7 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 
 	} else {
 //		if (!power) dur += 2; // add 2 duration for lead in and out
-		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, inductance, noise);
+		StartAudioSimulation(mode, numPoints + 10, dur, startF, stepF, cable_before, cable_after, 0, resistance, capacitance, sourcecapacitance, inductance, noise);
 	}
 	return(true);
 	// mp = 0;
@@ -459,7 +459,7 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 				 return;
 		}
 	} else {
-		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, inductance, noise);
+		StartAudioSimulation(mode, 1, 5, startF, 0, cable_before, cable_after, direction, resistance, capacitance, sourcecapacitance, inductance, noise);
 	}
 }
 
@@ -593,6 +593,10 @@ void VNADevice::SetResistance(int l) {
 
 void VNADevice::SetCapacitance(int l) {
 	capacitance = l;
+}
+
+void VNADevice::SetSourceCapacitance(int l) {
+	sourcecapacitance = l;
 }
 
 void VNADevice::SetInductance(int l) {

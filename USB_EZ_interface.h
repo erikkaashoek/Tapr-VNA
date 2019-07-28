@@ -60,6 +60,7 @@ private:
 	int cable_after;
 	int resistance;
 	int capacitance;
+	int sourcecapacitance;
 	int inductance;
 	int hardware;
 	float noise;
@@ -100,6 +101,7 @@ public:
 	void SetAfter(int l);
 	void SetResistance(int v);
 	void SetCapacitance(int v);
+	void SetSourceCapacitance(int v);
 	void SetInductance(int v);
 	void SelectHardware(int h);
 	int GetHardware();

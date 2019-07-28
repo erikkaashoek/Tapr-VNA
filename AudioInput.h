@@ -26,7 +26,7 @@ extern void ArmAudio(int pM, System::IO::Ports::SerialPort^ port);
 void MarkFrequency(unsigned long freq);
 void MarkFrequency(void);
 extern bool RetreiveData(int i, int duration, float& m, float& p, float& tm, float& tp, float& r, unsigned long& fr,int avSamp);
-extern void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF,int cable_before, int cable_after, int direction, int r, int c, int l, float n);
+extern void StartAudioSimulation(int mode, int numPoints, int duration, __int64 startF, __int64 stepF,int cable_before, int cable_after, int direction, int r, int c, int sc, int l, float n);
 extern void SetAudioPower(int power);
 extern void DumpMeasurement(System::String ^);
 extern void GetMixerInfo();
