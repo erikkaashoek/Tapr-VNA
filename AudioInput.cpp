@@ -91,7 +91,7 @@ unsigned int selectedAudio = WAVE_MAPPER;
 int sampleRate = 192000;
 int oldSampleRate = 0;
 
-int SAMPPERMS = 1;
+int SAMPPERMS = 2;
 int IFREQ = 4000;  // Invariant : IFREQ == (sampleRate / SAMP) * integer!!!!!!
 int SAMP=192;		// Audio samples per dsp, recalculated when samplerate changes, maximum sample rate
 
@@ -421,10 +421,11 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 				Process(measurementIndex[i]+ (d + 2) * SAMPPERMS, avSamp);
 			}
 #endif
-			if (fr < 300000000L)
+			measured[measurementIndex[i] + 0 + lastJ].freq = fr;
+//			if (fr < 300000000L)
 				r = measured[measurementIndex[i] + 0 + lastJ].reference;
-			else
-				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)20.0; // Harmonic mixing
+//			else
+//				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)20.0; // Harmonic mixing
 
 			m = measured[measurementIndex[i] + 0 + lastJ].magnitude;
 			p = measured[measurementIndex[i] + 0 + lastJ].phase;
@@ -442,6 +443,7 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 }
 
 #define SIGNAL_THRESHOLD -30	
+#define SILENCE_THRESHOLD	-45
 
 void MarkFrequency(unsigned long freq)
 {
@@ -454,6 +456,7 @@ void MarkFrequency(void)
 }
 
 double average_step=0;
+static int force_count = 0;
 
 void StoreMeasurement()
 {
@@ -461,8 +464,18 @@ void StoreMeasurement()
 	int highmatch = 0;
 	float delta4 = 0;
 	int found = false;
-	if (nextDecoded ==0)
+	if(lastMeasurement>maxMeasurement)
+		audioState = AS_FINISHED;
+	if(audioState != AS_ARMED) {
+		return;
+	}
+	if(lastMeasurement>maxMeasurement)
+		audioState = AS_FINISHED;
+
+	if (nextDecoded ==0) {
 		average_step = 0.0;
+		force_count = 0;
+	}
 //	if (lastMeasurement >= maxMeasurement)
 //		return;
 	if (nextDecoded < MAX_MEASUREMENTS) {
@@ -476,6 +489,8 @@ void StoreMeasurement()
 		measured[nextDecoded].dcr = actualMeasurement.dcr;
 		measured[nextDecoded].freq = lastFreq;
 		measured[nextDecoded].read = 0;
+		measured[nextDecoded].force = force_count;
+		measured[nextDecoded].average = (int)average_step;
 //		if (actualMeasurement.reference < -110)
 //			actualMeasurement.reference = -100;
 		if (nextDecoded > 0)
@@ -492,7 +507,15 @@ void StoreMeasurement()
 	}
 //	if (lastMeasurement > maxMeasurement)
 //		return; // Don't bother to store
-	if (nextDecoded > 20 && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 8 < nextDecoded )) ) {
+	if (nextDecoded > 20 && (lastMeasurement == 0 || (measurementIndex[lastMeasurement-1] + 6 < nextDecoded )) ) {
+#ifdef SUPERSIMPLE
+		if(measured[nextDecoded-2].reference < SILENCE_THRESHOLD && measured[nextDecoded-1].reference > SILENCE_THRESHOLD) {
+			measurementIndex[lastMeasurement++] = nextDecoded+1;
+			found = true;
+		}
+#endif
+
+
 #if 1 // new algorith for start of signal detection
 #if 0
 		float d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,ds1,ds2,ds3;
@@ -543,6 +566,7 @@ void StoreMeasurement()
 
 #else
 		float d1,d2,d3,d4,d5,ds5,d6,d7,d8,d9,d10;
+		float r1,r2,r3,r4,r5,r6,r7,r8,r9,r10;
 		d10 = measured[nextDecoded-10].delta;
 		d9 = measured[nextDecoded-9].delta;
 		d8 = measured[nextDecoded-8].delta;
@@ -553,21 +577,33 @@ void StoreMeasurement()
 		d3 = measured[nextDecoded-3].delta;
 		d2 = measured[nextDecoded-2].delta;
 		d1 = measured[nextDecoded-1].delta;
+		r10 = measured[nextDecoded-10].reference;
+		r9 = measured[nextDecoded-9].reference;
+		r8 = measured[nextDecoded-8].reference;
+		r7 = measured[nextDecoded-7].reference;
+		r6 = measured[nextDecoded-6].reference;
+		r5 = measured[nextDecoded-5].reference;
+		r4 = measured[nextDecoded-4].reference;
+		r3 = measured[nextDecoded-3].reference;
+		r2 = measured[nextDecoded-2].reference;
+		r1 = measured[nextDecoded-1].reference;
+		float minbefore = (r5<r6?r5:r6);
+		float minafter = (r2<r3?r2:r3);
 		ds5 = d5 + d4 + d3 + d2 + d1;
-		if (d3 > 10 && d2 > -2 && d1 > -2 && d3 >= d2 && d3 > d1 && d3 > d4 && d3 > d5  && lastMeasurement < 1100) {
+		if (minbefore < minafter && d4 > 10 && /* d2 > -2 && d1 > -2 && */ d4 >= d3 && d4 > d2 && d4 > d5 && d4 > d6  && d2 < 10 && d1 < 4 && r1 > -70.0 && lastMeasurement < 1100 ) {
 			float index = ((-5 * d5) + (-4 * d4) + (-3 * d3) + (-2 * d2) + (-1 * d1)) / ds5;
-			index = - 3;
-			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (d2>10?1:0) ; // + 1 after biggest step, +2 is first reliable signal
-			if (measured[measurementIndex[lastMeasurement-1]].reference < -50.0) // lowest acceptable reference signal
-				lastMeasurement--; // small peak after reference disappeared.
-			else
+			index = - 4;
+			measurementIndex[lastMeasurement++] = nextDecoded + (int)index + 1 + (abs(d2)>2?1:0) ; // + 1 after biggest step, +2 is first reliable signal
+//			if ((int)fabs(minafter - minbefore) < -10.0) // lowest acceptable reference signal delta
+//				lastMeasurement--; // small peak after reference disappeared.
+//			else
 				found = true;
 		}
 
 		if (lastMeasurement > 10 && average_step > 0.0 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + 5*average_step)) { // Give up
 			return;
 		}
-
+#if BAD_RECOVERY
 #define B_NOISE	4.0
 		if (average_step > 0 && lastMeasurement > 10 && (nextDecoded - 5 > measurementIndex[lastMeasurement-1] + average_step -2 )
 			&& abs(d5)>B_NOISE && abs(d4) < B_NOISE && abs(d3)<B_NOISE && abs(d2)<B_NOISE && abs(d1)<B_NOISE
@@ -589,7 +625,7 @@ void StoreMeasurement()
 				return;
 			}
 		}
-
+#endif
 
 #endif
 #else
@@ -642,6 +678,11 @@ void StoreMeasurement()
 			} else
 				average_step = (average_step * 3 + measurementIndex[lastMeasurement-1]- measurementIndex[lastMeasurement-2])/4;
 		}
+		force_count = 0;
+	}
+	if (force_count < 8 && lastMeasurement > 3 && average_step > 0.0 && (nextDecoded >= measurementIndex[lastMeasurement-1] + 1.7*average_step)) { // force
+		measurementIndex[lastMeasurement++] = measurementIndex[lastMeasurement-1] + (int)average_step + 1;
+		force_count++;
 	}
 }
 
@@ -657,7 +698,7 @@ void DumpMeasurement(String^ outfile)
 		fs = gcnew FileStream(outfile, FileMode::Create, FileAccess::Write);
 		sw = gcnew StreamWriter(fs);
 		sw->WriteLine("sep=;");
-		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; samp_s; samp_c; ref_s;ref_c ; measurement");
+		sw->WriteLine("index; freq; ref; delta; read; mag; phase; dcr; dcs ; samp_s; samp_c; ref_s;ref_c ; measurement; force; average");
 		int decoded=0;
 		int measure = 0;
 		string s;
@@ -688,14 +729,23 @@ void DumpMeasurement(String^ outfile)
 			sw->Write("; ");
 			sw->Write(measured[decoded].ref_c.ToString("N6"));
 			decoded++;
+			sw->Write("; ");
 			if (measure < lastMeasurement+1) {
 				if (measurementIndex[measure+1] == decoded) {
-					sw->Write("; ");
 					sw->Write(measure.ToString("N0"));
 					measure++;
-				}
-			}
-			sw->WriteLine("");
+				} else
+					sw->Write(" ");
+			} else
+				sw->Write(" ");
+			sw->Write("; ");
+			if (measured[decoded].force >0)
+				sw->Write(measured[decoded].force.ToString("N6"));
+			else
+				sw->Write(" ");
+			sw->Write("; ");
+			sw->Write(measured[decoded].average.ToString("N6"));
+			sw->WriteLine();
 		}
 		sw->Flush();	
 		sw->Close();	// close VNAdecodig.csv file

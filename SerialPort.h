@@ -421,7 +421,7 @@ namespace VNAR3 {
 			// hardwareBox
 			// 
 			this->hardwareBox->FormattingEnabled = true;
-			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(2) {L"SI5351", L"ADF4351"});
+			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(3) {L"SI5351", L"ADF4351", L"NanoVNA"});
 			this->hardwareBox->Location = System::Drawing::Point(116, 171);
 			this->hardwareBox->Name = L"hardwareBox";
 			this->hardwareBox->Size = System::Drawing::Size(83, 21);

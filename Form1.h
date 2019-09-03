@@ -133,6 +133,8 @@ namespace VNAR3
 		float PixelsPerGrid;			///< display pixels per grid point (freq or time)
 		int	StartIndex, StopIndex;		///< Start and stop times converted to array index
 		int vnaFound;
+		Bitmap ^ bufferBitmap;
+		int bufferBitmapInitialized;
 		array<__int64>^ Marker;			///< Frequency Markers
 		array<Single>^ MarkerT;			///< Time Markers
 		CursorStatus^ cs;				///< cursor text display
@@ -397,6 +399,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMenuItem;
 private: System::Windows::Forms::TrackBar^  MIndex;
 private: System::Windows::Forms::Button^  AddMarkerButton;
+
+
 
 
 
@@ -839,7 +843,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->SweepSpd->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->SweepSpd->BackColor = System::Drawing::Color::WhiteSmoke;
-			this->SweepSpd->Location = System::Drawing::Point(784, 390);
+			this->SweepSpd->Location = System::Drawing::Point(784, 367);
 			this->SweepSpd->Name = L"SweepSpd";
 			this->SweepSpd->Size = System::Drawing::Size(50, 23);
 			this->SweepSpd->TabIndex = 21;
@@ -916,13 +920,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label7->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label7->BackColor = System::Drawing::Color::Transparent;
 			this->label7->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label7->Location = System::Drawing::Point(755, 366);
+			this->label7->Location = System::Drawing::Point(390, 367);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(58, 22);
 			this->label7->TabIndex = 31;
 			this->label7->Text = L"Spectrum";
 			this->label7->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			this->toolTip1->SetToolTip(this->label7, L"Must have Cal File Loaded or must Run Cal file in order to enable.");
+			this->label7->Visible = false;
 			// 
 			// calCheckBox
 			// 
@@ -1127,7 +1132,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->rectItem->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->rectItem->Name = L"rectItem";
 			this->rectItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::R));
-			this->rectItem->Size = System::Drawing::Size(239, 22);
+			this->rectItem->Size = System::Drawing::Size(237, 22);
 			this->rectItem->Text = L"&Rectangular";
 			this->rectItem->Click += gcnew System::EventHandler(this, &Form1::rectItem_Click);
 			// 
@@ -1135,7 +1140,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->polarItem->Name = L"polarItem";
 			this->polarItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::P));
-			this->polarItem->Size = System::Drawing::Size(239, 22);
+			this->polarItem->Size = System::Drawing::Size(237, 22);
 			this->polarItem->Text = L"&Polar";
 			this->polarItem->Click += gcnew System::EventHandler(this, &Form1::polarItem_Click);
 			// 
@@ -1143,28 +1148,28 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->TDRItem->Name = L"TDRItem";
 			this->TDRItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::T));
-			this->TDRItem->Size = System::Drawing::Size(239, 22);
+			this->TDRItem->Size = System::Drawing::Size(237, 22);
 			this->TDRItem->Text = L"&Time Domain Reflection";
 			this->TDRItem->Click += gcnew System::EventHandler(this, &Form1::TDRItem_Click);
 			// 
 			// audioDevicesToolStripMenuItem
 			// 
 			this->audioDevicesToolStripMenuItem->Name = L"audioDevicesToolStripMenuItem";
-			this->audioDevicesToolStripMenuItem->Size = System::Drawing::Size(239, 22);
+			this->audioDevicesToolStripMenuItem->Size = System::Drawing::Size(237, 22);
 			this->audioDevicesToolStripMenuItem->Text = L"Audio Devices";
 			this->audioDevicesToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::audioDevicesToolStripMenuItem_Click);
 			// 
 			// signalGeneratorToolStripMenuItem
 			// 
 			this->signalGeneratorToolStripMenuItem->Name = L"signalGeneratorToolStripMenuItem";
-			this->signalGeneratorToolStripMenuItem->Size = System::Drawing::Size(239, 22);
+			this->signalGeneratorToolStripMenuItem->Size = System::Drawing::Size(237, 22);
 			this->signalGeneratorToolStripMenuItem->Text = L"Signal generator";
 			this->signalGeneratorToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::signalGeneratorToolStripMenuItem_Click);
 			// 
 			// mockupDeviceToolStripMenuItem1
 			// 
 			this->mockupDeviceToolStripMenuItem1->Name = L"mockupDeviceToolStripMenuItem1";
-			this->mockupDeviceToolStripMenuItem1->Size = System::Drawing::Size(239, 22);
+			this->mockupDeviceToolStripMenuItem1->Size = System::Drawing::Size(237, 22);
 			this->mockupDeviceToolStripMenuItem1->Text = L"Mockup Device";
 			this->mockupDeviceToolStripMenuItem1->Click += gcnew System::EventHandler(this, &Form1::mockupDeviceToolStripMenuItem_Click);
 			// 
@@ -1180,21 +1185,21 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->runItem->Name = L"runItem";
 			this->runItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::C));
-			this->runItem->Size = System::Drawing::Size(229, 22);
+			this->runItem->Size = System::Drawing::Size(230, 22);
 			this->runItem->Text = L"&Fixture Calibration";
 			this->runItem->Click += gcnew System::EventHandler(this, &Form1::runItem_Click);
 			// 
 			// loadItem
 			// 
 			this->loadItem->Name = L"loadItem";
-			this->loadItem->Size = System::Drawing::Size(229, 22);
+			this->loadItem->Size = System::Drawing::Size(230, 22);
 			this->loadItem->Text = L"&Load Fixture Calibration File...";
 			this->loadItem->Click += gcnew System::EventHandler(this, &Form1::loadItem_Click);
 			// 
 			// mockupDeviceToolStripMenuItem
 			// 
 			this->mockupDeviceToolStripMenuItem->Name = L"mockupDeviceToolStripMenuItem";
-			this->mockupDeviceToolStripMenuItem->Size = System::Drawing::Size(229, 22);
+			this->mockupDeviceToolStripMenuItem->Size = System::Drawing::Size(230, 22);
 			this->mockupDeviceToolStripMenuItem->Text = L"&Mockup Device";
 			this->mockupDeviceToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::mockupDeviceToolStripMenuItem_Click);
 			// 
@@ -1206,7 +1211,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 				this->calSopen, this->calSterm, this->toolStripSeparator1, this->pickTraceColorToolStripMenuItem, this->toolStripSeparator4, 
 				this->rawDetectorDataToolStripMenuItem, this->audioDistanceToolStripMenuItem});
 			this->traceMenu->Name = L"traceMenu";
-			this->traceMenu->Size = System::Drawing::Size(47, 20);
+			this->traceMenu->Size = System::Drawing::Size(46, 20);
 			this->traceMenu->Text = L"&Trace";
 			// 
 			// s11magItem
@@ -1452,49 +1457,49 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->Scale10dB->Checked = true;
 			this->Scale10dB->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->Scale10dB->Name = L"Scale10dB";
-			this->Scale10dB->Size = System::Drawing::Size(199, 22);
+			this->Scale10dB->Size = System::Drawing::Size(198, 22);
 			this->Scale10dB->Text = L"10 dB / div";
 			this->Scale10dB->Click += gcnew System::EventHandler(this, &Form1::Scale10dB_Click);
 			// 
 			// Scale5dB
 			// 
 			this->Scale5dB->Name = L"Scale5dB";
-			this->Scale5dB->Size = System::Drawing::Size(199, 22);
+			this->Scale5dB->Size = System::Drawing::Size(198, 22);
 			this->Scale5dB->Text = L"5 dB / div";
 			this->Scale5dB->Click += gcnew System::EventHandler(this, &Form1::Scale5dB_Click);
 			// 
 			// Scale2dB
 			// 
 			this->Scale2dB->Name = L"Scale2dB";
-			this->Scale2dB->Size = System::Drawing::Size(199, 22);
+			this->Scale2dB->Size = System::Drawing::Size(198, 22);
 			this->Scale2dB->Text = L"2 dB / div";
 			this->Scale2dB->Click += gcnew System::EventHandler(this, &Form1::Scale2dB_Click);
 			// 
 			// Scale1dB
 			// 
 			this->Scale1dB->Name = L"Scale1dB";
-			this->Scale1dB->Size = System::Drawing::Size(199, 22);
+			this->Scale1dB->Size = System::Drawing::Size(198, 22);
 			this->Scale1dB->Text = L"1 dB / div";
 			this->Scale1dB->Click += gcnew System::EventHandler(this, &Form1::Scale1dB_Click);
 			// 
 			// Scale05dB
 			// 
 			this->Scale05dB->Name = L"Scale05dB";
-			this->Scale05dB->Size = System::Drawing::Size(199, 22);
+			this->Scale05dB->Size = System::Drawing::Size(198, 22);
 			this->Scale05dB->Text = L"0.5 dB / div";
 			this->Scale05dB->Click += gcnew System::EventHandler(this, &Form1::Scale05dB_Click);
 			// 
 			// menuItem4
 			// 
 			this->menuItem4->Name = L"menuItem4";
-			this->menuItem4->Size = System::Drawing::Size(196, 6);
+			this->menuItem4->Size = System::Drawing::Size(195, 6);
 			// 
 			// toolStripMenuItem1
 			// 
 			this->toolStripMenuItem1->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->ScaleSWR10, 
 				this->ScaleSWR5, this->ScaleSWR2, this->ScaleSWR1});
 			this->toolStripMenuItem1->Name = L"toolStripMenuItem1";
-			this->toolStripMenuItem1->Size = System::Drawing::Size(199, 22);
+			this->toolStripMenuItem1->Size = System::Drawing::Size(198, 22);
 			this->toolStripMenuItem1->Text = L"SWR Scale";
 			// 
 			// ScaleSWR10
@@ -1530,14 +1535,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// menuItem20
 			// 
 			this->menuItem20->Name = L"menuItem20";
-			this->menuItem20->Size = System::Drawing::Size(196, 6);
+			this->menuItem20->Size = System::Drawing::Size(195, 6);
 			// 
 			// toolStripMenuItem3
 			// 
 			this->toolStripMenuItem3->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->scale1kOhms, 
 				this->scale100Ohms, this->scale10Ohms});
 			this->toolStripMenuItem3->Name = L"toolStripMenuItem3";
-			this->toolStripMenuItem3->Size = System::Drawing::Size(199, 22);
+			this->toolStripMenuItem3->Size = System::Drawing::Size(198, 22);
 			this->toolStripMenuItem3->Text = L"Impedance Scale";
 			// 
 			// scale1kOhms
@@ -1566,14 +1571,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// menuItem13
 			// 
 			this->menuItem13->Name = L"menuItem13";
-			this->menuItem13->Size = System::Drawing::Size(196, 6);
+			this->menuItem13->Size = System::Drawing::Size(195, 6);
 			// 
 			// menuItem15
 			// 
 			this->menuItem15->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->RightScalePhase, 
 				this->RightScaleSWR, this->RightScaleDelay, this->RightScaleOhms});
 			this->menuItem15->Name = L"menuItem15";
-			this->menuItem15->Size = System::Drawing::Size(199, 22);
+			this->menuItem15->Size = System::Drawing::Size(198, 22);
 			this->menuItem15->Text = L"Right Scale Display";
 			// 
 			// RightScalePhase
@@ -1609,7 +1614,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// menuItem10
 			// 
 			this->menuItem10->Name = L"menuItem10";
-			this->menuItem10->Size = System::Drawing::Size(196, 6);
+			this->menuItem10->Size = System::Drawing::Size(195, 6);
 			// 
 			// toolStripMenuItem4
 			// 
@@ -1617,7 +1622,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 				this->scale100microsec, this->scale10microsec, this->scalemicroSec, this->scale100nsec, this->scale10nsec, this->scalenanoSec, 
 				this->scale100psec});
 			this->toolStripMenuItem4->Name = L"toolStripMenuItem4";
-			this->toolStripMenuItem4->Size = System::Drawing::Size(199, 22);
+			this->toolStripMenuItem4->Size = System::Drawing::Size(198, 22);
 			this->toolStripMenuItem4->Text = L"Group Delay Time Scale";
 			// 
 			// scale1millisec
@@ -1681,14 +1686,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// toolStripSeparator2
 			// 
 			this->toolStripSeparator2->Name = L"toolStripSeparator2";
-			this->toolStripSeparator2->Size = System::Drawing::Size(196, 6);
+			this->toolStripSeparator2->Size = System::Drawing::Size(195, 6);
 			// 
 			// toolStripMenuItem2
 			// 
 			this->toolStripMenuItem2->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->GDAperture1, 
 				this->GDAperture4, this->GDAperture16, this->GDAperture64});
 			this->toolStripMenuItem2->Name = L"toolStripMenuItem2";
-			this->toolStripMenuItem2->Size = System::Drawing::Size(199, 22);
+			this->toolStripMenuItem2->Size = System::Drawing::Size(198, 22);
 			this->toolStripMenuItem2->Text = L"Group Delay Aperture";
 			// 
 			// GDAperture1
@@ -1724,14 +1729,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// menuItem16
 			// 
 			this->menuItem16->Name = L"menuItem16";
-			this->menuItem16->Size = System::Drawing::Size(196, 6);
+			this->menuItem16->Size = System::Drawing::Size(195, 6);
 			// 
 			// menuItem17
 			// 
 			this->menuItem17->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->PolarZoom10Menu, 
 				this->PolarZoom15Menu, this->PolarZoom20Menu, this->PolarZoom25Menu});
 			this->menuItem17->Name = L"menuItem17";
-			this->menuItem17->Size = System::Drawing::Size(199, 22);
+			this->menuItem17->Size = System::Drawing::Size(198, 22);
 			this->menuItem17->Text = L"Polar Zoom";
 			// 
 			// PolarZoom10Menu
@@ -1767,12 +1772,12 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// menuItem21
 			// 
 			this->menuItem21->Name = L"menuItem21";
-			this->menuItem21->Size = System::Drawing::Size(196, 6);
+			this->menuItem21->Size = System::Drawing::Size(195, 6);
 			// 
 			// TDRSetupmenuItem
 			// 
 			this->TDRSetupmenuItem->Name = L"TDRSetupmenuItem";
-			this->TDRSetupmenuItem->Size = System::Drawing::Size(199, 22);
+			this->TDRSetupmenuItem->Size = System::Drawing::Size(198, 22);
 			this->TDRSetupmenuItem->Text = L"TDR Setup...";
 			this->TDRSetupmenuItem->Click += gcnew System::EventHandler(this, &Form1::TDRSetupmenuItem_Click);
 			// 
@@ -1946,7 +1951,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->IntegrationMenu1x->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->IntegrationMenu1x->Name = L"IntegrationMenu1x";
 			this->IntegrationMenu1x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D1));
-			this->IntegrationMenu1x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu1x->Size = System::Drawing::Size(132, 22);
 			this->IntegrationMenu1x->Text = L"1x";
 			this->IntegrationMenu1x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu1x_Click);
 			// 
@@ -1954,7 +1959,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->IntegrationMenu2x->Name = L"IntegrationMenu2x";
 			this->IntegrationMenu2x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D2));
-			this->IntegrationMenu2x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu2x->Size = System::Drawing::Size(132, 22);
 			this->IntegrationMenu2x->Text = L"2x";
 			this->IntegrationMenu2x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu2x_Click);
 			// 
@@ -1962,7 +1967,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->IntegrationMenu4x->Name = L"IntegrationMenu4x";
 			this->IntegrationMenu4x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D4));
-			this->IntegrationMenu4x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu4x->Size = System::Drawing::Size(132, 22);
 			this->IntegrationMenu4x->Text = L"4x";
 			this->IntegrationMenu4x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu4x_Click);
 			// 
@@ -1970,7 +1975,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->IntegrationMenu8x->Name = L"IntegrationMenu8x";
 			this->IntegrationMenu8x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D8));
-			this->IntegrationMenu8x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu8x->Size = System::Drawing::Size(132, 22);
 			this->IntegrationMenu8x->Text = L"8x";
 			this->IntegrationMenu8x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu8x_Click);
 			// 
@@ -1978,7 +1983,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->IntegrationMenu16x->Name = L"IntegrationMenu16x";
 			this->IntegrationMenu16x->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D6));
-			this->IntegrationMenu16x->Size = System::Drawing::Size(131, 22);
+			this->IntegrationMenu16x->Size = System::Drawing::Size(132, 22);
 			this->IntegrationMenu16x->Text = L"16x";
 			this->IntegrationMenu16x->Click += gcnew System::EventHandler(this, &Form1::IntegrationMenu16x_Click);
 			// 
@@ -2032,7 +2037,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->RefExtnCheckBox->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->RefExtnCheckBox->AutoSize = true;
-			this->RefExtnCheckBox->Location = System::Drawing::Point(914, 397);
+			this->RefExtnCheckBox->Location = System::Drawing::Point(913, 399);
 			this->RefExtnCheckBox->Name = L"RefExtnCheckBox";
 			this->RefExtnCheckBox->Size = System::Drawing::Size(15, 14);
 			this->RefExtnCheckBox->TabIndex = 28;
@@ -2044,7 +2049,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label6->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label6->BackColor = System::Drawing::Color::Transparent;
 			this->label6->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label6->Location = System::Drawing::Point(836, 394);
+			this->label6->Location = System::Drawing::Point(831, 396);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(76, 19);
 			this->label6->TabIndex = 29;
@@ -2055,11 +2060,12 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->Spectrum->AutoSize = true;
-			this->Spectrum->Location = System::Drawing::Point(819, 372);
+			this->Spectrum->Location = System::Drawing::Point(454, 373);
 			this->Spectrum->Name = L"Spectrum";
 			this->Spectrum->Size = System::Drawing::Size(15, 14);
 			this->Spectrum->TabIndex = 30;
 			this->Spectrum->UseVisualStyleBackColor = true;
+			this->Spectrum->Visible = false;
 			this->Spectrum->CheckedChanged += gcnew System::EventHandler(this, &Form1::Spectrum_CheckedChanged);
 			// 
 			// MIndex
@@ -2092,12 +2098,13 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 431);
-			this->Controls->Add(this->AddMarkerButton);
+			this->Controls->Add(this->RefExtnCheckBox);
 			this->Controls->Add(this->Spectrum);
+			this->Controls->Add(this->label7);
+			this->Controls->Add(this->AddMarkerButton);
 			this->Controls->Add(this->stopF);
 			this->Controls->Add(this->startF);
 			this->Controls->Add(this->label6);
-			this->Controls->Add(this->RefExtnCheckBox);
 			this->Controls->Add(this->SweepProgressBar);
 			this->Controls->Add(this->FrequencyDigitDecrease);
 			this->Controls->Add(this->FrequencyDigitIncrease);
@@ -2124,7 +2131,6 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->Controls->Add(this->label3);
 			this->Controls->Add(this->menuStrip1);
 			this->Controls->Add(this->MIndex);
-			this->Controls->Add(this->label7);
 			this->MainMenuStrip = this->menuStrip1;
 			this->MinimumSize = System::Drawing::Size(600, 300);
 			this->Name = L"Form1";
@@ -2168,7 +2174,8 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			TDRMetricMode = true;		// default TDR to metric mode
 
 			PreCharge = false;			// default to integrator precharge off
-
+//			bufferBitmap = (System::Drawing::Bitmap ^) NULL;
+			bufferBitmapInitialized = false;
 			Marker = gcnew array<__int64>(5);	// allocate and initialize 5 frequency markers
 			MarkerT = gcnew array<Single>(5);		// allocate and initialize 5 time markers
 			for (int i=0; i<5; i++)
@@ -2214,7 +2221,7 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			// VNAWorkerThread->ApartmentState = ApartmentState::STA;
 
 			SerialCollect = false;			// nothing for worker thread to do yet
-			SerialThread->Start();		// start up the thread
+//			SerialThread->Start();		// start up the thread
 
 
 			// Open configuration from last time VNAR was run, or from commandline if there's an argument passed
@@ -2399,6 +2406,8 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 		array<Point>^ points = gcnew array<Point>(1024+1); // used for drawlines
 
 		long avrgRef = 0;
+
+
 
 		// Set antialiasing for lines and circles  07-13-2008
 		gr->SmoothingMode = SmoothingMode::AntiAlias;
@@ -3773,6 +3782,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 #endif
 					gr->DrawLine(penBrown2, traceStart, traceStop);
 				}
+//#define DEBUGLONGCAL
 #ifdef DEBUGLONGCAL
 				if (true)
 				{
@@ -3798,7 +3808,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude -= sqrt(xx*xx + yy*yy);
 					fphase = NormalizePhaseDegr(fphase);
 
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fabs(fmagnitude), scopeDisp.Height, RectVertScaledB, refLevel);
 					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 					// Current point
@@ -3826,7 +3836,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					else if (Scale1dB->Checked)	scaleFactor = 1;
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
+					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fabs(fmagnitude), scopeDisp.Height, scaleFactor, refLevel);
 					DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
 
 					// current point - phase
@@ -3855,7 +3865,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 #endif
 		}
 
-		if (polarItem->Checked == true  && !Spectrum->Checked)							// render screen in polar mode
+		if (polarItem->Checked == true && !Spectrum->Checked )							// render screen in polar mode
 		{
 
 			// Display plot title 
@@ -3886,7 +3896,8 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			polarBox.Height = polarRadius *2;
 
 			// draw polar display and outside circle
-			gr->FillEllipse(brwhite, polarBox);
+			if ( !rectItem->Checked ) 
+				gr->FillEllipse(brwhite, polarBox);
 			gr->DrawEllipse(penBlack2, polarBox);
 
 			// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
@@ -4672,6 +4683,52 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			gr->DrawString(ZoomStatus, Statusfont, brBlack, toprightcenter, Centerformat);
 		}
 
+	}
+
+
+private: System::Void CalculateReferencePlane()
+	 {
+
+		// Compute equivalent time delay of the cal fixture (as though it were linear)
+		// This is used for Reference Plane Extension compensation mode.
+		// The phase component of Et is ~ the phase of the fixture.
+
+		double sumDeltaPhase = 0.0;
+		for (int i=20; i<FG->points-20; i++)
+		{
+			double phase1;
+			double phase2;
+			
+			double fmagnitude;			// 0 to 1
+			double fphase;				// -180 to +180	
+			double& rmag = fmagnitude;
+			double& rphs = fphase;
+
+
+			// current point
+			CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
+			if (calCheckBox->Checked)
+				CorrectS11(CalData, FG->Frequency(i), false, fmagnitude, fphase, rmag, rphs);
+			phase1 = fphase;
+
+			// next point
+			CalData->ResolveReflPolar(trace[i+1], FG->Frequency(i+1), rmag, rphs, true);
+			if (calCheckBox->Checked)
+				CorrectS11(CalData, FG->Frequency(i+1), false, fmagnitude, fphase, rmag, rphs);
+			phase2 = fphase;
+
+
+			sumDeltaPhase += NormalizePhaseDegr(phase1 - phase2); // This assumes a phase setp is always small enough not to wrap around
+		}
+
+		// time delay is the total running deltaphase over the frequency range.
+
+		__int64 freq2 = FG->Frequency(FG->points-20);
+		__int64 freq1 = FG->Frequency(20);
+		__int64 freqd = freq2-freq1;
+		CalData->reflTimeDelayEquivalent = sumDeltaPhase / (360.0 * (double)freqd);
+
+		 
 	}
 
 	/// Convert event into renderable size 
@@ -5600,8 +5657,8 @@ private: System::Void rectItem_Click(System::Object^  sender, System::EventArgs^
 					FG->SetStopF(Convert::ToInt32(tempstr->ToString()));
 				}
 
-			rectItem->Checked = true;
-			polarItem->Checked = false;
+			rectItem->Checked = !rectItem->Checked;
+//			polarItem->Checked = false;
 			TDRItem->Checked = false;
 			Refresh();
 		}
@@ -5653,8 +5710,8 @@ private: System::Void polarItem_Click(System::Object^  sender, System::EventArgs
 					FG->SetStopF(Convert::ToInt32(tempstr->ToString()));
 				}
 
-			rectItem->Checked = false;
-			polarItem->Checked = true;
+//			rectItem->Checked = false;
+			polarItem->Checked = !polarItem->Checked;
 			TDRItem->Checked = false;
 			Refresh();
 							
@@ -5767,7 +5824,6 @@ private: System::Void calCheckBox_CheckedChanged(System::Object^  sender, System
 				RefExtnCheckBox->Enabled = true;
 			else
 				RefExtnCheckBox->Enabled = false;
-
 			Refresh();	// Force Screen redraw
 		 }
 		 /// Error Term Trace enable/disable menu item click handler
@@ -7226,27 +7282,9 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					VNA->SetAudioRefLevel(br->ReadInt32());
 
 					VNA->SetIF(ifr);
-					OpenAudio();
+					if (VNA->GetHardware() != HW_NANOVNA)
+						OpenAudio();
 					FindVNA();
-#if 0
-					serialPort1->Open();
-				     vnaFound = false;
-					 serialPort1->WriteLine("F3");
-					 System::Threading::Thread::Sleep(1000);
-					// String ^reply = serialPort1->ReadExisting();
-					if (!vnaFound) {
-						MessageBox::Show("No VNA connected to stored port", "Error",
-						 MessageBoxButtons::OK, MessageBoxIcon::Error);
-					    throw; 
-					}
-					VNA->SetFreq(50000000L, true);
-					System::Threading::Thread::Sleep(500);
-					if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
-						MessageBox::Show("Measurement signal level out of range", "Error",
-						 MessageBoxButtons::OK, MessageBoxIcon::Error);
-					    throw; 
-					}
-#endif
 					//if (serialPort1->IsOpen) serialPort1->Close();
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
@@ -7276,7 +7314,7 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 //				if(CalSetPresent)								// load the detector.ica file
 //					CalData = new InstrumentCalDataSet(AllUsersDataPath);		// Allocate calibration data set
 
-			if(calCheckBox->Enabled)						// load Fixture cal file
+			if(calCheckBox->Enabled)						// load Fixture cal file if it was present at save
 			{
 				//if FixtureCalFileName points to a valid filename string
 				if((FixtureCalFileName != nullptr) && (String::Compare(FixtureCalFileName, "") != 0))
@@ -7309,21 +7347,19 @@ private: System::Void FindVNA()
 		 {
 				try 
 				{
-					serialPort1->Open();
-				     vnaFound = false;
-					 serialPort1->WriteLine("F3");
-					 System::Threading::Thread::Sleep(1000);
-					if (!vnaFound) {
+					if (!VNA->FindVNA()) {
 						MessageBox::Show("No VNA connected to port", "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
 					    throw; 
 					}
 					VNA->SetFreq(50000000L, true);
-					System::Threading::Thread::Sleep(500);
-					if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
-						MessageBox::Show("Measurement signal level out of range", "Error",
-						 MessageBoxButtons::OK, MessageBoxIcon::Error);
-					    throw; 
+					if (VNA->GetHardware() != HW_NANOVNA) {
+						System::Threading::Thread::Sleep(500);
+						if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
+							MessageBox::Show("Measurement signal level out of range", "Error",
+							 MessageBoxButtons::OK, MessageBoxIcon::Error);
+						    throw; 
+						}
 					}
 					//if (serialPort1->IsOpen) serialPort1->Close();
 				}
@@ -7349,20 +7385,24 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 		 /// Paint event handler
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
-#if 1
+			try {
+#if 0
 			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
 			delete(pg);
 #else
 		 // Double-buffered version of paint
 			Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
-
-			Bitmap ^ localBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
-			Graphics^ bitmapGraphics = Graphics::FromImage(localBitmap);
+			if (!bufferBitmapInitialized) {
+				bufferBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
+				bufferBitmapInitialized = true;
+			}
+//			Bitmap ^ localBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
+			Graphics^ bitmapGraphics = Graphics::FromImage(bufferBitmap);
 			bitmapGraphics->Clip = pg->Clip;
 
 			Form_Render(bitmapGraphics, ClientSize);	// redraw to our local bitmap
-			pg->DrawImage(localBitmap, 0, 0);			// draw our local bitmap to the screen
+			pg->DrawImageUnscaled(bufferBitmap, 0, 0);			// draw our local bitmap to the screen
 
 //			bitmapGraphics->Dispose();
 //			localBitmap->Dispose();
@@ -7372,6 +7412,7 @@ private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms
 			//delete(pg);
 
 #endif
+			} catch (Exception^) {}
 		 }
 
 	/// Resize event handler
@@ -7534,6 +7575,10 @@ private: System::Void s21GroupDelayColorToolStripMenuItem_Click(System::Object^ 
 		 }
 private: System::Void RefExtnCheckBox_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		 {
+			if (RefExtnCheckBox->Checked) {
+				// Calculate rotation to shift refplane to end of cable
+				CalculateReferencePlane();
+			}
  			Refresh();	// Force Screen redraw.  The checkbox is not accessible at this time.
 		 }
 private: System::Void RightScaleOhms_Click(System::Object^  sender, System::EventArgs^  e)
@@ -7779,6 +7824,7 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 		FG->SetStopF(FG->StopF() - (__int64)Math::Pow(10.0, digit));
 		stopF->Text = FG->StopF().ToString("N0");
     }
+
   }
 }
 ;};

@@ -122,9 +122,9 @@ int ToDisplayRectMag(double magnitude, int height, float dbScaleFactor, int refL
 
 	double dbmag;
 
-//	if(magnitude < 0.0000001)
-//		dbmag = 140.0;
-//	else
+	if(magnitude < 0.0000000001)
+		dbmag = -500.0;
+	else
 		dbmag = refLevel - 20.0 * log10(magnitude);	// 0 to 100 for zero dB to -100 dB.
 
 	dbmag /= ((double)dbScaleFactor * 10.0);			// 0 to +1 for 10db/div
@@ -700,21 +700,11 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 	measimag = measmag * sin(phase_radians);
     std::complex<double>	S11meas(measreal, measimag);
 
-	if (ReflExtn == false)		// perform full SOLT compensation
-		rslt = ((S11meas - Ed) / (Es * (S11meas - Ed) + Et));
+	rslt = ((S11meas - Ed) / (Es * (S11meas - Ed) + Et));
 
-	// Currently the limited compensation can not be enabled by the user
-	// because the checkbox is not displayed. This is a remnant from some experiments.
-	else				// perform limited Et compensation
+	if (ReflExtn)		// extend reference plane with calculated value
 	{
-		// Linearize the phase component of Et by use of the equivalent cable time delay.
-		// The control for selecting this option is in Form1, but is not currently enabled.
-		// We should probably replace it with a better method to compensate for the
-		// interconnecting cable not have a surge impedance of exactly 50+j0 ohms.
-
-		double oldRealLin = real(Et);
-		double oldImagLin = imag(Et);
-		double oldAngleRadians = atan2(oldImagLin, oldRealLin);
+		// Use reflTimeDelayEquivalent to calculate the required phase shift
 
 //		double linmag = sqrt(real(Et) * real(Et) + imag(Et) * imag(Et));
 		double linmag = 1.0; // Ignore magnitude impact for now
@@ -724,7 +714,7 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 		double imagLin = linmag * sin(newAngleRadians);
 		std::complex<double> ELin(realLin, imagLin);
 
-		rslt = S11meas / ELin;
+		rslt = rslt / ELin;
 	}
 
 	// Convert results to polar coordinates
@@ -885,6 +875,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 //									 MessageBoxButtons::OK, MessageBoxIcon::Information);
 		}
 
+#if 0  // No longer user here
+
 		// Compute equivalent time delay of the cal fixture (as though it were linear)
 		// This is used for Reference Plane Extension compensation mode.
 		// The phase component of Et is ~ the phase of the fixture.
@@ -895,7 +887,7 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 			double phase1 = RAD2DEGR * atan2(Cal->EtReal[i], Cal->EtImag[i]);
 			double phase2 = RAD2DEGR * atan2(Cal->EtReal[i+1], Cal->EtImag[i+1]);
 
-			sumDeltaPhase += NormalizePhaseDegr(phase1 - phase2);
+			sumDeltaPhase += NormalizePhaseDegr(phase1 - phase2); // This assumes a phase setp is always small enough not to wrap around
 		}
 
 		// time delay is the total running deltaphase over the frequency range.
@@ -904,7 +896,7 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 		__int64 freq1 = Cal->GetFreqFromFixtureCalGrid(20,  false);
 		__int64 freqd = freq2-freq1;
 		Cal->reflTimeDelayEquivalent = -sumDeltaPhase / (360.0 * (double)freqd);
-
+#endif
 		return true;
 	}
 	catch(System::IO::FileNotFoundException^ pe)

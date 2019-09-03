@@ -45,6 +45,7 @@
 #include "AudioInput.h"
 #using <mscorlib.dll>
 #include <math.h>
+#include <cstdio>
 
 using namespace System;
 	using namespace System::Windows::Forms;
@@ -211,6 +212,10 @@ VNADevice::VNADevice(System::IO::Ports::SerialPort^  port)
 	lastFreq = 0;
 	lastDir = -1;
 	hardware = 0;
+	S11Real = gcnew array<Double>(1200);
+	S11Imag = gcnew array<Double>(1200);
+	S21Real = gcnew array<Double>(1200);
+	S21Imag = gcnew array<Double>(1200);
 };
 	/// Destructor for VNADevice
 VNADevice::~VNADevice()
@@ -397,10 +402,14 @@ void VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, int power)
 {
 //	String ^ t;
-	SetAudioPower(power);
-	ArmAudio(numPoints,serialPort);
-	dur = duration;
+	if (hardware != HW_NANOVNA) {
+		SetAudioPower(power);
+		ArmAudio(numPoints,serialPort);
+		dur = duration;
+	}
 	if (! mode){
+		array<String^>^ sa;
+		String ^s;
 
 		try {
 //		t = String::Format("0 {0} {1} {2} ", startF, numPoints+5, stepF);
@@ -411,12 +420,56 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 			Sleep(1000);
 
 		}
-		//serialPort->ReadExisting();
-		if (power)
-			serialPort->WriteLine(String::Format("F2 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur, IFREQ, hardware));
-		else
-			serialPort->WriteLine(String::Format("F0 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur+2, IFREQ, hardware)); // add 2 duration for lead in and out
-		Sleep(20);
+		if (hardware == HW_NANOVNA) {
+			int base=0;
+			while (numPoints > 0) {
+				serialPort->WriteLine(String::Format("resume"));
+				Sleep(20);
+				s = serialPort->ReadLine();
+				serialPort->WriteLine(String::Format("sweep {0} {1}", startF, startF + 100*stepF));
+				Sleep(1000);
+				index = 0;
+				s = serialPort->ReadExisting();
+				serialPort->WriteLine(String::Format("pause"));
+				Sleep(20);
+				s = serialPort->ReadLine();
+				serialPort->WriteLine(String::Format("data 0"));
+				Sleep(20);
+				s = serialPort->ReadLine(); // Read "Data 0"
+				for (index = 0; index < 101; index++) {
+					s = serialPort->ReadLine();
+					if (s->StartsWith("ch>"))
+						break;
+					sa = s->Split(' ');
+					S11Real[index+base] = Convert::ToDouble(sa[0]);
+					S11Imag[index+base] = Convert::ToDouble(sa[1]);
+				}
+				s = serialPort->ReadExisting();
+				serialPort->WriteLine(String::Format("data 1"));
+				s = serialPort->ReadLine(); // Read "Data 1"
+				for (index = 0; index < 101; index++) {
+					s = serialPort->ReadLine();
+					if (s->StartsWith("ch>"))
+						break;
+					sa = s->Split(' ');
+					S21Real[index+base] = Convert::ToDouble(sa[0]);
+					S21Imag[index+base] = Convert::ToDouble(sa[1]);
+//					sscanf(s,"%f %f", S21Real[index],S21Imag[index]);
+				}
+				s = serialPort->ReadExisting();
+				base += 100;
+				numPoints -= 100;
+				startF += 100*stepF;
+				}
+				index = 0;
+		} else {
+			//serialPort->ReadExisting();
+			if (power)
+				serialPort->WriteLine(String::Format("F2 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur, IFREQ, hardware));
+			else
+				serialPort->WriteLine(String::Format("F0 {0} {1} {2} {3} {4} {5}", startF, numPoints + 10, stepF, dur+2, IFREQ, hardware)); // add 2 duration for lead in and out
+			Sleep(20);
+		}
 		}
 		catch (System::Exception^ e) {
 			     MessageBox::Show(e->Message, "Error");
@@ -441,11 +494,13 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 				//serialPort->ReadExisting();
 
 			}
-			SetAudioPower((direction == 2?true:false));
 			if (serialPort->IsOpen) {
-				//serialPort->ReadExi-sting();
-//				String ^t = String::Format("{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware);
-				serialPort->WriteLine(String::Format("F{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
+				if (hardware == HW_NANOVNA) {
+					serialPort->WriteLine(String::Format("freq {0}", startF));
+				} else {
+					SetAudioPower((direction == 2?true:false));
+					serialPort->WriteLine(String::Format("F{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
+				}
 			}
 		}	
 		catch (System::Exception^ e) {
@@ -464,6 +519,50 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 }
 
 
+bool VNADevice::FindVNA()
+		 {
+				try 
+				{
+
+//					       serialPort->PortName = SetPortName(_serialPort->PortName);
+//        serialPort->BaudRate = SetPortBaudRate(_serialPort->BaudRate);
+        serialPort->Parity =(System::IO::Ports::Parity) 0;
+        //serialPort->DataBits = (System::IO::Ports::DataBits)8;
+        serialPort->StopBits = (System::IO::Ports::StopBits)1;
+        serialPort->Handshake = (System::IO::Ports::Handshake)0;
+
+        // Set the read/write timeouts
+        serialPort->ReadTimeout = 500;
+        serialPort->WriteTimeout = 200;
+
+
+					serialPort->Open();
+					if (hardware == HW_NANOVNA) {
+						 String ^s = serialPort->ReadExisting();
+						serialPort->NewLine = "\r";
+						serialPort->WriteLine("test");
+						 System::Threading::Thread::Sleep(200);
+						 s = serialPort->ReadLine();
+						 if (s->StartsWith("test")) {
+							 s = serialPort->ReadExisting();
+							serialPort->WriteLine("cal off");
+						    System::Threading::Thread::Sleep(20);
+						    String ^s = serialPort->ReadLine();
+							 return true;
+						 }
+					} else { 
+						serialPort->Write("f3");
+						 System::Threading::Thread::Sleep(200);
+						 String ^s = serialPort->ReadLine();
+						 if (s->StartsWith("TAPR VNA v4"))
+							 return true;
+					}
+				}
+				catch( Exception^ /* e */ )	
+				{	
+				}
+				return false;
+		 }
 
 
 #define PhaseToQ(X) (short)( sin((X) * DEGR2RAD) * 1800 + 1850 )
@@ -515,6 +614,24 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflevel;
 	unsigned long freq = (unsigned long)TxBuffer->Freq2;
 	int i;
+	if (hardware == HW_NANOVNA) {
+		//if (index > 100)
+		//	return false;
+		double x;
+		double y;
+		reflevel = 0.0; // Always 0.0 for NanoVNA
+		x = S11Real[index];
+		y = S11Imag[index];
+		reflphase = (float) (atan2(y, x) * RAD2DEGR);
+		reflmag = (float)todb(sqrt(x*x + y*y));
+
+		x = S21Real[index];
+		y = S21Imag[index];
+		tranphase = (float) (atan2(y, x) * RAD2DEGR);
+		tranmag = (float)todb(sqrt(x*x + y*y));
+		index++;
+	} else {
+
 	//unsigned int level;
 	int availableSamples = ((dur+2) * SAMPPERMS - 2);
 //	int reply = TxBuffer->ReplyType;
@@ -547,7 +664,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 		}
 	}
 #endif
-#if 0
+#if 1
 	reflmag = Median(sumreflmag,availableSamples);
 	tranmag = Median(sumtranmag,availableSamples);
 	reflphase = Median(sumreflphase,availableSamples);
@@ -561,6 +678,7 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	reflevel = sumreflevel[0];
 #endif
 		// mp++;
+	}
 	RxBuffer->Vref1 = DB2SHORT(reflevel);
 //	RxBuffer->Vref2 = level;
 	NormalizePhase(reflphase);
@@ -570,7 +688,6 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	RxBuffer->TranPQ = PHASE2SHORT(tranphase) ;
 	RxBuffer->TranMQ = DB2SHORT(tranmag);
 	RxBuffer->Freq = freq;
-
 	return(rxsuccess);
 }
 

@@ -101,6 +101,7 @@ namespace VNAR3
 	private: System::Windows::Forms::Label^  statShortF;
 	private: System::Windows::Forms::Label^  label8;
 	private: System::Windows::Forms::TextBox^  minFreq;
+	private: System::Windows::Forms::TextBox^  refPlaneBox;
 
 
 
@@ -146,6 +147,7 @@ namespace VNAR3
 			this->statShortF = (gcnew System::Windows::Forms::Label());
 			this->label8 = (gcnew System::Windows::Forms::Label());
 			this->minFreq = (gcnew System::Windows::Forms::TextBox());
+			this->refPlaneBox = (gcnew System::Windows::Forms::TextBox());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -458,6 +460,15 @@ namespace VNAR3
 			this->minFreq->TabIndex = 29;
 			this->minFreq->Leave += gcnew System::EventHandler(this, &Calibration::minFreq_Leave);
 			// 
+			// refPlaneBox
+			// 
+			this->refPlaneBox->Location = System::Drawing::Point(521, 35);
+			this->refPlaneBox->Name = L"refPlaneBox";
+			this->refPlaneBox->Size = System::Drawing::Size(71, 20);
+			this->refPlaneBox->TabIndex = 36;
+			this->refPlaneBox->Text = L"0";
+			this->refPlaneBox->TextChanged += gcnew System::EventHandler(this, &Calibration::refPlaneBox_TextChanged);
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -465,6 +476,7 @@ namespace VNAR3
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
 			this->ClientSize = System::Drawing::Size(640, 492);
+			this->Controls->Add(this->refPlaneBox);
 			this->Controls->Add(this->minFreq);
 			this->Controls->Add(this->label8);
 			this->Controls->Add(this->statShortF);
@@ -813,6 +825,9 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 private: System::Void Calibration_Load(System::Object^  sender, System::EventArgs^  e) {
 			 minFreq->Text = String::Format("{0}",Cal->minCalFreq);
 			 maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
+			refPlaneBox->Text = Cal->reflTimeDelayEquivalent.ToString();
+
+
 		 }
 
 private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
@@ -861,6 +876,9 @@ private: System::Void minFreq_Leave(System::Object^  sender, System::EventArgs^ 
 			}
 
 
+		 }
+private: System::Void refPlaneBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+			Cal->reflTimeDelayEquivalent = Convert::ToDouble(refPlaneBox->Text);
 		 }
 };
 }

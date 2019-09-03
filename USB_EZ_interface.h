@@ -43,6 +43,10 @@ extern volatile float magSig;
 extern volatile float phaseSig;
 extern volatile float volSig;
 
+#define HW_SI5351 0
+#define HW_ADF4351 1
+#define HW_NANOVNA 2
+
 #define DIR_TRANS	0
 #define DIR_REFL	1
 
@@ -66,6 +70,11 @@ private:
 	float noise;
 	__int64 minHWFreq;
 	__int64 maxHWFreq;
+	array<double>^ S11Real;
+	array<double>^ S11Imag;
+	array<double>^ S21Real;
+	array<double>^ S21Imag;
+	int index;
 	int dur;						// total duration of one side signal
 	System::IO::Ports::SerialPort^  serialPort;
 
@@ -96,6 +105,7 @@ public:
 									// If 2nd byte is not 0x00, there was an I2C error on the 8051
 	bool Write(VNA_TXBUFFER * writebuf);		// Write 64 bytes of data to BULK_OUT_EP2 endpoint
 	bool WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int direction);	// Write data buffer then retrieve Rx buffer
+	bool FindVNA();				// Check if current serial port and HW selection is connected with the right device
 	void SetMode(int m);
 	void SetBefore(int l);
 	void SetAfter(int l);

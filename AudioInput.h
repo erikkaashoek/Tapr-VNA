@@ -49,6 +49,8 @@ typedef struct measurementType {
     SUMTYPE samp_c;
     SUMTYPE ref_s;
     SUMTYPE ref_c;
+	int force;
+	int average;
 } measurementType;
 
 
