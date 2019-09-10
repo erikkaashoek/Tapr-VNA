@@ -559,7 +559,7 @@ namespace VNAR3
 						statShortF->Visible = true;
 					  goto done;
 					}
-					calPoint->ReflPI = RxBuf->ReflPI;
+//					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 
@@ -619,7 +619,7 @@ namespace VNAR3
 					  statOpenF->Visible = true;
 					  goto done;
 					}
-					calPoint->ReflPI = RxBuf->ReflPI;
+//					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 
@@ -679,7 +679,7 @@ namespace VNAR3
 						statTermF->Visible = true;
 					  goto done;
 					}
-					calPoint->ReflPI = RxBuf->ReflPI;
+//					calPoint->ReflPI = RxBuf->ReflPI;
 					calPoint->ReflPQ = RxBuf->ReflPQ;
 					calPoint->ReflMQ = RxBuf->ReflMQ;
 

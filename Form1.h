@@ -831,12 +831,12 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label5->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label5->BackColor = System::Drawing::Color::Transparent;
 			this->label5->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label5->Location = System::Drawing::Point(840, 361);
+			this->label5->Location = System::Drawing::Point(854, 361);
 			this->label5->Name = L"label5";
-			this->label5->Size = System::Drawing::Size(72, 35);
+			this->label5->Size = System::Drawing::Size(58, 35);
 			this->label5->TabIndex = 18;
-			this->label5->Text = L"Apply Fixture Calibration";
-			this->label5->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+			this->label5->Text = L"Apply Calibration";
+			this->label5->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
 			this->toolTip1->SetToolTip(this->label5, L"Must have Cal File Loaded or must Run Cal file in order to enable.");
 			// 
 			// SweepSpd
@@ -845,7 +845,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->SweepSpd->BackColor = System::Drawing::Color::WhiteSmoke;
 			this->SweepSpd->Location = System::Drawing::Point(784, 367);
 			this->SweepSpd->Name = L"SweepSpd";
-			this->SweepSpd->Size = System::Drawing::Size(50, 23);
+			this->SweepSpd->Size = System::Drawing::Size(64, 23);
 			this->SweepSpd->TabIndex = 21;
 			this->SweepSpd->Text = L"1 ms";
 			this->toolTip1->SetToolTip(this->SweepSpd, L"Toggle Sweep Speed");
@@ -920,14 +920,13 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label7->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label7->BackColor = System::Drawing::Color::Transparent;
 			this->label7->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label7->Location = System::Drawing::Point(390, 367);
+			this->label7->Location = System::Drawing::Point(784, 393);
 			this->label7->Name = L"label7";
-			this->label7->Size = System::Drawing::Size(58, 22);
+			this->label7->Size = System::Drawing::Size(40, 22);
 			this->label7->TabIndex = 31;
-			this->label7->Text = L"Spectrum";
-			this->label7->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+			this->label7->Text = L"Power";
+			this->label7->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
 			this->toolTip1->SetToolTip(this->label7, L"Must have Cal File Loaded or must Run Cal file in order to enable.");
-			this->label7->Visible = false;
 			// 
 			// calCheckBox
 			// 
@@ -2049,23 +2048,22 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label6->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label6->BackColor = System::Drawing::Color::Transparent;
 			this->label6->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label6->Location = System::Drawing::Point(831, 396);
+			this->label6->Location = System::Drawing::Point(836, 396);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(76, 19);
 			this->label6->TabIndex = 29;
-			this->label6->Text = L"Refl Plane Ext";
+			this->label6->Text = L"ReflPlaneExt";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			// 
 			// Spectrum
 			// 
 			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->Spectrum->AutoSize = true;
-			this->Spectrum->Location = System::Drawing::Point(454, 373);
+			this->Spectrum->Location = System::Drawing::Point(830, 399);
 			this->Spectrum->Name = L"Spectrum";
 			this->Spectrum->Size = System::Drawing::Size(15, 14);
 			this->Spectrum->TabIndex = 30;
 			this->Spectrum->UseVisualStyleBackColor = true;
-			this->Spectrum->Visible = false;
 			this->Spectrum->CheckedChanged += gcnew System::EventHandler(this, &Form1::Spectrum_CheckedChanged);
 			// 
 			// MIndex
@@ -5244,9 +5242,8 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 					else if (actualMeasurement.reference > 15.0) 
 						MessageBox::Show("Measurement signal level too high", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
 					else
-						MessageBox::Show("Sweep failed for unknown reason", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
- 
-					break;
+						MessageBox::Show("Timeout when reading data", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+ 					break;
 				}
 				RxBuf->Vref2 = (unsigned short)(512 + ( (freq* 1.0 - RxBuf->Freq) / ((FG->Frequency(0) + FG->Frequency(FG->points-1))/ 2.0)) * 512.0);
 //				if ( !Spectrum->Checked  && ( freq* 1.0 / RxBuf->Freq < 0.99 || 1.01 < freq* 1.0 / RxBuf->Freq ) ) {
@@ -5752,8 +5749,10 @@ private: System::Void TDRItem_Click(System::Object^  sender, System::EventArgs^ 
 
 			FG = gcnew FrequencyGrid(1020);
 			FG->ferror = CalData->FreqError;
-			FG->SetStartF(VNA->GetMaxFreq()*1e6*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
-			FG->SetStopF(VNA->GetMaxFreq()*1e6*1019.0/1020.0);		// would become point[1025] in the array (not used)
+//			FG->SetStartF( 119999488*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
+//			FG->SetStopF( 119999488);		// would become point[1025] in the array (not used)
+			FG->SetStartF(VNA->GetMaxFreq()*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
+			FG->SetStopF(VNA->GetMaxFreq()*1019.0/1020.0);		// would become point[1025] in the array (not used)
 											// points [0] .. [4] get extrapolated so IFFT works
 
 //			FG->SetStopF(120116675);	old code - before gridstop fix (dividing by points-1)

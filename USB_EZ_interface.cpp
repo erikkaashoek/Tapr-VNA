@@ -408,7 +408,6 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 		dur = duration;
 	}
 	if (! mode){
-		array<String^>^ sa;
 		String ^s;
 
 		try {
@@ -420,28 +419,23 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 				return false;
 		}
 		if (hardware == HW_NANOVNA) {
-			int base=0;
-			while (numPoints > 0) {
 //				serialPort->WriteLine(String::Format("resume"));
 //				Sleep(20);
 //				s = serialPort->ReadLine();
-				serialPort->WriteLine(String::Format("sweep {0} {1}", startF, startF + 100*stepF));
-					s = serialPort->ReadLine();
-				Sleep(20);
-					s = serialPort->ReadExisting();
-				serialPort->WriteLine(String::Format("scan"));
+				s = serialPort->ReadExisting();
+				serialPort->WriteLine(String::Format("scan {0} {1} {2}",startF, stepF, numPoints));
 				s = serialPort->ReadLine();
 				Sleep(20);
-					s = serialPort->ReadExisting();
-				int busy = true;
+				s = serialPort->ReadExisting();
+#if 0
+				s = serialPort->ReadExisting();
+
+					int busy = true;
 				while (busy) {
 					s = serialPort->ReadExisting();
 					serialPort->WriteLine(String::Format("test"));
 					s = serialPort->ReadLine(); // test
 					s = serialPort->ReadLine();
-					char a0 , a1;
-					a0 = s[0];
-					a1 = s[1];
 					if (s->StartsWith("don"))
 						busy = false;
 				}
@@ -469,11 +463,12 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 					S21Imag[index+base] = Convert::ToDouble(sa[1]);
 //					sscanf(s,"%f %f", S21Real[index],S21Imag[index]);
 				}
-				s = serialPort->ReadExisting();
+				s = serialPort->ReadLine();
 				base += 101;
 				numPoints -= 101;
 				startF += 101*stepF;
 				}
+#endif
 				index = 0;
 		} else {
 			//serialPort->ReadExisting();
@@ -507,7 +502,10 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 			}
 			if (serialPort->IsOpen) {
 				if (hardware == HW_NANOVNA) {
+					String	^s = serialPort->ReadExisting();
 					serialPort->WriteLine(String::Format("freq {0}", startF));
+					s = serialPort->ReadLine();
+//					s = serialPort->ReadExisting();
 				} else {
 					SetAudioPower((direction == 2?true:false));
 					serialPort->WriteLine(String::Format("F{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware));
@@ -556,9 +554,9 @@ bool VNADevice::FindVNA()
 						 s = serialPort->ReadLine(); // "test"
 						 if (s->StartsWith("pause")) {
 							s = serialPort->ReadExisting(); // ch>
-							serialPort->WriteLine("cal off");
-							 s = serialPort->ReadLine(); // cal off
-							 s = serialPort->ReadExisting(); // ch>
+//							serialPort->WriteLine("cal off");
+//							 s = serialPort->ReadLine(); // cal off
+//							 s = serialPort->ReadExisting(); // ch>
 //						    System::Threading::Thread::Sleep(100);
 //							serialPort->WriteLine("pause");
 //						    s = serialPort->ReadLine();
@@ -627,75 +625,74 @@ bool VNADevice::WriteRead(VNA_TXBUFFER * TxBuffer, VNA_RXBUFFER * RxBuffer, int 
 	float reflphase,tranphase;
 	float reflmag,tranmag;
 	float reflevel;
-	unsigned long freq = (unsigned long)TxBuffer->Freq2;
+	unsigned long freq;
 	int i;
 	if (hardware == HW_NANOVNA) {
-		//if (index > 100)
-		//	return false;
+		array<String^>^ sa;
+		String ^s;
 		double x;
 		double y;
 		reflevel = 0.0; // Always 0.0 for NanoVNA
-		x = S11Real[index];
-		y = S11Imag[index];
+		try {
+		s = serialPort->ReadLine();
+		if (s->StartsWith("done"))
+			return false;
+		if (s->StartsWith("start"))
+			s = serialPort->ReadLine();
+		sa = s->Split(' ');
+
+		freq = Convert::ToInt32(sa[0]);
+		x =  Convert::ToDouble(sa[1]);
+		y = Convert::ToDouble(sa[2]);
 		reflphase = (float) (atan2(y, x) * RAD2DEGR);
 		reflmag = (float)todb(sqrt(x*x + y*y));
 
-		x = S21Real[index];
-		y = S21Imag[index];
+		x = Convert::ToDouble(sa[3]);
+		y = Convert::ToDouble(sa[4]);
 		tranphase = (float) (atan2(y, x) * RAD2DEGR);
 		tranmag = (float)todb(sqrt(x*x + y*y));
 		index++;
+		}
+		catch( Exception^ /* e */ )	
+		{	
+			return false;
+		}
+
 	} else {
 
-	//unsigned int level;
-	int availableSamples = ((dur+2) * SAMPPERMS - 2);
-//	int reply = TxBuffer->ReplyType;
-	int retries=0;
-//	return true;
+		//unsigned int level;
+		int availableSamples = ((dur+2) * SAMPPERMS - 2);
+		//	int reply = TxBuffer->ReplyType;
+		int retries=0;
+		//	return true;
 #define MAX_RETRIES	100		
-//	i = 0;
-	for (i=0; i<availableSamples; i++) 
-	{
-		while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq, availableSamples) && retries < MAX_RETRIES) {
-			Sleep(2);
-			retries++;
-		}
-		if (retries >= MAX_RETRIES)
-			return (false);
-	}
-#if 0 // moved to form.h SerialWorker
-	if (serialPort->IsOpen) {
-		if (serialPort->BytesToRead > 0) {
-			char b = serialPort->ReadByte();
-			if (b == 'x') {
-				freq = ((unsigned long)serialPort->ReadByte());
-				freq += ((unsigned long)serialPort->ReadByte())<<8;
-				freq += ((unsigned long)serialPort->ReadByte())<<16;
-				freq += ((unsigned long)serialPort->ReadByte())<<24;
-				level = ((unsigned long)serialPort->ReadByte());
-				level += ((unsigned long)serialPort->ReadByte())<<8;
-				MarkFrequency(freq);
+		//	i = 0;
+		for (i=0; i<availableSamples; i++) 
+		{
+			while (!RetreiveData((int)TxBuffer->TxAccum, dur, sumreflmag[i], sumreflphase[i], sumtranmag[i], sumtranphase[i], sumreflevel[i], freq, availableSamples) && retries < MAX_RETRIES) {
+				Sleep(2);
+				retries++;
 			}
+			if (retries >= MAX_RETRIES)
+				return (false);
 		}
-	}
-#endif
 #if 1
-	reflmag = Median(sumreflmag,availableSamples);
-	tranmag = Median(sumtranmag,availableSamples);
-	reflphase = Median(sumreflphase,availableSamples);
-	tranphase = Median(sumtranphase,availableSamples);
-	reflevel = Median(sumreflevel,availableSamples);
+		reflmag = Median(sumreflmag,availableSamples);
+		tranmag = Median(sumtranmag,availableSamples);
+		reflphase = Median(sumreflphase,availableSamples);
+		tranphase = Median(sumtranphase,availableSamples);
+		reflevel = Median(sumreflevel,availableSamples);
 #else
-	reflmag = sumreflmag[0];
-	tranmag = sumtranmag[0];
-	reflphase = sumreflphase[0];
-	tranphase = sumtranphase[0];
-	reflevel = sumreflevel[0];
+		reflmag = sumreflmag[0];
+		tranmag = sumtranmag[0];
+		reflphase = sumreflphase[0];
+		tranphase = sumtranphase[0];
+		reflevel = sumreflevel[0];
 #endif
 		// mp++;
 	}
 	RxBuffer->Vref1 = DB2SHORT(reflevel);
-//	RxBuffer->Vref2 = level;
+	//	RxBuffer->Vref2 = level;
 	NormalizePhase(reflphase);
 	RxBuffer->ReflPQ = PHASE2SHORT(reflphase) ;
 	RxBuffer->ReflMQ = DB2SHORT(reflmag);
