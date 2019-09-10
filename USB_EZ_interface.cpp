@@ -416,25 +416,38 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //		serialPort->WriteLine(String::Format("0 1000000 1 0 ", startF, numPoints, stepF));
 //		Sleep(200);
 		if (!serialPort->IsOpen) { 
-			serialPort->Open();
-			Sleep(1000);
-
+			if (!FindVNA())
+				return false;
 		}
 		if (hardware == HW_NANOVNA) {
 			int base=0;
 			while (numPoints > 0) {
-				serialPort->WriteLine(String::Format("resume"));
-				Sleep(20);
-				s = serialPort->ReadLine();
+//				serialPort->WriteLine(String::Format("resume"));
+//				Sleep(20);
+//				s = serialPort->ReadLine();
 				serialPort->WriteLine(String::Format("sweep {0} {1}", startF, startF + 100*stepF));
-				Sleep(1000);
+					s = serialPort->ReadLine();
+				Sleep(20);
+					s = serialPort->ReadExisting();
+				serialPort->WriteLine(String::Format("scan"));
+				s = serialPort->ReadLine();
+				Sleep(20);
+					s = serialPort->ReadExisting();
+				int busy = true;
+				while (busy) {
+					s = serialPort->ReadExisting();
+					serialPort->WriteLine(String::Format("test"));
+					s = serialPort->ReadLine(); // test
+					s = serialPort->ReadLine();
+					char a0 , a1;
+					a0 = s[0];
+					a1 = s[1];
+					if (s->StartsWith("don"))
+						busy = false;
+				}
 				index = 0;
 				s = serialPort->ReadExisting();
-				serialPort->WriteLine(String::Format("pause"));
-				Sleep(20);
-				s = serialPort->ReadLine();
 				serialPort->WriteLine(String::Format("data 0"));
-				Sleep(20);
 				s = serialPort->ReadLine(); // Read "Data 0"
 				for (index = 0; index < 101; index++) {
 					s = serialPort->ReadLine();
@@ -457,9 +470,9 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //					sscanf(s,"%f %f", S21Real[index],S21Imag[index]);
 				}
 				s = serialPort->ReadExisting();
-				base += 100;
-				numPoints -= 100;
-				startF += 100*stepF;
+				base += 101;
+				numPoints -= 101;
+				startF += 101*stepF;
 				}
 				index = 0;
 		} else {
@@ -489,10 +502,8 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 	if (! mode){
 		try {
 			if (!serialPort->IsOpen) {
-				serialPort->Open();
-				Sleep(1000);
-				//serialPort->ReadExisting();
-
+				if (!FindVNA())
+					return;
 			}
 			if (serialPort->IsOpen) {
 				if (hardware == HW_NANOVNA) {
@@ -532,22 +543,26 @@ bool VNADevice::FindVNA()
         serialPort->Handshake = (System::IO::Ports::Handshake)0;
 
         // Set the read/write timeouts
-        serialPort->ReadTimeout = 500;
-        serialPort->WriteTimeout = 200;
+        serialPort->ReadTimeout = 2000;
+        serialPort->WriteTimeout = 1000;
 
 
 					serialPort->Open();
 					if (hardware == HW_NANOVNA) {
 						 String ^s = serialPort->ReadExisting();
-						serialPort->NewLine = "\r";
-						serialPort->WriteLine("test");
-						 System::Threading::Thread::Sleep(200);
-						 s = serialPort->ReadLine();
-						 if (s->StartsWith("test")) {
-							 s = serialPort->ReadExisting();
+						serialPort->NewLine = "\r\n";
+						serialPort->WriteLine("pause");
+					    System::Threading::Thread::Sleep(1000); // Let sweep finish
+						 s = serialPort->ReadLine(); // "test"
+						 if (s->StartsWith("pause")) {
+							s = serialPort->ReadExisting(); // ch>
 							serialPort->WriteLine("cal off");
-						    System::Threading::Thread::Sleep(20);
-						    String ^s = serialPort->ReadLine();
+							 s = serialPort->ReadLine(); // cal off
+							 s = serialPort->ReadExisting(); // ch>
+//						    System::Threading::Thread::Sleep(100);
+//							serialPort->WriteLine("pause");
+//						    s = serialPort->ReadLine();
+//						    s = serialPort->ReadExisting();
 							 return true;
 						 }
 					} else { 

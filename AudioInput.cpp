@@ -799,7 +799,9 @@ complex <double> modelLoadTran(__int64 freq, double res)
 	complex <double> debugC;
 complex <double> modelRefl(__int64 freq, double bef, double res, double aft)
 {
-	double del1 = bef/10./160e6, del2 = aft/10./160e6;
+	bef = pow(10,bef/25.0-2.0);
+	aft = pow(10,aft/25.0-2.0);
+	double del1 = bef/160e6, del2 = aft/160e6;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq) * polar(1.,del1*freq*2*PI) ;
 	debugC = r;
 	return(r);
@@ -807,7 +809,9 @@ complex <double> modelRefl(__int64 freq, double bef, double res, double aft)
 
 complex <double> modelTran(__int64 freq, double bef, double res, double aft)
 {
-	double del1 = bef/10./160e6, del2 = aft/10./160e6;
+	bef = pow(10,bef/25.0-2.0);
+	aft = pow(10,aft/25.0-2.0);
+	double del1 = bef/10./160e7, del2 = aft/10./160e7;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadTran(freq,res) * polar(1.,del2*freq*2*PI) ;
 	return(r);
 }

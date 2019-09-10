@@ -1860,7 +1860,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->grid101menu->Name = L"grid101menu";
 			this->grid101menu->Size = System::Drawing::Size(134, 22);
-			this->grid101menu->Text = L"100 points";
+			this->grid101menu->Text = L"101 points";
 			this->grid101menu->Click += gcnew System::EventHandler(this, &Form1::grid101menu_Click);
 			// 
 			// grid201menu
@@ -1869,14 +1869,14 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->grid201menu->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->grid201menu->Name = L"grid201menu";
 			this->grid201menu->Size = System::Drawing::Size(134, 22);
-			this->grid201menu->Text = L"200 points";
+			this->grid201menu->Text = L"201 points";
 			this->grid201menu->Click += gcnew System::EventHandler(this, &Form1::grid201menu_Click);
 			// 
 			// grid401menu
 			// 
 			this->grid401menu->Name = L"grid401menu";
 			this->grid401menu->Size = System::Drawing::Size(134, 22);
-			this->grid401menu->Text = L"400 points";
+			this->grid401menu->Text = L"401 points";
 			this->grid401menu->Click += gcnew System::EventHandler(this, &Form1::grid401menu_Click);
 			// 
 			// grid1024menu
@@ -5638,9 +5638,9 @@ private: System::Void rectItem_Click(System::Object^  sender, System::EventArgs^
 
 					// Rebuild FrequencyGrid from control values
 
-					if (grid101menu->Checked) points = 100;
-					else if(grid201menu->Checked) points = 200;
-					else if(grid401menu->Checked) points = 400;
+					if (grid101menu->Checked) points = 101;
+					else if(grid201menu->Checked) points = 201;
+					else if(grid401menu->Checked) points = 401;
 					else points = 1020;
 
 					FG = gcnew FrequencyGrid(points);
@@ -5752,8 +5752,8 @@ private: System::Void TDRItem_Click(System::Object^  sender, System::EventArgs^ 
 
 			FG = gcnew FrequencyGrid(1020);
 			FG->ferror = CalData->FreqError;
-			FG->SetStartF(585935);			// becomes point[5] in the post-extrapolation array
-			FG->SetStopF(119999488);		// would become point[1025] in the array (not used)
+			FG->SetStartF(VNA->GetMaxFreq()*1e6*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
+			FG->SetStopF(VNA->GetMaxFreq()*1e6*1019.0/1020.0);		// would become point[1025] in the array (not used)
 											// points [0] .. [4] get extrapolated so IFFT works
 
 //			FG->SetStopF(120116675);	old code - before gridstop fix (dividing by points-1)
@@ -6074,7 +6074,7 @@ private: System::Void grid101menu_Click(System::Object^  sender, System::EventAr
 			 grid1024menu->Checked = false;
 			 __int64 start = FG->StartF();
 			 __int64 stop = FG->StopF();
-			 FG = gcnew FrequencyGrid(100);	// Grid containing 100 frequencies
+			 FG = gcnew FrequencyGrid(101);	// Grid containing 100 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
 			 FG->ferror = CalData->FreqError;
@@ -6089,7 +6089,7 @@ private: System::Void grid201menu_Click(System::Object^  sender, System::EventAr
 			 grid1024menu->Checked = false;
              __int64 start = FG->StartF();
 			 __int64 stop = FG->StopF();
-			 FG = gcnew FrequencyGrid(200);	// Grid containing 200 frequencies
+			 FG = gcnew FrequencyGrid(201);	// Grid containing 200 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
 			 FG->ferror = CalData->FreqError;
@@ -6104,7 +6104,7 @@ private: System::Void grid401menu_Click(System::Object^  sender, System::EventAr
 			 grid1024menu->Checked = false;
 			 __int64 start = FG->StartF();
 			 __int64 stop = FG->StopF();
-			 FG = gcnew FrequencyGrid(400);	// Grid containing 401 frequencies
+			 FG = gcnew FrequencyGrid(401);	// Grid containing 401 frequencies
 			 FG->SetStartF(start);			// pick up previous values for start
 			 FG->SetStopF(stop);			// and stop
 			 FG->ferror = CalData->FreqError;

@@ -79,7 +79,11 @@
 											//0xFFF		// about +3.5 dB too hot for Q-DAC
 
 // constants used by Time Domain display
-#define	TDRTIMETICK		4.167				// 4.167 nanoseconds per TDR time tick
+//#define	TDRTIMETICK		4.167				// 4.167 nanoseconds per TDR time tick
+
+
+#define TDRTIMETICK		((1/(VNA->GetMaxFreq()*1e6))/2.0)
+
 #define METERSPERNSEC	0.2998				// meters per nanosecond - free space
 #define FEETPERNSEC		0.9836				// feet per nanosecond - free space
 

@@ -50,6 +50,10 @@ namespace VNAR3 {
 	private: System::Windows::Forms::TrackBar^  SourceCapacitance;
 	private: System::Windows::Forms::Label^  label19;
 	private: System::Windows::Forms::Label^  label20;
+	private: System::Windows::Forms::TextBox^  LBText;
+	private: System::Windows::Forms::TextBox^  LAText;
+	private: System::Windows::Forms::Label^  label21;
+	private: System::Windows::Forms::Label^  label22;
 	public: 
 			 int cable_after;
 	
@@ -147,6 +151,10 @@ namespace VNAR3 {
 			this->SourceCapacitance = (gcnew System::Windows::Forms::TrackBar());
 			this->label19 = (gcnew System::Windows::Forms::Label());
 			this->label20 = (gcnew System::Windows::Forms::Label());
+			this->LBText = (gcnew System::Windows::Forms::TextBox());
+			this->LAText = (gcnew System::Windows::Forms::TextBox());
+			this->label21 = (gcnew System::Windows::Forms::Label());
+			this->label22 = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableBefore))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->CableAfter))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->Resistance))->BeginInit();
@@ -518,12 +526,48 @@ namespace VNAR3 {
 			this->label20->TabIndex = 38;
 			this->label20->Text = L"-100dB";
 			// 
+			// LBText
+			// 
+			this->LBText->Location = System::Drawing::Point(289, 292);
+			this->LBText->Name = L"LBText";
+			this->LBText->Size = System::Drawing::Size(56, 20);
+			this->LBText->TabIndex = 39;
+			// 
+			// LAText
+			// 
+			this->LAText->Location = System::Drawing::Point(289, 331);
+			this->LAText->Name = L"LAText";
+			this->LAText->Size = System::Drawing::Size(56, 20);
+			this->LAText->TabIndex = 40;
+			// 
+			// label21
+			// 
+			this->label21->AutoSize = true;
+			this->label21->Location = System::Drawing::Point(373, 295);
+			this->label21->Name = L"label21";
+			this->label21->Size = System::Drawing::Size(33, 13);
+			this->label21->TabIndex = 41;
+			this->label21->Text = L"meter";
+			// 
+			// label22
+			// 
+			this->label22->AutoSize = true;
+			this->label22->Location = System::Drawing::Point(373, 334);
+			this->label22->Name = L"label22";
+			this->label22->Size = System::Drawing::Size(33, 13);
+			this->label22->TabIndex = 42;
+			this->label22->Text = L"meter";
+			// 
 			// Mockup
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
-			this->ClientSize = System::Drawing::Size(434, 339);
+			this->ClientSize = System::Drawing::Size(434, 363);
+			this->Controls->Add(this->label22);
+			this->Controls->Add(this->label21);
+			this->Controls->Add(this->LAText);
+			this->Controls->Add(this->LBText);
 			this->Controls->Add(this->label20);
 			this->Controls->Add(this->label19);
 			this->Controls->Add(this->label15);
@@ -610,9 +654,11 @@ private: System::Void radioButton5_CheckedChanged(System::Object^  sender, Syste
 			 Resistance->Value = 50;
 		 }
 private: System::Void CableBefore_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			LBText->Text = String::Format("{0}",(pow(10,CableBefore->Value/25.0-2.0)/1).ToString("G5"));
 			 this->VNA->SetBefore(CableBefore->Value);
 		 }
 private: System::Void CableAfter_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
+			LAText->Text = String::Format("{0}",(pow(10,CableAfter->Value/25.0-2.0)/1).ToString("G5"));
 			 this->VNA->SetAfter(CableAfter->Value);
 		 }
 

@@ -351,6 +351,7 @@ namespace VNAR3 {
 			this->minFreqBox->TabIndex = 18;
 			this->minFreqBox->Text = L"0.1";
 			this->minFreqBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			this->minFreqBox->TextChanged += gcnew System::EventHandler(this, &SerialPort::minFreqBox_TextChanged);
 			// 
 			// maxFreqBox
 			// 
@@ -360,6 +361,7 @@ namespace VNAR3 {
 			this->maxFreqBox->TabIndex = 19;
 			this->maxFreqBox->Text = L"4400";
 			this->maxFreqBox->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			this->maxFreqBox->TextChanged += gcnew System::EventHandler(this, &SerialPort::maxFreqBox_TextChanged);
 			// 
 			// label8
 			// 
@@ -593,6 +595,12 @@ private: System::Void refLevelBox_TextChanged(System::Object^  sender, System::E
 private: System::Void label8_Click(System::Object^  sender, System::EventArgs^  e) {
 		 }
 private: System::Void label13_Click(System::Object^  sender, System::EventArgs^  e) {
+		 }
+private: System::Void minFreqBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+				VNA->SetMinFreq((__int64) ( Convert::ToDouble(this->minFreqBox->Text)*1000000.0));
+		 }
+private: System::Void maxFreqBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));
 		 }
 };
 }
