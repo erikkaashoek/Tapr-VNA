@@ -105,7 +105,7 @@ namespace VNAR3
 
 			InitializeComponent();
 			VNA_Initialize();
-//			this->MockupBox = (gcnew Mockup (this->VNA));
+			this->MockupBox = (gcnew Mockup (this->VNA));
       	}
  
 	protected:
@@ -134,6 +134,7 @@ namespace VNAR3
 		int	StartIndex, StopIndex;		///< Start and stop times converted to array index
 		int vnaFound;
 		Bitmap ^ bufferBitmap;
+		Graphics^ bitmapGraphics;
 		int bufferBitmapInitialized;
 		array<__int64>^ Marker;			///< Frequency Markers
 		array<Single>^ MarkerT;			///< Time Markers
@@ -399,6 +400,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  mockupDeviceToolStripMenuIt
 private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMenuItem;
 private: System::Windows::Forms::TrackBar^  MIndex;
 private: System::Windows::Forms::Button^  AddMarkerButton;
+private: System::Windows::Forms::TextBox^  delayBox;
 
 
 
@@ -605,6 +607,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->Spectrum = (gcnew System::Windows::Forms::CheckBox());
 			this->MIndex = (gcnew System::Windows::Forms::TrackBar());
 			this->AddMarkerButton = (gcnew System::Windows::Forms::Button());
+			this->delayBox = (gcnew System::Windows::Forms::TextBox());
 			this->menuStrip1->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->MIndex))->BeginInit();
 			this->SuspendLayout();
@@ -920,7 +923,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->label7->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->label7->BackColor = System::Drawing::Color::Transparent;
 			this->label7->ForeColor = System::Drawing::SystemColors::InfoText;
-			this->label7->Location = System::Drawing::Point(784, 393);
+			this->label7->Location = System::Drawing::Point(442, 364);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(40, 22);
 			this->label7->TabIndex = 31;
@@ -2059,7 +2062,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			// 
 			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
 			this->Spectrum->AutoSize = true;
-			this->Spectrum->Location = System::Drawing::Point(830, 399);
+			this->Spectrum->Location = System::Drawing::Point(488, 369);
 			this->Spectrum->Name = L"Spectrum";
 			this->Spectrum->Size = System::Drawing::Size(15, 14);
 			this->Spectrum->TabIndex = 30;
@@ -2089,6 +2092,15 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->AddMarkerButton->UseVisualStyleBackColor = true;
 			this->AddMarkerButton->Click += gcnew System::EventHandler(this, &Form1::AddMarkerButton_Click);
 			// 
+			// delayBox
+			// 
+			this->delayBox->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->delayBox->Location = System::Drawing::Point(784, 395);
+			this->delayBox->Name = L"delayBox";
+			this->delayBox->Size = System::Drawing::Size(60, 20);
+			this->delayBox->TabIndex = 34;
+			this->delayBox->TextChanged += gcnew System::EventHandler(this, &Form1::delayBox_TextChanged);
+			// 
 			// Form1
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -2096,6 +2108,7 @@ private: System::Windows::Forms::Button^  AddMarkerButton;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 431);
+			this->Controls->Add(this->delayBox);
 			this->Controls->Add(this->RefExtnCheckBox);
 			this->Controls->Add(this->Spectrum);
 			this->Controls->Add(this->label7);
@@ -2930,14 +2943,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						
 						// previous point
 						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// current point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						DrawLineBound(gr, scopeDisp, penS21Mag, traceStart, traceStop);
@@ -2948,14 +2959,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					if(DisplayMenuItem->Checked)			// display storage also
 					{
 						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// current point
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						DrawLineBound(gr, scopeDisp, penS21MagSto, traceStart, traceStop);
@@ -2975,25 +2984,21 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 						// get the magnitude and phase of previous measured point
 						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmMag, rmPhs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), measMag, measPhase, rmMag, rmPhs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
 
 						// get the magnitude and phase of previous stored point
 						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rsMag, rsPhs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), stoMag, stoPhase, rsMag, rsPhs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// get the magnitude and phase of current measured point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i-1), rmMag, rmPhs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), measMag, measPhase, rmMag, rmPhs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
 
 						// get the magnitude and phase of current stored point
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i-1), rsMag, rsPhs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), stoMag, stoPhase, rsMag, rsPhs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
 
@@ -3005,14 +3010,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 	//
 	//
 					//CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i), rmag, rphs);
-					//if (calCheckBox->Checked)
-					//	CorrectS21(CalData, FG->Frequency(i-1), fmagnitude, fphase, rmag, rphs);
+					//CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					//traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 					//// current point
 					//CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
-					//if (calCheckBox->Checked)
-					//	CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+					//CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					//traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 					//gr->DrawLine(penBrown2, traceStart, traceStop);
@@ -3028,14 +3031,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						// current point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
@@ -3047,14 +3048,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i-1), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						// current point
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						DrawLineBound(gr, scopeDisp, penS21PhsSto, traceStart, traceStop);
@@ -3068,14 +3067,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 					// previous point
 						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						DrawLineBound(gr, scopeDisp, penS11Mag, traceStart, traceStop);
@@ -3087,14 +3084,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						DrawLineBound(gr, scopeDisp, penS11MagSto, traceStart, traceStop);
@@ -3113,25 +3108,21 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 						// get the magnitude and phase of previous measured point
 						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmMag, rmPhs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
 
 						// get the magnitude and phase of previous stored point
 						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rsMag, rsPhs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
 						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
 
 						// get the magnitude and phase of current measured point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i-1), rmMag, rmPhs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
 
 						// get the magnitude and phase of current stored point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i-1), rsMag, rsPhs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
 						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
 
@@ -3142,14 +3133,14 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 		//
 		//
 					//CalData->ResolveReflPolar(trace3[i-1], trace4[i-1], trace2[i-1], rmag, rphs);
-					//if (calCheckBox->Checked)
-					//	CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					//
+					//CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					//traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 					//// current point
 					//CalData->ResolveReflPolar(trace3[i], trace4[i], trace2[i], rmag, rphs);
-					//if (calCheckBox->Checked)
-					//	CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					//
+					//CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					//traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
 
 					//gr->DrawLine(penDarkGoldenrod, traceStart, traceStop);
@@ -3165,15 +3156,13 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						traceStart.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
 
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						traceStop.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
 
@@ -3186,15 +3175,13 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						traceStart.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
 
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						traceStop.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
 
@@ -3211,14 +3198,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
@@ -3230,14 +3215,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 						DrawLineBound(gr, scopeDisp, penS11PhsSto, traceStart, traceStop);
@@ -3274,15 +3257,13 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					// previous point
 					CalData->ResolveTranPolar(trace[lowindex], FG->Frequency(lowindex), rmag, rphs);
-					if (calCheckBox->Checked)
-						CorrectS21(CalData, FG->Frequency(lowindex), fmagnitude, fphase, rmag, rphs);
+					CorrectS21(CalData, FG->Frequency(lowindex), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					prevphs = fphase;
 					prevfreq = FG->Frequency(lowindex);
 
 					// current point
 					CalData->ResolveTranPolar(trace[highindex], FG->Frequency(highindex), rmag, rphs);
-					if (calCheckBox->Checked)
-						CorrectS21(CalData, FG->Frequency(highindex), fmagnitude, fphase, rmag, rphs);
+					CorrectS21(CalData, FG->Frequency(highindex), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 					currphs = fphase;
 					currfreq = FG->Frequency(highindex);
 
@@ -3294,8 +3275,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						for(int k=lowindex+1; k<highindex; k++)
 						{
 							CalData->ResolveTranPolar(trace[k], FG->Frequency(k), rmag, rphs);
-							if (calCheckBox->Checked)
-								CorrectS21(CalData, FG->Frequency(k), fmagnitude, fphase, rmag, rphs);
+							CorrectS21(CalData, FG->Frequency(k), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 							if(fphase - trackphase > 25)		// big backwards phase jump - assume wrap
 								accumphase -= trackphase + 360.0 - fphase;
@@ -3342,15 +3322,13 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveTranPolar(traceSto[lowindex], FG->Frequency(lowindex), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(lowindex), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(lowindex), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						prevphs = fphase;
 						prevfreq = FG->Frequency(lowindex);
 
 						// current point
 						CalData->ResolveTranPolar(traceSto[highindex], FG->Frequency(highindex), rmag, rphs);
-						if (calCheckBox->Checked)
-							CorrectS21(CalData, FG->Frequency(highindex), fmagnitude, fphase, rmag, rphs);
+						CorrectS21(CalData, FG->Frequency(highindex), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 						currphs = fphase;
 						currfreq = FG->Frequency(highindex);
 
@@ -3362,8 +3340,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 							for(int k=lowindex+1; k<highindex; k++)
 							{
 								CalData->ResolveTranPolar(trace[k], FG->Frequency(k), rmag, rphs);
-								if (calCheckBox->Checked)
-									CorrectS21(CalData, FG->Frequency(k), fmagnitude, fphase, rmag, rphs);
+								CorrectS21(CalData, FG->Frequency(k), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 								if(fphase - trackphase > 25)		// big backwards phase jump - assume wrap
 									accumphase -= trackphase + 360.0 - fphase;
@@ -3424,8 +3401,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					// previous point
 					CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-					if (calCheckBox->Checked)
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					// derive R and jX from rmag and fphase
 					X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
@@ -3444,8 +3420,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					// current point
 					CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-					if (calCheckBox->Checked)
-						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
 					Y = (float)(fmagnitude * sin(DEGR2RAD * fphase));
@@ -3479,8 +3454,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						// previous point
 						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						// derive R and jX from rmag and fphase
 						X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
@@ -3495,8 +3469,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-						if (calCheckBox->Checked)
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 						// derive R and jX from rmag and fphase
 						X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
@@ -4071,8 +4044,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					// Correct S11 measured values against Calibration data
 
-					if (calCheckBox->Checked)
-						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					// Convert from polar to rectangular format, scale to chart size,
 					// and align with respect the center of the chart.
@@ -4100,8 +4072,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					// Correct S11 measured values against Calibration data
 
-					if (calCheckBox->Checked)
-						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					// Convert from polar to rectangular format, scale to chart size,
 					// and align with respect the center of the chart.
@@ -4223,8 +4194,17 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			const bool Inverse = true;		// Inverse FFT mode
 			String^ rangetext;
 
+			//			#define TDRTIMETICK		((1.0/(double)VNA->GetMaxFreq())*1e9/2.0)
+
 			StartIndex = (int)(TDRStartTime/TDRTIMETICK);
 			StopIndex = (int)(TDRStopTime/TDRTIMETICK);
+
+			if (StopIndex > 1020) {
+				StopIndex = 1020;
+				TDRStopTime = (float)(StopIndex * TDRTIMETICK);
+				StartIndex = 5;
+				TDRStartTime = (float)(StartIndex * TDRTIMETICK);
+			}
 
 			PixelsPerGrid = (float)scopeDisp.Width / (float)(StopIndex - StartIndex);		// Fixed Size Display of IFFT
 
@@ -4311,8 +4291,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			for(int i=5; i<1025; i++)
 			{
 				CalData->ResolveReflPolar(trace[i-5], FG->Frequency(i-5), rmag, rphs, true);
-				if (calCheckBox->Checked)
-					CorrectS11(CalData, FG->Frequency(i-5), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+				CorrectS11(CalData, FG->Frequency(i-5), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 				Real[i] = rmag * cos(rphs * DEGR2RAD);
 				Imag[i] = rmag * sin(rphs * DEGR2RAD);
@@ -4372,8 +4351,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				for(int i=5; i<1025; i++)
 				{
 					CalData->ResolveReflPolar(traceSto[i-5], FG->Frequency(i-5), rmag, rphs, true);
-					if (calCheckBox->Checked)
-						CorrectS11(CalData, FG->Frequency(i-5), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+					CorrectS11(CalData, FG->Frequency(i-5), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					Real[i] = rmag * cos(rphs * DEGR2RAD);
 					Imag[i] = rmag * sin(rphs * DEGR2RAD);
@@ -4488,8 +4466,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 								if (s11magItem->Checked || s11phsItem->Checked || polarItem->Checked)
 								{
 									CalData->ResolveReflPolar(trace[index], FG->Frequency(index), rmag, rphs, true);
-									if (calCheckBox->Checked)
-										CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+									CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 									// convert fmagnitude to dB
 
@@ -4507,8 +4484,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 								if (s21magItem->Checked && rectItem->Checked)
 								{
 									CalData->ResolveTranPolar(trace[index], FG->Frequency(index), rmag, rphs);
-									if (calCheckBox->Checked)
-										CorrectS21(CalData, FG->Frequency(index), fmagnitude, fphase, rmag, rphs);
+									CorrectS21(CalData, FG->Frequency(index), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 									// convert fmagnitude to dB
 
@@ -4528,8 +4504,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 								if (VSWRdisplay->Checked || polarItem->Checked)
 								{
 									CalData->ResolveReflPolar(trace[index], FG->Frequency(index), rmag, rphs, true);
-									if (calCheckBox->Checked)
-										CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+									CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 									if (fmagnitude > 1.0)		// clip if S11 greater than unity
 										fmagnitude = 1.0;
@@ -4547,8 +4522,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 									(s11magItem->Checked || RDisplay->Checked || jXDisplay->Checked)))
 								{
 									CalData->ResolveReflPolar(trace[index], FG->Frequency(index), rmag, rphs, true);
-									if (calCheckBox->Checked)
-										CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+									CorrectS11(CalData, FG->Frequency(index), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 									// convert magnitude+phase to R + jX
 
@@ -4705,14 +4679,12 @@ private: System::Void CalculateReferencePlane()
 
 			// current point
 			CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-			if (calCheckBox->Checked)
-				CorrectS11(CalData, FG->Frequency(i), false, fmagnitude, fphase, rmag, rphs);
+			CorrectS11(CalData, FG->Frequency(i), false, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 			phase1 = fphase;
 
 			// next point
 			CalData->ResolveReflPolar(trace[i+1], FG->Frequency(i+1), rmag, rphs, true);
-			if (calCheckBox->Checked)
-				CorrectS11(CalData, FG->Frequency(i+1), false, fmagnitude, fphase, rmag, rphs);
+			CorrectS11(CalData, FG->Frequency(i+1), false, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 			phase2 = fphase;
 
 
@@ -4725,8 +4697,7 @@ private: System::Void CalculateReferencePlane()
 		__int64 freq1 = FG->Frequency(20);
 		__int64 freqd = freq2-freq1;
 		CalData->reflTimeDelayEquivalent = sumDeltaPhase / (360.0 * (double)freqd);
-
-		 
+		delayBox->Text = (CalData->reflTimeDelayEquivalent*1e12).ToString("#.00");
 	}
 
 	/// Convert event into renderable size 
@@ -5465,13 +5436,13 @@ private: System::Void startF_DoubleClick(System::Object^  sender, System::EventA
 				{
 					__int64 tempF = nb->get_NumericValue();
 					// check for legitimate values for startF
-					if (tempF >= 200000 && tempF <= 220000000)
+					if (tempF >= VNA->GetMinFreq() && tempF <= VNA->GetMaxFreq())
 					{
 						FG->SetStartF(tempF);
 						startF->Text = FG->StartF().ToString("N0");
 					}
 					else
-						MessageBox::Show("Frequency must be between 200,000 and 200,000,000",
+						MessageBox::Show("Frequency must be between 200,000 and 900,000,000",
 							"Out of Range");
 				}
 			}
@@ -5484,13 +5455,13 @@ private: System::Void stopF_DoubleClick(System::Object^  sender, System::EventAr
 				if (nb->ShowDialog() == ::DialogResult::OK)
 				{
 					__int64 tempF = nb->get_NumericValue();
-					if (tempF >= 200000 && tempF <= 220000000)
+					if (tempF >= VNA->GetMaxFreq() && tempF <= VNA->GetMaxFreq())
 					{
 						FG->SetStopF(tempF);
 						stopF->Text = FG->StopF().ToString("N0");
 					}
 					else
-						MessageBox::Show("Frequency must be between 200,000 and 200,000,000",
+						MessageBox::Show("Frequency must be between 200,000 and 900,000,000",
 							"Out of Range");
 				}
 			 }
@@ -5751,8 +5722,8 @@ private: System::Void TDRItem_Click(System::Object^  sender, System::EventArgs^ 
 			FG->ferror = CalData->FreqError;
 //			FG->SetStartF( 119999488*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
 //			FG->SetStopF( 119999488);		// would become point[1025] in the array (not used)
-			FG->SetStartF(VNA->GetMaxFreq()*5.0/1020.0);			// becomes point[5] in the post-extrapolation array
-			FG->SetStopF(VNA->GetMaxFreq()*1019.0/1020.0);		// would become point[1025] in the array (not used)
+			FG->SetStartF((__int64)(VNA->GetMaxFreq()*5.0/1020.0));			// becomes point[5] in the post-extrapolation array
+			FG->SetStopF((__int64)(VNA->GetMaxFreq()*1019.0/1020.0));		// would become point[1025] in the array (not used)
 											// points [0] .. [4] get extrapolated so IFFT works
 
 //			FG->SetStopF(120116675);	old code - before gridstop fix (dividing by points-1)
@@ -5819,10 +5790,10 @@ private: System::Void s21groupdelayItem_Click(System::Object^  sender, System::E
 		 /// Calibration Applied button changed event handler
 private: System::Void calCheckBox_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		 {
-			if (calCheckBox->Checked)
-				RefExtnCheckBox->Enabled = true;
-			else
-				RefExtnCheckBox->Enabled = false;
+//			if (calCheckBox->Checked)
+//				RefExtnCheckBox->Enabled = true;
+//			else
+//				RefExtnCheckBox->Enabled = false;
 			Refresh();	// Force Screen redraw
 		 }
 		 /// Error Term Trace enable/disable menu item click handler
@@ -7278,12 +7249,16 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 					VNA->SetMinFreq(br->ReadInt32() * (__int64) 1000);
 					VNA->SetMaxFreq(br->ReadInt32() * (__int64) 1000);
 					VNA->SelectHardware(br->ReadInt32());
-					VNA->SetAudioRefLevel(br->ReadInt32());
+					VNA->SetAudioRefLevel(br->ReadDouble());
 
 					VNA->SetIF(ifr);
 					if (VNA->GetHardware() != HW_NANOVNA)
 						OpenAudio();
-					FindVNA();
+					if (VNA->GetHardware() != HW_MOCKUP)
+						FindVNA();
+					else 
+						MockupBox->Show();
+
 					//if (serialPort1->IsOpen) serialPort1->Close();
 				}
 				catch( Exception^ /* e */ )	// Don't bother warning the user ...
@@ -7344,31 +7319,33 @@ private: System::Void ReadConfiguration(OpenFileDialog^ infile)
 
 private: System::Void FindVNA()
 		 {
-				try 
-				{
-					if (!VNA->FindVNA()) {
-						MessageBox::Show("No VNA connected to port", "Error",
+			 try 
+			 {
+				 if (VNA->GetHardware() == HW_MOCKUP) {
+					 MockupBox->Show();
+				 } else if (!VNA->FindVNA()) {
+					 MessageBox::Show(String::Concat("No VNA connected to port ",serialPort1->PortName), "Error",
 						 MessageBoxButtons::OK, MessageBoxIcon::Error);
-					    throw; 
-					}
-					VNA->SetFreq(50000000L, true);
-					if (VNA->GetHardware() != HW_NANOVNA) {
-						System::Threading::Thread::Sleep(500);
-						if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
-							MessageBox::Show("Measurement signal level out of range", "Error",
+					 throw; 
+				 }
+				 VNA->SetFreq(50000000L, true);
+				 if (VNA->GetHardware() != HW_NANOVNA) {
+					 System::Threading::Thread::Sleep(500);
+					 if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
+						 MessageBox::Show("Measurement signal level out of range", "Error",
 							 MessageBoxButtons::OK, MessageBoxIcon::Error);
-						    throw; 
-						}
-					}
-					//if (serialPort1->IsOpen) serialPort1->Close();
-				}
-				catch( Exception^ /* e */ )	// Don't bother warning the user ...
-				{											// They probably don't care anyway
-//					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
-//									 MessageBoxButtons::OK, MessageBoxIcon::Information);
-					SerialPortBox = gcnew SerialPort (serialPort1, VNA);
-					SerialPortBox->ShowDialog();
-				}
+						 throw; 
+					 }
+				 }
+				 //if (serialPort1->IsOpen) serialPort1->Close();
+			 }
+			 catch( Exception^ /* e */ )	// Don't bother warning the user ...
+			 {											// They probably don't care anyway
+				 //					MessageBox::Show("Can not open stored serial port.", serialPort1->PortName,
+				 //									 MessageBoxButtons::OK, MessageBoxIcon::Information);
+				 SerialPortBox = gcnew SerialPort (serialPort1, VNA);
+				 SerialPortBox->ShowDialog();
+			 }
 		 }
 private: System::Single GetVerticalScaleFactor(System::Void)
 		 {
@@ -7395,9 +7372,9 @@ private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms
 			if (!bufferBitmapInitialized) {
 				bufferBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
 				bufferBitmapInitialized = true;
+				bitmapGraphics = Graphics::FromImage(bufferBitmap);
 			}
 //			Bitmap ^ localBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
-			Graphics^ bitmapGraphics = Graphics::FromImage(bufferBitmap);
 			bitmapGraphics->Clip = pg->Clip;
 
 			Form_Render(bitmapGraphics, ClientSize);	// redraw to our local bitmap
@@ -7676,7 +7653,7 @@ private: System::Void mockupDeviceToolStripMenuItem_Click(System::Object^  sende
 //			 _assembly = Assembly::GetExecutingAssembly();
 			 //MessageBox::Show(_assembly->ToString(),"TAPR VNA Host Program");
 
-			 MockupBox = gcnew Mockup (VNA);
+//			 MockupBox = gcnew Mockup (VNA);
 			 MockupBox->Show();
 
 		 }
@@ -7806,8 +7783,8 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
 	if (pe->Delta != 0) {
 		
 		FG->SetStopF(FG->StopF() + (__int64)Math::Pow(10.0, digit) * (__int64)(pe->Delta / MOUSE_WHEEL_STEP));
-		if (FG->StopF() < VNA->GetMinFreq())  // max allowed frequency
-			FG->SetStopF(VNA->GetMinFreq());
+		if (FG->StopF() > VNA->GetMaxFreq())  // max allowed frequency
+			FG->SetStopF(VNA->GetMaxFreq());
 		stopF->Text = FG->StopF().ToString("N0");
 		return;
 	}
@@ -7825,6 +7802,13 @@ private: System::Void stopF_MouseDown(System::Object^  sender, System::Windows::
     }
 
   }
+private: System::Void delayBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
+			try {
+				CalData->reflTimeDelayEquivalent = Convert::ToDouble(delayBox->Text)/1e12;
+				if (RefExtnCheckBox->Checked) Refresh();
+			}
+			catch (Exception^ /* pe */ ) {CalData->reflTimeDelayEquivalent = 0.0;}
+		 }
 }
 ;};
 

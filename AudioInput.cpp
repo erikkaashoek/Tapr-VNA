@@ -40,7 +40,7 @@ volatile int measurementIndex[1100];
 volatile int lastMeasurement;
 volatile int maxMeasurement;
 volatile unsigned long lastFreq;
-int audioRefLevel = -30;
+volatile double audioRefLevel = 0.0;
 int mark = 0;
 bool audioStopping = false;
 
@@ -422,10 +422,12 @@ bool RetreiveData(int i, int d, float& m, float& p, float& tm, float& tp, float&
 			}
 #endif
 			measured[measurementIndex[i] + 0 + lastJ].freq = fr;
-//			if (fr < 300000000L)
+			if (fr < 300000000L)
 				r = measured[measurementIndex[i] + 0 + lastJ].reference;
-//			else
-//				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)20.0; // Harmonic mixing
+			else if (fr < 900000000L)
+				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)16.0; // Harmonic mixing;
+			else
+				r = measured[measurementIndex[i] + 0 + lastJ].reference + (float)26.0; // Harmonic mixing
 
 			m = measured[measurementIndex[i] + 0 + lastJ].magnitude;
 			p = measured[measurementIndex[i] + 0 + lastJ].phase;
@@ -769,7 +771,7 @@ using namespace std;
 #define INDUCTANCE	2.0*PI*freq*pow(10,simL/20.0)/1e10
 #define CAPACITANCE	1/(2.0*PI*freq*pow(10,simC/20.0)/1e13)
 #define SOURCECAPACITANCE	1/(2.0*PI*freq*pow(10,simSC/20.0)/1e13)
-#define RESISTANCE pow(10, (simR - 50.0)/20.0)*Z0
+#define RESISTANCE pow(10, (simR - 50.0)/10.0)*Z0
 #define NOISE (float)((0.5 - (rand() % 1000)/1000.0) * simN )
 
 
@@ -799,8 +801,8 @@ complex <double> modelLoadTran(__int64 freq, double res)
 	complex <double> debugC;
 complex <double> modelRefl(__int64 freq, double bef, double res, double aft)
 {
-	bef = pow(10,bef/25.0-2.0);
-	aft = pow(10,aft/25.0-2.0);
+	bef = pow(10,2*(bef/25.0-2.0));
+	aft = pow(10,2*(aft/25.0-2.0));
 	double del1 = bef/160e6, del2 = aft/160e6;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadRefl(freq) * polar(1.,del1*freq*2*PI) ;
 	debugC = r;
@@ -809,8 +811,8 @@ complex <double> modelRefl(__int64 freq, double bef, double res, double aft)
 
 complex <double> modelTran(__int64 freq, double bef, double res, double aft)
 {
-	bef = pow(10,bef/25.0-2.0);
-	aft = pow(10,aft/25.0-2.0);
+	bef = pow(10,2*(bef/25.0-2.0));
+	aft = pow(10,2*(aft/25.0-2.0));
 	double del1 = bef/10./160e7, del2 = aft/10./160e7;
 	complex <double> r = polar(1.,del1*freq*2*PI) * modelLoadTran(freq,res) * polar(1.,del2*freq*2*PI) ;
 	return(r);

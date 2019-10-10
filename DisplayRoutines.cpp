@@ -623,13 +623,21 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 };
 
 // Convert measured S11 into actual S11 via fixture calibration
-void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs)
+void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs)
 {
 	// Modified 02-07-2010 to select Linear(f) or Log(f) fixture calibration 
+
+	// Convert measured data to rectangular coordinates
+	double phase_radians = measphs * DEGR2RAD;
+	double measreal = measmag * cos(phase_radians);
+	double measimag = measmag * sin(phase_radians);
+    std::complex<double>	rslt(measreal, measimag);
 
 	int i, j;
 	double delta, position;
 	double realpart, imagpart;
+
+	if (calMode) {
 
 	if (Cal->FixtureCalLogFreqMode == false)					// Linear(f) interpolation
 	{
@@ -677,7 +685,6 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 
 	// transform measured S11 into actual S11
 
-	std::complex<double> rslt;
 
 	realpart = Cal->EdReal[i] + ((Cal->EdReal[j] - Cal->EdReal[i]) * position); // interpolate
 	imagpart = Cal->EdImag[i] + ((Cal->EdImag[j] - Cal->EdImag[i]) * position);
@@ -693,14 +700,8 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 	imagpart = Cal->EtImag[i] + ((Cal->EtImag[j] - Cal->EtImag[i]) * position);
 	std::complex<double>	Et(realpart, imagpart);
 	
-	// Convert measured data to rectangular coordinates
-    double measreal, measimag;
-	double phase_radians = measphs * DEGR2RAD;
-	measreal = measmag * cos(phase_radians);
-	measimag = measmag * sin(phase_radians);
-    std::complex<double>	S11meas(measreal, measimag);
-
-	rslt = ((S11meas - Ed) / (Es * (S11meas - Ed) + Et));
+	rslt = ((rslt - Ed) / (Es * (rslt - Ed) + Et));
+	}
 
 	if (ReflExtn)		// extend reference plane with calculated value
 	{
@@ -728,14 +729,23 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, dou
 	rsltphs = fphase;
 }
 // Convert measured S21 into actual S21 via fixture calibration
-void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs)
+void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs)
 {
 	// Modified 02-07-2010 to select Linear(f) or Log(f) fixture calibration 
+
+
+		// Convert measured data to rectangular coordinates
+	double phase_radians = measphs * DEGR2RAD;
+	double measreal = measmag * cos(phase_radians);
+	double measimag = measmag * sin(phase_radians);
+    std::complex<double>	rslt(measreal, measimag);
+
 
 	int i, j;
 	double delta, position;
 	double realpart, imagpart;
 
+	if (calMode) {
 	if (Cal->FixtureCalLogFreqMode == false)					// Linear(f) interpolation
 	{
 		// There are 1024 fixture calibration frequencies linearly spaced. Find the two adjacent to the
@@ -785,17 +795,11 @@ void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, do
 
 	// transform measured S21 into actual S21
 
-	std::complex<double> rslt;
     std::complex<double>	Th(realpart, imagpart);
 
-	// Convert measured data to rectangular coordinates
-    double measreal, measimag;
-	double phase_radians = measphs * DEGR2RAD;
-	measreal = measmag * cos(phase_radians);
-	measimag = measmag * sin(phase_radians);
-    std::complex<double>	S21meas(measreal, measimag);
+	rslt = rslt / Th;
 
-	rslt = S21meas / Th;
+	}
 
 	// Convert results to polar coordinates
 	double x = real(rslt);
@@ -866,7 +870,7 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 		{
 			Cal->maxCalFreq = (__int64) br->ReadDouble();
 			Cal->minCalFreq = (__int64) br->ReadDouble();
-			Cal->VNA->SetAudioRefLevel(br->ReadInt32());
+			Cal->VNA->SetAudioRefLevel(br->ReadDouble());
 			Cal->VNA->SetIF(br->ReadInt32());
 		}
 		catch( Exception^ /* e */ )	// Don't bother warning the user ...
@@ -1258,8 +1262,7 @@ void StoreSParams(bool calmode, bool ReflExtn, FrequencyGrid^ FG, InstrumentCalD
 	{
 		// Compute S11 or S22
 		CalData->ResolveReflPolar(dataSet[i], FG->Frequency(i), rmag, rphs, true);
-		if (calmode)
-			CorrectS11(CalData, FG->Frequency(i), ReflExtn, fmagnitude, fphase, rmag, rphs);
+		CorrectS11(CalData, FG->Frequency(i), ReflExtn, calmode, fmagnitude, fphase, rmag, rphs);
 
 		reflMag[i] = fmagnitude;	// store reflected component in polar form
 		reflPhs[i] = fphase;
@@ -1267,7 +1270,7 @@ void StoreSParams(bool calmode, bool ReflExtn, FrequencyGrid^ FG, InstrumentCalD
 		// Compute S21 or S12
 		CalData->ResolveTranPolar(dataSet[i], FG->Frequency(i), rmag, rphs);
 		if (calmode)
-			CorrectS21(CalData, FG->Frequency(i), fmagnitude, fphase, rmag, rphs);
+			CorrectS21(CalData, FG->Frequency(i), calmode, fmagnitude, fphase, rmag, rphs);
 
 		tranMag[i] = fmagnitude;	// store transmitted component in polar form
 		tranPhs[i] = fphase;

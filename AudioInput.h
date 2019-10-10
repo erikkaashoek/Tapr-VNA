@@ -14,7 +14,7 @@ extern  int audio_delay;
 
 extern int sampleRate;
 extern int IFREQ;
-extern int audioRefLevel;
+extern volatile double audioRefLevel;
 extern double audio_volume_reflection;
 extern double audio_phase_reflection;
 extern double audio_volume_transmission;

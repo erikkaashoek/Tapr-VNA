@@ -355,6 +355,7 @@ namespace VNAR3 {
 			// 
 			// RText
 			// 
+			this->RText->Enabled = false;
 			this->RText->Location = System::Drawing::Point(289, 32);
 			this->RText->Name = L"RText";
 			this->RText->Size = System::Drawing::Size(56, 20);
@@ -362,6 +363,7 @@ namespace VNAR3 {
 			// 
 			// CText
 			// 
+			this->CText->Enabled = false;
 			this->CText->Location = System::Drawing::Point(289, 76);
 			this->CText->Name = L"CText";
 			this->CText->Size = System::Drawing::Size(56, 20);
@@ -369,6 +371,7 @@ namespace VNAR3 {
 			// 
 			// LText
 			// 
+			this->LText->Enabled = false;
 			this->LText->Location = System::Drawing::Point(289, 163);
 			this->LText->Name = L"LText";
 			this->LText->Size = System::Drawing::Size(56, 20);
@@ -396,6 +399,7 @@ namespace VNAR3 {
 			// 
 			// NText
 			// 
+			this->NText->Enabled = false;
 			this->NText->Location = System::Drawing::Point(289, 211);
 			this->NText->Name = L"NText";
 			this->NText->Size = System::Drawing::Size(56, 20);
@@ -467,6 +471,7 @@ namespace VNAR3 {
 			// 
 			// SCText
 			// 
+			this->SCText->Enabled = false;
 			this->SCText->Location = System::Drawing::Point(289, 122);
 			this->SCText->Name = L"SCText";
 			this->SCText->Size = System::Drawing::Size(56, 20);
@@ -528,6 +533,7 @@ namespace VNAR3 {
 			// 
 			// LBText
 			// 
+			this->LBText->Enabled = false;
 			this->LBText->Location = System::Drawing::Point(289, 292);
 			this->LBText->Name = L"LBText";
 			this->LBText->Size = System::Drawing::Size(56, 20);
@@ -535,6 +541,7 @@ namespace VNAR3 {
 			// 
 			// LAText
 			// 
+			this->LAText->Enabled = false;
 			this->LAText->Location = System::Drawing::Point(289, 331);
 			this->LAText->Name = L"LAText";
 			this->LAText->Size = System::Drawing::Size(56, 20);
@@ -654,17 +661,17 @@ private: System::Void radioButton5_CheckedChanged(System::Object^  sender, Syste
 			 Resistance->Value = 50;
 		 }
 private: System::Void CableBefore_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
-			LBText->Text = String::Format("{0}",(pow(10,CableBefore->Value/25.0-2.0)/1).ToString("G5"));
+			LBText->Text = String::Format("{0}",(pow(10,2*(CableBefore->Value/25.0-2.0))/1).ToString("G5"));
 			 this->VNA->SetBefore(CableBefore->Value);
 		 }
 private: System::Void CableAfter_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
-			LAText->Text = String::Format("{0}",(pow(10,CableAfter->Value/25.0-2.0)/1).ToString("G5"));
+			LAText->Text = String::Format("{0}",(pow(10,2*(CableAfter->Value/25.0-2.0))/1).ToString("G5"));
 			 this->VNA->SetAfter(CableAfter->Value);
 		 }
 
 private: System::Void Resistance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			this->VNA->SetResistance(Resistance->Value);
-			RText->Text = String::Format("{0}",(pow(10, (Resistance->Value - 50.0)/20.0)*50).ToString("G5"));
+			RText->Text = String::Format("{0}",(pow(10, (Resistance->Value - 50.0)/10.0)*50).ToString("G5"));
 		 }
 private: System::Void Capacitance_ValueChanged(System::Object^  sender, System::EventArgs^  e) {
 			CText->Text = String::Format("{0}pF",(pow(10,Capacitance->Value/20.0)/10).ToString("G5"));

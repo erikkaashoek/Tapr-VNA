@@ -17,7 +17,7 @@ extern HWAVEIN      hWaveIn;
 //#include "objbase.h"
 
 extern int IFREQ;
-extern int audioRefLevel;
+extern volatile double audioRefLevel;
 extern int sampleRate;
 extern int oldSampleRate;
 #define SAMPLERATES	6
@@ -205,6 +205,7 @@ namespace VNAR3 {
 			this->button3->TabIndex = 3;
 			this->button3->Text = L"Refresh";
 			this->button3->UseVisualStyleBackColor = true;
+			this->button3->Click += gcnew System::EventHandler(this, &SerialPort::button3_Click);
 			// 
 			// sampleRateBox
 			// 
@@ -423,12 +424,12 @@ namespace VNAR3 {
 			// hardwareBox
 			// 
 			this->hardwareBox->FormattingEnabled = true;
-			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(3) {L"SI5351", L"ADF4351", L"NanoVNA"});
+			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(4) {L"Mockup", L"NanoVNA", L"SI5351", L"ADF4351"});
 			this->hardwareBox->Location = System::Drawing::Point(116, 171);
 			this->hardwareBox->Name = L"hardwareBox";
 			this->hardwareBox->Size = System::Drawing::Size(83, 21);
 			this->hardwareBox->TabIndex = 27;
-			this->hardwareBox->Text = L"SI5351";
+			this->hardwareBox->Text = L"Mockup";
 			// 
 			// SerialPort
 			// 
@@ -477,12 +478,14 @@ namespace VNAR3 {
 			 }
 	private: System::Void SerialPort_Load(System::Object^  sender, System::EventArgs^  e) {
 
+				this->comboBox1->Items->Clear();
 		        for each (String^ s in System::IO::Ports::SerialPort::GetPortNames())
 				{
 					 this->comboBox1->Items->Add(System::String::Concat(s,  L""));
 
 				}
 
+				this->comboBox2->Items->Clear();
 				for (unsigned int i = 0; i < waveInGetNumDevs(); i++){
 					MMRESULT mRes;
 					WAVEINCAPS stWIC={0};
@@ -526,6 +529,11 @@ namespace VNAR3 {
 				VNA->SetMinFreq((__int64) ( Convert::ToDouble(this->minFreqBox->Text)*1000000.0));
 				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));
 				VNA->SelectHardware(Convert::ToInt32(this->hardwareBox->SelectedIndex));
+				if (VNA->GetHardware() != HW_MOCKUP  && !VNA->FindVNA()) {
+					MessageBox::Show(String::Concat("No VNA connected to port ",Port->PortName), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				    this->DialogResult = System::Windows::Forms::DialogResult::None;
+				}
+
 
 //        this->Port->Parity = SetPortParity(_serialPort->Parity);
 //        this->Port->DataBits = SetPortDataBits(_serialPort->DataBits);
@@ -588,7 +596,7 @@ private: System::Void label5_Click(System::Object^  sender, System::EventArgs^  
 		 }
 private: System::Void refLevelBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 		try {
-			 audioRefLevel = Convert::ToInt32(this->refLevelBox->Text);	
+			 audioRefLevel = Convert::ToDouble(this->refLevelBox->Text);	
 			}
 		 catch (Exception^) { }
 		 }
@@ -601,6 +609,9 @@ private: System::Void minFreqBox_TextChanged(System::Object^  sender, System::Ev
 		 }
 private: System::Void maxFreqBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));
+		 }
+private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
+			 SerialPort_Load(sender,e);
 		 }
 };
 }

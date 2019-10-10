@@ -125,10 +125,10 @@ __int64 GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 void CalToErrorTerms(InstrumentCalDataSet^ Cal);
 
 /// Convert measured S11 into actual S11 via Fixture calibration
-void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, double measmag, double measphs, double& rsltmag, double& rsltphs);
+void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs);
 
 /// Convert measured S21 into actual S21 via Foixture calibration
-void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, double measmag, double measphs, double& rsltmag, double& rsltphs);
+void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs);
 
 /// Load calibration data from a previously saved file
 bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal);

@@ -43,9 +43,10 @@ extern volatile float magSig;
 extern volatile float phaseSig;
 extern volatile float volSig;
 
-#define HW_SI5351 0
-#define HW_ADF4351 1
-#define HW_NANOVNA 2
+#define HW_MOCKUP	0
+#define HW_NANOVNA	1
+#define HW_SI5351	2
+#define HW_ADF4351	3
 
 #define DIR_TRANS	0
 #define DIR_REFL	1
@@ -67,6 +68,7 @@ private:
 	int sourcecapacitance;
 	int inductance;
 	int hardware;
+	int hasScanCommand;
 	float noise;
 	__int64 minHWFreq;
 	__int64 maxHWFreq;
@@ -115,8 +117,8 @@ public:
 	void SetInductance(int v);
 	void SelectHardware(int h);
 	int GetHardware();
-	void SetAudioRefLevel(int h);
-	int GetAudioRefLevel();
+	void SetAudioRefLevel(double h);
+	double GetAudioRefLevel();
 	void SetNoise(float c);
 	void SetMaxFreq(__int64 f);
 	void SetMinFreq(__int64 f);
@@ -124,5 +126,6 @@ public:
 	__int64 GetMaxFreq();
 	void VNADevice::SetIF(int r);
 	int VNADevice::GetIF();
+	array<System::String ^>^ VNADevice::Perform(System::String ^command);
 
 };

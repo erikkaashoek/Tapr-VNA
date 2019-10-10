@@ -825,9 +825,7 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 private: System::Void Calibration_Load(System::Object^  sender, System::EventArgs^  e) {
 			 minFreq->Text = String::Format("{0}",Cal->minCalFreq);
 			 maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
-			refPlaneBox->Text = Cal->reflTimeDelayEquivalent.ToString();
-
-
+			refPlaneBox->Text = (Cal->reflTimeDelayEquivalent*1e12).ToString();
 		 }
 
 private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
@@ -878,7 +876,7 @@ private: System::Void minFreq_Leave(System::Object^  sender, System::EventArgs^ 
 
 		 }
 private: System::Void refPlaneBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
-			Cal->reflTimeDelayEquivalent = Convert::ToDouble(refPlaneBox->Text);
+//			Cal->reflTimeDelayEquivalent = Convert::ToDouble(refPlaneBox->Text);
 		 }
 };
 }
