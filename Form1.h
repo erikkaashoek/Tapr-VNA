@@ -2411,7 +2411,10 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 		Centerformat->Alignment = StringAlignment::Center;
 
 		Point leftTick, rightTick, topTick, bottomTick, minorTopTick, minorBotTick; // rectangular display
-		Point traceStart, traceStop;							// incremental trace drawing points
+		array<Point>^ tracesStart = gcnew array<Point>(60);
+		array<Point>^ tracesStop = gcnew array<Point>(60);
+		Point traceStart;
+		Point traceStop;							// incremental trace drawing points
 		Point traceStartS, traceStopS;							// trace drawing points for storage
 		Point polarCenter, polarRightCenter;					// polar display bounding box
 		array<Point>^ points = gcnew array<Point>(1024+1); // used for drawlines
@@ -2737,7 +2740,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 #ifdef DEBUGAUDIO
 			int mm = 0;
 			int mlevel = 0;
-			int prevmlevel = 0;
 #endif
 #ifdef DEBUGAUDIOLEVELS
 			int bucket[1024];
@@ -2789,44 +2791,43 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 // ------------------ Start display rectangular -------------------------------
 			for (int i=1; i<FG->points; i++)	// Display measurements on the frequency grid
 			{
-				traceStart.X = scopeDisp.X + (int)(((float)i-1.0f) * PixelsPerGrid); // previous point
-				traceStop.X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
+				if (i > 0)
+					for (int k=0;k<tracesStop->Length;k++)
+						tracesStart[k] = tracesStop[k];
+				for (int k=0;k<tracesStop->Length;k++)
+					tracesStop[k].X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
 
 
 #ifdef	DEBUGRAWREFL		
 // *********************** debugging code to display raw data  ***************************
 				//	Reflected Phase
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPI * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPI * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflPQ * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflPQ * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS11Phs, traceStart, traceStop);
+				tracesStop[0].Y = ToDisplayRectScaled(trace[i]->ReflPI, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[0], tracesStop[0]);
+
+				tracesStop[1].Y = ToDisplayRectScaled(trace[i]->ReflPQ, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS11Phs, tracesStart[1], tracesStop[1]);
+
 				//	Reflected Magnitude
-				traceStop.Y = scopeDisp.Bottom - trace[i]->ReflMQ * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->ReflMQ * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
+				tracesStop[2].Y = ToDisplayRectScaled(trace[i]->ReflMQ, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[2], tracesStop[2]);
 #endif
 #ifdef DEBUGAUDIOLEVELS
-				traceStop.Y = scopeDisp.Bottom - bucket[i] * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - bucket[i-1]* scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
+				tracesStop[3].Y = ToDisplayRectScaled(bucket[i], scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[3], tracesStop[3]);
 				
 #endif
 
 				if (audioDistanceToolStripMenuItem->Checked) {
-				traceStop.Y = scopeDisp.Bottom - distance[i] * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - distance[i-1]* scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
+					tracesStop[4].Y = ToDisplayRectScaled(distance[i], scopeDisp, SHORT_RANGE);
+					if (i > 0) gr->DrawLine(penS21Mag, tracesStart[4], tracesStop[4]);
 				}
 #ifdef DEBUGAUDIO
 #if 1
-				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
-				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+0] * scopeDisp.Height / 70000;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom/2 + waveIn[0][2*i+1] * scopeDisp.Height / 70000;
-				traceStart.Y = scopeDisp.Bottom/2 + waveIn[0][2*(i-1)+1] * scopeDisp.Height / 70000;
-				gr->DrawLine(penS11Phs, traceStart, traceStop);
+				tracesStop[5].Y = scopeDisp.Bottom/2 + waveIn[0][2*i+0] * scopeDisp.Height / 70000;
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[5], tracesStop[5]);
+
+				tracesStop[6].Y = scopeDisp.Bottom/2 + waveIn[0][2*i+1] * scopeDisp.Height / 70000;
+				if (i > 0) gr->DrawLine(penS11Phs, tracesStart[6], tracesStop[6]);
 #else
 				if (i > measurementIndex[mm]+13) {	
 					mm++; 
@@ -2836,22 +2837,18 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				} else {
 					mlevel = 0;
 				}
-				traceStop.Y = scopeDisp.Bottom/2 - mlevel * scopeDisp.Height / 3;
-				traceStart.Y = scopeDisp.Bottom/2 - prevmlevel * scopeDisp.Height / 3;
-				gr->DrawLine(penS11Phs, traceStart, traceStop);
-				prevmlevel = mlevel;
+				tracesStop[7].Y = scopeDisp.Bottom/2 - mlevel * scopeDisp.Height / 3;
+				if (i > 0) gr->DrawLine(penS11Phs, tracesStart[7], tracesStop[7]);
 
 
 				if (mlevel) {
-					traceStop.Y = scopeDisp.Bottom / 100  - measured[i].reference * scopeDisp.Height / 200.0;
-					traceStart.Y = scopeDisp.Bottom / 100 - measured[i-1].reference * scopeDisp.Height / 200.0;
-					gr->DrawLine(penS11Mag, traceStart, traceStop);
+					tracesStop[8].Y = scopeDisp.Bottom / 100  - measured[i].reference * scopeDisp.Height / 200.0;
+					if (i > 0) gr->DrawLine(penS11Mag, tracesStart[8], tracesStop[8]);
 				}
 
 				if (mlevel) {
-					traceStop.Y = scopeDisp.Bottom /2 - measured[i].magnitude * scopeDisp.Height / 200.0;
-					traceStart.Y = scopeDisp.Bottom /2 - measured[i-1].magnitude * scopeDisp.Height / 200.0;
-					gr->DrawLine(penS21Mag, traceStart, traceStop);
+					tracesStop[9].Y = scopeDisp.Bottom /2 - measured[i].magnitude * scopeDisp.Height / 200.0;
+					if (i > 0) gr->DrawLine(penS21Mag, tracesStart[9], tracesStop[9]);
 				}
 #endif
 #endif
@@ -2860,34 +2857,31 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 #ifdef DEBUGRAWREFV
 				//	Reference Voltages
-				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21GD, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->Vref2 * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penBrown2, traceStart, traceStop);
+				tracesStop[10].Y = ToDisplayRectScaled(trace[i]->Vref1, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21GD, tracesStart[10], tracesStop[10]);
+
+				tracesStop[11].Y = ToDisplayRectScaled(trace[i]->Vref2, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penBrown2, tracesStart[11], tracesStop[11]);
 #endif
 				avrgRef += trace[i]->Vref1;
 
 
 #ifdef DEBUGRAWTRANHIPHASE
 				//	Transmit Phase
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPI * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPI * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQ * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQ * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS11Phs, traceStart, traceStop);
+				tracesStop[12].Y = ToDisplayRectScaled(trace[i]->TranPI, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[12], tracesStop[12]);
+
+				tracesStop[13].Y = ToDisplayRectScaled(trace[i]->TranPQ, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS11Phs, tracesStart[13], tracesStop[13]);
 #endif
 
 #ifdef DEBUGRAWTRANLOPHASE
 				//	Transmit Phase using Lo excitation level
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPILow * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPILow * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS21Mag, traceStart, traceStop);
-				traceStop.Y = scopeDisp.Bottom - trace[i]->TranPQLow * scopeDisp.Height / SHORT_RANGE;
-				traceStart.Y = scopeDisp.Bottom - trace[i-1]->TranPQLow * scopeDisp.Height / SHORT_RANGE;
-				gr->DrawLine(penS11Phs, traceStart, traceStop);
+				tracesStop[14].Y = ToDisplayRectScaled(trace[i]->TranPILow, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS21Mag, tracesStart[14], tracesStop[14]);
+
+				tracesStop[15].Y = ToDisplayRectScaled(trace[i]->TranPQLow, scopeDisp, SHORT_RANGE);
+				if (i > 0) gr->DrawLine(penS11Phs, tracesStart[15], tracesStop[15]);
 #endif
 
 #ifdef DUMPRAWDECODING
@@ -2941,33 +2935,24 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					if(DisplayMeasured->Checked)
 					{
 						
-						// previous point
-						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// current point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[16].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS21Mag, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21Mag, tracesStart[16], tracesStop[16]);
 
-						DrawMarkers(gr, penS21Mag, brS21Mag, traceStop, Markerfont, i);		
+						DrawMarkers(gr, penS21Mag, brS21Mag, tracesStop[16], Markerfont, i);		
 					}
 
 					if(DisplayMenuItem->Checked)			// display storage also
 					{
-						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// current point
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i), rmag, rphs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[17].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS21MagSto, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21MagSto, tracesStart[17], tracesStop[171]);
 
 					}
 
@@ -2982,16 +2967,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						double& rsPhs = stoPhase;
 
 
-						// get the magnitude and phase of previous measured point
-						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmMag, rmPhs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
-
-						// get the magnitude and phase of previous stored point
-						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rsMag, rsPhs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
-
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// get the magnitude and phase of current measured point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i-1), rmMag, rmPhs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
@@ -3000,25 +2975,21 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i-1), rsMag, rsPhs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[18].Y = ToDisplayRectMag(measMag/stoMag, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS21MagDelta, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21MagDelta, tracesStart[18], tracesStop[18]);
 					}
 
 
 	// debug using the MQ indicators
 	//
 	//
-					//CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i), rmag, rphs);
-					//CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-					//traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 					//// current point
 					//CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
 					//CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-					//traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+					//tracesStop[19].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-					//gr->DrawLine(penBrown2, traceStart, traceStop);
+					//gr->DrawLine(penBrown2, tracesStart[19], tracesStop[19]);
 	//
 	//
 	// end using MQ indicators
@@ -3029,34 +3000,24 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				{
 					if(DisplayMeasured->Checked)
 					{
-						// previous point
-						CalData->ResolveTranPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 						// current point
 						CalData->ResolveTranPolar(trace[i], FG->Frequency(i), rmag, rphs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
+						tracesStop[20].Y = ToDisplayRectPhs(fphase, scopeDisp);
 
-						DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21Phs, tracesStart[20], tracesStop[20]);
 
-						DrawMarkers(gr, penS21Phs, brS21Phs, traceStop, Markerfont, i);
+						DrawMarkers(gr, penS21Phs, brS21Phs, tracesStop[20], Markerfont, i);
 					}
 
 					if(DisplayMenuItem->Checked)		// display stored data
 					{
-						// previous point
-						CalData->ResolveTranPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs);
-						CorrectS21(CalData, FG->Frequency(i-1), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 						// current point
 						CalData->ResolveTranPolar(traceSto[i], FG->Frequency(i), rmag, rphs);
 						CorrectS21(CalData, FG->Frequency(i), calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
+						tracesStop[21].Y = ToDisplayRectPhs(fphase, scopeDisp);
 
-						DrawLineBound(gr, scopeDisp, penS21PhsSto, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21PhsSto, tracesStart[21], tracesStop[21]);
 
 					}
 				}
@@ -3065,34 +3026,24 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				{
 					if(DisplayMeasured->Checked)		// display measured data
 					{
-					// previous point
-						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[22].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS11Mag, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11Mag, tracesStart[22], tracesStop[22]);
 
-						DrawMarkers(gr, penS11Mag, brS11Mag, traceStop, Markerfont, i);		
+						DrawMarkers(gr, penS11Mag, brS11Mag, tracesStop[22], Markerfont, i);		
 					}
 
 					if(DisplayMenuItem->Checked)		// display stored data
 					{
-						// previous point
-						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[23].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS11MagSto, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11MagSto, tracesStart[23], tracesStop[23]);
 					}
 
 					if(displayMeasuredMinusStored->Checked)		// Display Delta between Measured minus Stored
@@ -3105,17 +3056,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						double& rsMag = stoMag;
 						double& rsPhs = stoPhase;
 
-
-						// get the magnitude and phase of previous measured point
-						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmMag, rmPhs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
-
-						// get the magnitude and phase of previous stored point
-						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rsMag, rsPhs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
-
-						traceStart.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
-
 						// get the magnitude and phase of current measured point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i-1), rmMag, rmPhs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, measMag, measPhase, rmMag, rmPhs);
@@ -3124,26 +3064,21 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i-1), rsMag, rsPhs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, stoMag, stoPhase, rsMag, rsPhs);
 
-						traceStop.Y = scopeDisp.Y + ToDisplayRectMag(measMag/stoMag, scopeDisp.Height, RectVertScaledB, refLevel);
+						tracesStop[24].Y = ToDisplayRectMag(measMag/stoMag, scopeDisp, RectVertScaledB, refLevel);
 
-						DrawLineBound(gr, scopeDisp, penS11MagDelta, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11MagDelta, tracesStart[24], tracesStop[24]);
 					}
 
 		// debug using RelMQ indicators
 		//
 		//
-					//CalData->ResolveReflPolar(trace3[i-1], trace4[i-1], trace2[i-1], rmag, rphs);
-					//
-					//CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-					//traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-
 					//// current point
 					//CalData->ResolveReflPolar(trace3[i], trace4[i], trace2[i], rmag, rphs);
 					//
 					//CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-					//traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
+					//tracesStop[25].Y = ToDisplayRectMag(fmagnitude, scopeDisp, RectVertScaledB, refLevel);
 
-					//gr->DrawLine(penDarkGoldenrod, traceStart, traceStop);
+					//gr->DrawLine(penDarkGoldenrod, tracesStart[25], tracesStop[25]);
 		//
 		//
 		// end debug using refl MQ indicators
@@ -3154,38 +3089,26 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				{
 					if(DisplayMeasured->Checked)
 					{
-						// previous point
-						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-
-						traceStart.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
-
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
-						traceStop.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
+						tracesStop[26].Y = ToDisplayAsSWR(fmagnitude, scopeDisp, RectSWRScale);
 
-						DrawLineBound(gr, scopeDisp, penS11VSWR, traceStart, traceStop);
+						DrawLineBound(gr, scopeDisp, penS11VSWR, tracesStart[26], tracesStop[26]);
 
-						DrawMarkers(gr, penS11VSWR, brS11VSWR, traceStop, Markerfont, i);
+						DrawMarkers(gr, penS11VSWR, brS11VSWR, tracesStop[26], Markerfont, i);
 					}
 
 					if(DisplayMenuItem->Checked)		// also display storage
 					{
-						// previous point
-						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-
-						traceStart.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
-
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-							CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
+						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
-						traceStop.Y = scopeDisp.Y + ToDisplayAsSWR(fmagnitude, scopeDisp.Height, RectSWRScale);
+						tracesStop[27].Y = ToDisplayAsSWR(fmagnitude, scopeDisp, RectSWRScale);
 
-						DrawLineBound(gr, scopeDisp, penS11VSWRSto, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11VSWRSto, tracesStart[27], tracesStop[27]);
 
 
 					}
@@ -3196,34 +3119,24 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				{
 					if(DisplayMeasured->Checked)
 					{
-						// previous point
-						CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 						// current point
 						CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
+						tracesStop[28].Y = ToDisplayRectPhs(fphase, scopeDisp);
 
-						DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11Phs, tracesStart[28], tracesStop[28]);
 
-						DrawMarkers(gr, penS11Phs, brS11Phs, traceStop, Markerfont, i);	
+						DrawMarkers(gr, penS11Phs, brS11Phs, tracesStop[28], Markerfont, i);	
 					}
 
 					if(DisplayMenuItem->Checked)		// also display storage
 					{
-						// previous point
-						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStart.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-						traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
+						tracesStop[29].Y = ToDisplayRectPhs(fphase, scopeDisp);
 
-						DrawLineBound(gr, scopeDisp, penS11PhsSto, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS11PhsSto, tracesStart[29], tracesStop[29]);
 					}
 
 
@@ -3307,16 +3220,16 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					if (groupdelay < 0.0)		// prevent display of negative (i.e. wrong) values
 						groupdelay = 0.0;
 
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectGD(groupdelay, scopeDisp.Height, scalefactorGD);
+					tracesStop[30].Y = ToDisplayRectGD(groupdelay, scopeDisp, scalefactorGD);
 
-					traceStart.Y = oldY;
+					tracesStart[30].Y = oldY;
 
 					if (i>1)
-						DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+						if (i > 0) DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[30], tracesStop[30]);
 
-					DrawMarkers(gr, penS21GD, brS21GD, traceStop, Markerfont, i);
+					DrawMarkers(gr, penS21GD, brS21GD, tracesStop[30], Markerfont, i);
 
-					oldY = traceStop.Y;		// save stopping point for next iteration
+					oldY = tracesStop[30].Y;		// save stopping point for next iteration
 
 					if(DisplayMenuItem->Checked)			// display storage also
 					{
@@ -3374,14 +3287,10 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 						if (groupdelay < 0.0)		// prevent display of negative (i.e. wrong) values
 							groupdelay = 0.0;
 
-						traceStop.Y = scopeDisp.Bottom - ToDisplayRectGD(groupdelay, scopeDisp.Height, scalefactorGD);
-
-						traceStart.Y = oldYs;
-
+						tracesStop[31].Y = ToDisplayRectGD(groupdelay, scopeDisp, scalefactorGD);
 						if (i>1)
-							DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+							DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[31], tracesStop[31]);
 
-						oldYs = traceStop.Y;		// save stopping point for next iteration
 					}
 
 
@@ -3390,7 +3299,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				if((RDisplay->Checked || jXDisplay->Checked) && !Spectrum->Checked)
 				{
 
-					float X, Y, Rprev, jXprev, Rcurr, jXcurr;
+					float X, Y, Rcurr, jXcurr;
 					int scale;
 
 					if(scale10Ohms->Checked)
@@ -3398,25 +3307,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					else if(scale100Ohms->Checked)
 						scale = 100;
 					else scale = 1000;
-
-					// previous point
-					CalData->ResolveReflPolar(trace[i-1], FG->Frequency(i-1), rmag, rphs, true);
-					CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-
-					// derive R and jX from rmag and fphase
-					X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
-					Y = (float)(fmagnitude * sin(DEGR2RAD * fphase));
-
-					std::complex<float> S11prev(X, Y);		// S11
-					std::complex<float> One(1.0, 0.0);	// unity
-					std::complex<float> Zo(50.0, 0.0);	// Zo
-					std::complex<float> Z;				// result
-
-					Z = Zo * ( One + S11prev) / (One - S11prev);	// calculate normalized Z at mouse point
-
-					Rprev = real(Z);
-					jXprev = imag(Z);
-
 
 					// current point
 					CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
@@ -3427,6 +3317,11 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 					std::complex<float> S11curr(X, Y);
 
+					std::complex<float> S11prev(X, Y);		// S11
+					std::complex<float> One(1.0, 0.0);	// unity
+					std::complex<float> Zo(50.0, 0.0);	// Zo
+					std::complex<float> Z;				// result
+
 					Z = Zo * ( One + S11curr) / (One - S11curr);	// calculate normalized Z at mouse point
 
 					Rcurr = real(Z);
@@ -3436,37 +3331,20 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					{
 						if(RDisplay->Checked)		// draw R-ohms part of S11
 						{
-							traceStart.Y = scopeDisp.Bottom - ToDisplayRectR(Rprev, scale, scopeDisp.Height);
-							traceStop.Y = scopeDisp.Bottom - ToDisplayRectR(Rcurr, scale, scopeDisp.Height);
-							DrawLineBound(gr, scopeDisp, penR, traceStart, traceStop);
-							DrawMarkers(gr, penR, brR, traceStop, Markerfont, i);	
+							tracesStop[32].Y = ToDisplayRectR(Rcurr, scale, scopeDisp);
+							if (i > 0) DrawLineBound(gr, scopeDisp, penR, tracesStart[32], tracesStop[32]);
+							DrawMarkers(gr, penR, brR, tracesStop[32], Markerfont, i);	
 						}
 						if(jXDisplay->Checked)		// draw jX-ohms part of S11
 						{
-							traceStart.Y = scopeDisp.Bottom - ToDisplayRectjX(jXprev, scale, scopeDisp.Height);
-							traceStop.Y = scopeDisp.Bottom - ToDisplayRectjX(jXcurr, scale, scopeDisp.Height);
-							DrawLineBound(gr, scopeDisp, penjX, traceStart, traceStop);
-							DrawMarkers(gr, penjX, brjX, traceStop, Markerfont, i);	
+							tracesStop[33].Y = ToDisplayRectjX(jXcurr, scale, scopeDisp);
+							if (i > 0) DrawLineBound(gr, scopeDisp, penjX, tracesStart[33], tracesStop[33]);
+							DrawMarkers(gr, penjX, brjX, tracesStop[33], Markerfont, i);	
 						}
 					}
 
 					if(DisplayMenuItem->Checked)		// also display storage
 					{
-						// previous point
-						CalData->ResolveReflPolar(traceSto[i-1], FG->Frequency(i-1), rmag, rphs, true);
-						CorrectS11(CalData, FG->Frequency(i-1), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
-
-						// derive R and jX from rmag and fphase
-						X = (float)(fmagnitude * cos(DEGR2RAD * fphase));
-						Y = (float)(fmagnitude * sin(DEGR2RAD * fphase));
-
-						std::complex<float> S11Storprev(X, Y);		// S11
-
-						Z = Zo * ( One + S11Storprev) / (One - S11Storprev);	// calculate normalized Z at mouse point
-
-						Rprev = real(Z);
-						jXprev = imag(Z);
-
 						// current point
 						CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
 						CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
@@ -3484,31 +3362,24 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 						if(RDisplay->Checked)		// draw R-ohms part of S11
 						{
-							traceStart.Y = scopeDisp.Bottom - ToDisplayRectR(Rprev, scale, scopeDisp.Height);
-							traceStop.Y = scopeDisp.Bottom - ToDisplayRectR(Rcurr, scale, scopeDisp.Height);
-							DrawLineBound(gr, scopeDisp, penRSto, traceStart, traceStop);
+							tracesStop[34].Y = ToDisplayRectR(Rcurr, scale, scopeDisp);
+							if (i > 0) DrawLineBound(gr, scopeDisp, penRSto, tracesStart[34], tracesStop[34]);
 						}
 						if(jXDisplay->Checked)		// draw jX-ohms part of S11
 						{
-							traceStart.Y = scopeDisp.Bottom - ToDisplayRectjX(jXprev, scale, scopeDisp.Height);
-							traceStop.Y = scopeDisp.Bottom - ToDisplayRectjX(jXcurr, scale, scopeDisp.Height);
-							DrawLineBound(gr, scopeDisp, penjXSto, traceStart, traceStop);
+							tracesStop[35].Y = ToDisplayRectjX(jXcurr, scale, scopeDisp);
+							if (i > 0) DrawLineBound(gr, scopeDisp, penjXSto, tracesStart[35], tracesStop[35]);
 						}
 					}
 
 				}
+				double xx;
+				double yy;
+
+
 				if (EtTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->EtReal[i-1];
-					double yy = CalData->EtImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 					// Current point
 
@@ -3522,28 +3393,17 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+					tracesStop[36].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[36], tracesStop[36]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
+					tracesStop[37].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Phs, tracesStart[37], tracesStop[37]);
 
 				}
 				if (EsTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->EsReal[i-1];
-					double yy = CalData->EsImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3556,13 +3416,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penBrown2, traceStart, traceStop);
+					tracesStop[38].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penBrown2, tracesStart[38], tracesStop[38]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Mag, traceStart, traceStop);
+					tracesStop[39].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Mag, tracesStart[39], tracesStop[39]);
 
 				}
 
@@ -3570,16 +3429,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				if (EdTrace->Checked == true && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->EdReal[i-1];
-					double yy = CalData->EdImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3593,28 +3442,17 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penDarkCyan, traceStart, traceStop);
+					tracesStop[40].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penDarkCyan, tracesStart[40], tracesStop[40]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
+					tracesStop[41].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS11Phs, tracesStart[41], tracesStop[41]);
 				}
 
 				if (calSthru->Checked && !Spectrum->Checked)
 				{
 					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->ThReal[i-1];
-					double yy = CalData->ThImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3628,28 +3466,17 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+					tracesStop[42].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[42], tracesStop[42]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
+					tracesStop[43].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Phs, tracesStart[43], tracesStop[43]);
 
 				}
 
 				if (calSshort->Checked && !Spectrum->Checked)
 				{
-					// Previous point
-					double xx = CalData->S11shortReal[i-1];
-					double yy = CalData->S11shortImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3663,28 +3490,16 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+					tracesStop[44].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[44], tracesStop[44]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
+					tracesStop[45].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Phs, tracesStart[45], tracesStop[45]);
 				}
 
 				if (calSopen->Checked && !Spectrum->Checked)
 				{
-					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->S11openReal[i-1];
-					double yy = CalData->S11openImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3698,29 +3513,17 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penBrown2, traceStart, traceStop);
+					tracesStop[46].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penBrown2, tracesStart[46], tracesStop[46]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Mag, traceStart, traceStop);
+					tracesStop[47].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Mag, tracesStart[47], tracesStop[47]);
 
 				}
 
 				if (calSterm->Checked && !Spectrum->Checked)
 				{
-					// Convert results to polar coordinates
-					// Previous point
-					double xx = CalData->S11termReal[i-1];
-					double yy = CalData->S11termImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-
 					// Current point
 
 					// Convert results to polar coordinates
@@ -3734,24 +3537,21 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					float scaleFactor = GetVerticalScaleFactor();
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fmagnitude, scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penDarkCyan, traceStart, traceStop);
+					tracesStop[48].Y = ToDisplayRectMag(fmagnitude, scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penDarkCyan, tracesStart[48], tracesStop[48]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS11Phs, traceStart, traceStop);
+					tracesStop[49].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS11Phs, tracesStart[49], tracesStop[49]);
 				}
 				if (rawDetectorDataToolStripMenuItem->Checked) {
 					//	Reference level
 #if 1
-					traceStop.Y = scopeDisp.Bottom - trace[i]->Vref1 * scopeDisp.Height / SHORT_RANGE;
-					traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref1 * scopeDisp.Height / SHORT_RANGE;
+					tracesStop[50].Y = ToDisplayRectScaled(trace[i]->Vref1, scopeDisp, SHORT_RANGE);
 #else
-					traceStop.Y = scopeDisp.Bottom - trace[i]->Vref2 * scopeDisp.Height / 1030;
-					traceStart.Y = scopeDisp.Bottom - trace[i-1]->Vref2 * scopeDisp.Height / 1030;
+					tracesStop[50].Y = ToDisplayRectScaled(trace[i]->Vref2, scopeDisp, 1030);
 #endif
-					gr->DrawLine(penBrown2, traceStart, traceStop);
+					gr->DrawLine(penBrown2, tracesStart[50], tracesStop[50]);
 				}
 //#define DEBUGLONGCAL
 #ifdef DEBUGLONGCAL
@@ -3763,24 +3563,6 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					// Perfect cal data would indicate dB magnitude is large negative
 					// (same magnitude for both components) and 0 degrees phase (they point
 					// exactly in opposite directions).
-
-					// Previous point
-					double xx = CalData->S11shortReal[i-1];
-					double yy = CalData->S11shortImag[i-1];
-
-					fphase = RAD2DEGR * atan2(yy, xx);
-					fmagnitude = sqrt(xx*xx + yy*yy);
-
-					xx = CalData->S11openReal[i-1];
-					yy = CalData->S11openImag[i-1];
-
-					fphase -= RAD2DEGR * atan2(yy, xx);
-					fphase += 180.0;
-					fmagnitude -= sqrt(xx*xx + yy*yy);
-					fphase = NormalizePhaseDegr(fphase);
-
-					traceStart.Y = scopeDisp.Y + ToDisplayRectMag(fabs(fmagnitude), scopeDisp.Height, RectVertScaledB, refLevel);
-					int PhstraceStart = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
 
 					// Current point
 
@@ -3807,13 +3589,12 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					else if (Scale1dB->Checked)	scaleFactor = 1;
 
 					// current point - magnitude
-					traceStop.Y = scopeDisp.Y + ToDisplayRectMag(fabs(fmagnitude), scopeDisp.Height, scaleFactor, refLevel);
-					DrawLineBound(gr, scopeDisp, penS21GD, traceStart, traceStop);
+					tracesStop[51].Y = ToDisplayRectMag(fabs(fmagnitude), scopeDisp, scaleFactor, refLevel);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21GD, tracesStart[51], tracesStop[51]);
 
 					// current point - phase
-					traceStart.Y = PhstraceStart;
-					traceStop.Y = scopeDisp.Bottom - ToDisplayRectPhs(fphase, scopeDisp.Height);
-					DrawLineBound(gr, scopeDisp, penS21Phs, traceStart, traceStop);
+					tracesStop[52].Y = ToDisplayRectPhs(fphase, scopeDisp);
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS21Phs, tracesStart[52], tracesStop[52]);
 				}
 
 #endif
@@ -4035,15 +3816,16 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 			for (int i=0; i<FG->points; i++)	// Display the frequency grid
 			{
+				if (i > 0)
+					for (int k=0;k<tracesStop->Length;k++)
+						tracesStart[k] = tracesStop[k];
+
 				avrgRef += trace[i]->Vref1;
 
 				if (DisplayMeasured->Checked)
 				{
 					// convert measurements into polar S11
 					CalData->ResolveReflPolar(trace[i], FG->Frequency(i), rmag, rphs, true);
-
-					// Correct S11 measured values against Calibration data
-
 					CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					// Convert from polar to rectangular format, scale to chart size,
@@ -4051,27 +3833,20 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
 
 					// store the display point
-					traceStop.X = x;
-					traceStop.Y = y;
+					tracesStop[53].X = x;
+					tracesStop[53].Y = y;
 
 					// draw from previous to current point
 					if (i > 0)
-						gr->DrawLine(penS11Mag, traceStart, traceStop);
+						gr->DrawLine(penS11Mag, tracesStart[53], tracesStop[53]);
 
-					DrawMarkers(gr, penS11Mag, brS11Mag, traceStop, Markerfont, i);					
-
-					// store as previous point
-					traceStart.X = x;
-					traceStart.Y = y;
+					DrawMarkers(gr, penS11Mag, brS11Mag, tracesStop[53], Markerfont, i);					
 				}
 
 				if(DisplayMenuItem->Checked)		// also display storage
 				{
 					// convert measurements into polar S11
 					CalData->ResolveReflPolar(traceSto[i], FG->Frequency(i), rmag, rphs, true);
-
-					// Correct S11 measured values against Calibration data
-
 					CorrectS11(CalData, FG->Frequency(i), RefExtnCheckBox->Checked, calCheckBox->Checked, fmagnitude, fphase, rmag, rphs);
 
 					// Convert from polar to rectangular format, scale to chart size,
@@ -4109,7 +3884,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS21Phs, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS21Phs, x, y, x+2, y+2);
 				}
 
 
@@ -4123,7 +3898,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS21Mag, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS21Mag, x, y, x+2, y+2);
 				}
 
 
@@ -4137,7 +3912,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS11Phs, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS11Phs, x, y, x+2, y+2);
 				}
 
 				if (calSshort->Checked == true)
@@ -4150,7 +3925,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS21Phs, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS21Phs, x, y, x+2, y+2);
 				}
 
 				if (calSopen->Checked == true)
@@ -4163,7 +3938,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS21Mag, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS21Mag, x, y, x+2, y+2);
 				}
 
 				if (calSterm->Checked == true)
@@ -4176,7 +3951,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 					fmagnitude = sqrt(xx*xx + yy*yy);
 
 					ToDisplayPolar(fmagnitude, fphase, polarRadius, polarBox.X, polarBox.Y, rx, ry);
-					DrawLineBound(gr, tempbox, penS11Phs, x, y, x+2, y+2);
+					if (i > 0) DrawLineBound(gr, tempbox, penS11Phs, x, y, x+2, y+2);
 				}
 
 
@@ -4314,36 +4089,35 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 			for (int i=StartIndex+1; i<=StopIndex; i++)	// Draw Real time coefficients
 			{
-				traceStart.X = scopeDisp.X + (int)(((float)i - 1.0f - (float)StartIndex) * PixelsPerGrid); // previous point
-				traceStop.X = scopeDisp.X + (int)(((float)i - (float)StartIndex) * PixelsPerGrid);		// current point
+				tracesStop[54].X = scopeDisp.X + (int)(((float)i - (float)StartIndex) * PixelsPerGrid);		// current point
+				tracesStop[54].Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (float)(-Real[i]+1.0)/2.0);
+#if 0
+				if(tracesStart[54].Y > scopeDisp.Height)		// Clip display in case Y-values are not valid
+					tracesStart[54].Y = scopeDisp.Height;
+				if(tracesStart[54].Y < scopeDisp.Y)
+					tracesStart[54].Y = scopeDisp.Y;
+				if(tracesStop[54].Y > scopeDisp.Height)
+					tracesStop[54].Y = scopeDisp.Height;
+				if(tracesStop[54].Y < scopeDisp.Y)
+					tracesStop[54].Y = scopeDisp.Y;
+#endif
+				if (i > 0) DrawLineBound(gr, scopeDisp, penS11Mag, tracesStart[54], tracesStop[54]);		// red
 
-                traceStart.Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (float)(-Real[i-1]+1.0)/2.0);
-				traceStop.Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (float)(-Real[i]+1.0)/2.0);
+				DrawMarkerT(gr, penS11Mag, brS11Mag, tracesStop[54], Markerfont, i);	
+				tracesStart[54] = tracesStop[54];
 
-				if(traceStart.Y > scopeDisp.Height)		// Clip display in case Y-values are not valid
-					traceStart.Y = scopeDisp.Height;
-				if(traceStart.Y < scopeDisp.Y)
-					traceStart.Y = scopeDisp.Y;
-				if(traceStop.Y > scopeDisp.Height)
-					traceStop.Y = scopeDisp.Height;
-				if(traceStop.Y < scopeDisp.Y)
-					traceStop.Y = scopeDisp.Y;
-
-				DrawLineBound(gr, scopeDisp, penS11Mag, traceStart, traceStop);		// red
-
-				DrawMarkerT(gr, penS11Mag, brS11Mag, traceStop, Markerfont, i);					
 			}
 // Imaginary part will be zero since IFFT symmetry conditions are met. No need to plot.
 //			for (int i=StartIndex+1; i<StopIndex; i++)	// Draw Imaginary time coefficients
 //			{
-//				traceStart.X = scopeDisp.X + (int)(((float)i-1.0) * PixelsPerGrid); // previous point
-//				traceStop.X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
+//				tracesStart[56].X = scopeDisp.X + (int)(((float)i-1.0) * PixelsPerGrid); // previous point
+//				tracesStop[56].X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
 //
-//                traceStart.Y = scopeDisp.Y + (float)scopeDisp.Height * (Imag[i-1]+1.0)/2.0;
-//				traceStop.Y = scopeDisp.Y + (float)scopeDisp.Height * (Imag[i]+1.0)/2.0;
-//				gr->DrawLine(penS21Mag, traceStart, traceStop);		// green
+//                tracesStart[56].Y = scopeDisp.Y + (float)scopeDisp.Height * (Imag[i-1]+1.0)/2.0;
+//				tracesStop[56].Y = scopeDisp.Y + (float)scopeDisp.Height * (Imag[i]+1.0)/2.0;
+//				gr->DrawLine(penS21Mag, tracesStart[56], tracesStop[56]);		// green
 //
-//				DrawMarkerT(gr, penS21Mag, brS21Mag, traceStop, Markerfont, i);					
+//				DrawMarkerT(gr, penS21Mag, brS21Mag, tracesStop[56], Markerfont, i);					
 //			}
 
 			if(DisplayMenuItem->Checked)		// also display storage
@@ -4372,22 +4146,20 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 				FFT(Real, Imag, 2048, Inverse);	// Inverse FFT
 				for (int i=StartIndex+1; i<StopIndex; i++)	// Draw Real time coefficients
 				{
-					traceStart.X = scopeDisp.X + (int)(((float)i-1.0) * PixelsPerGrid); // previous point
-					traceStop.X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
-
-					traceStart.Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (-Real[i-1]+1.0)/2.0);
-					traceStop.Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (-Real[i]+1.0)/2.0);
-
-					if(traceStart.Y > scopeDisp.Height)		// Clip display in case Y-values are not valid
-						traceStart.Y = scopeDisp.Height;
-					if(traceStart.Y < scopeDisp.Y)
-						traceStart.Y = scopeDisp.Y;
-					if(traceStop.Y > scopeDisp.Height)
-						traceStop.Y = scopeDisp.Height;
-					if(traceStop.Y < scopeDisp.Y)
-						traceStop.Y = scopeDisp.Y;
-
-					DrawLineBound(gr, scopeDisp, penS11MagSto, traceStart, traceStop);		// red
+					tracesStop[57].X = scopeDisp.X + (int)((float)i * PixelsPerGrid);		// current point
+					tracesStop[57].Y = scopeDisp.Y + (int)((float)scopeDisp.Height * (-Real[i]+1.0)/2.0);
+#if 0
+					if(tracesStart[57].Y > scopeDisp.Height)		// Clip display in case Y-values are not valid
+						tracesStart[57].Y = scopeDisp.Height;
+					if(tracesStart[57].Y < scopeDisp.Y)
+						tracesStart[57].Y = scopeDisp.Y;
+					if(tracesStop[57].Y > scopeDisp.Height)
+						tracesStop[57].Y = scopeDisp.Height;
+					if(tracesStop[57].Y < scopeDisp.Y)
+						tracesStop[57].Y = scopeDisp.Y;
+#endif
+					if (i > 0) DrawLineBound(gr, scopeDisp, penS11MagSto, tracesStart[57], tracesStop[57]);		// red
+					tracesStart[57] = tracesStop[57];
 				}
 			}
 
@@ -5160,18 +4932,18 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 		for (int i=0; i<FG->points; i++)			// Save current values to integrand
 		{
-			ITrace[i]->ReflMI = trace[i]->ReflMI;
+//			ITrace[i]->ReflMI = trace[i]->ReflMI;
 			ITrace[i]->ReflMQ = trace[i]->ReflMQ;
-			ITrace[i]->ReflPI = trace[i]->ReflPI;
+//			ITrace[i]->ReflPI = trace[i]->ReflPI;
 			ITrace[i]->ReflPQ = trace[i]->ReflPQ;
-			ITrace[i]->TranMI = trace[i]->TranMI;
-			ITrace[i]->TranMQHi = trace[i]->TranMQHi;
-			ITrace[i]->TranPI = trace[i]->TranPI;
+//			ITrace[i]->TranMI = trace[i]->TranMI;
+//			ITrace[i]->TranMQHi = trace[i]->TranMQHi;
+//			ITrace[i]->TranPI = trace[i]->TranPI;
 			ITrace[i]->TranPQ = trace[i]->TranPQ;
 			ITrace[i]->TranMQ = trace[i]->TranMQ;
-			ITrace[i]->TranMQMid = trace[i]->TranMQMid;
-			ITrace[i]->TranPILow = trace[i]->TranPILow;
-			ITrace[i]->TranPQLow = trace[i]->TranPQLow;
+//			ITrace[i]->TranMQMid = trace[i]->TranMQMid;
+//			ITrace[i]->TranPILow = trace[i]->TranPILow;
+//			ITrace[i]->TranPQLow = trace[i]->TranPQLow;
 		}
 
 
@@ -5241,9 +5013,9 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 				// Save received data by grid point
 
-				trace[m]->ReflMI = RxBuf->ReflMI;
+//				trace[m]->ReflMI = RxBuf->ReflMI;
 				trace[m]->ReflMQ = RxBuf->ReflMQ;
-				trace[m]->ReflPI = RxBuf->ReflPI;
+//				trace[m]->ReflPI = RxBuf->ReflPI;
 				trace[m]->ReflPQ = RxBuf->ReflPQ;
 				trace[m]->Vref1 = RxBuf->Vref1;
 
@@ -5269,18 +5041,18 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 				// Save received data by grid point
 
-				trace[m]->TranMI = RxBuf->TranMI;
-				trace[m]->TranMQHi = RxBuf->TranMQHi;
-				trace[m]->TranPI = RxBuf->TranPI;
+//				trace[m]->TranMI = RxBuf->TranMI;
+//				trace[m]->TranMQHi = RxBuf->TranMQHi;
+//				trace[m]->TranPI = RxBuf->TranPI;
 				trace[m]->TranPQ = RxBuf->TranPQ;
-				trace[m]->Vref2 = RxBuf->Vref2;
+//				trace[m]->Vref2 = RxBuf->Vref2;
 
 				trace[m]->TranMQ = RxBuf->TranMQ;
-				trace[m]->TranMQMid = RxBuf->TranMQMid;
+//				trace[m]->TranMQMid = RxBuf->TranMQMid;
 
 				// New 09-30-2007
-				trace[m]->TranPILow = RxBuf->TranPILow;
-				trace[m]->TranPQLow = RxBuf->TranPQLow;
+//				trace[m]->TranPILow = RxBuf->TranPILow;
+//				trace[m]->TranPQLow = RxBuf->TranPQLow;
 
 				// Update Sweep Progress
 				if ((m % 10) == 0) SweepProgressBar->Value = (m+1);
@@ -5320,18 +5092,18 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 			for(int i=0; i<FG->points; i++)		// Exponentially Integrate the Current Readings
 			{
-				trace[i]->ReflMI = (unsigned short)(((long)ITrace[i]->ReflMI * Keep + (long)trace[i]->ReflMI ) / TotalSize);
+//				trace[i]->ReflMI = (unsigned short)(((long)ITrace[i]->ReflMI * Keep + (long)trace[i]->ReflMI ) / TotalSize);
 				trace[i]->ReflMQ = (unsigned short)(((long)ITrace[i]->ReflMQ * Keep + (long)trace[i]->ReflMQ ) / TotalSize);
-				trace[i]->ReflPI = (unsigned short)(((long)ITrace[i]->ReflPI * Keep + (long)trace[i]->ReflPI ) / TotalSize);
+//				trace[i]->ReflPI = (unsigned short)(((long)ITrace[i]->ReflPI * Keep + (long)trace[i]->ReflPI ) / TotalSize);
 				trace[i]->ReflPQ = (unsigned short)(((long)ITrace[i]->ReflPQ * Keep + (long)trace[i]->ReflPQ ) / TotalSize);
-				trace[i]->TranMI = (unsigned short)(((long)ITrace[i]->TranMI * Keep + (long)trace[i]->TranMI ) / TotalSize);
-				trace[i]->TranMQHi = (unsigned short)(((long)ITrace[i]->TranMQHi * Keep + (long)trace[i]->TranMQHi ) / TotalSize);
-				trace[i]->TranPI = (unsigned short)(((long)ITrace[i]->TranPI * Keep + (long)trace[i]->TranPI ) / TotalSize);
+//				trace[i]->TranMI = (unsigned short)(((long)ITrace[i]->TranMI * Keep + (long)trace[i]->TranMI ) / TotalSize);
+//				trace[i]->TranMQHi = (unsigned short)(((long)ITrace[i]->TranMQHi * Keep + (long)trace[i]->TranMQHi ) / TotalSize);
+//				trace[i]->TranPI = (unsigned short)(((long)ITrace[i]->TranPI * Keep + (long)trace[i]->TranPI ) / TotalSize);
 				trace[i]->TranPQ = (unsigned short)(((long)ITrace[i]->TranPQ * Keep + (long)trace[i]->TranPQ ) / TotalSize);
 				trace[i]->TranMQ = (unsigned short)(((long)ITrace[i]->TranMQ * Keep + (long)trace[i]->TranMQ ) / TotalSize);
-				trace[i]->TranMQMid = (unsigned short)(((long)ITrace[i]->TranMQMid * Keep + (long)trace[i]->TranMQMid) / TotalSize);
-				trace[i]->TranPILow = (unsigned short)(((long)ITrace[i]->TranPILow * Keep + (long)trace[i]->TranPILow) / TotalSize);
-				trace[i]->TranPQLow = (unsigned short)(((long)ITrace[i]->TranPQLow * Keep + (long)trace[i]->TranPQLow) / TotalSize);
+//				trace[i]->TranMQMid = (unsigned short)(((long)ITrace[i]->TranMQMid * Keep + (long)trace[i]->TranMQMid) / TotalSize);
+//				trace[i]->TranPILow = (unsigned short)(((long)ITrace[i]->TranPILow * Keep + (long)trace[i]->TranPILow) / TotalSize);
+//				trace[i]->TranPQLow = (unsigned short)(((long)ITrace[i]->TranPQLow * Keep + (long)trace[i]->TranPQLow) / TotalSize);
 			}
 
 		}
@@ -6522,20 +6294,20 @@ private: System::Void StoreMenuItem_Click(System::Object^  sender, System::Event
 		 {
 			 for(int i=0; i<1024; i++)		// store display traces to memory
 			 {
-				 traceSto[i]->ReflMI = trace[i]->ReflMI;
+//				 traceSto[i]->ReflMI = trace[i]->ReflMI;
 				 traceSto[i]->ReflMQ = trace[i]->ReflMQ;
-				 traceSto[i]->ReflPI = trace[i]->ReflPI;
+//				 traceSto[i]->ReflPI = trace[i]->ReflPI;
 				 traceSto[i]->ReflPQ = trace[i]->ReflPQ;
 				 traceSto[i]->Vref1 = trace[i]->Vref1;
-				 traceSto[i]->TranMI = trace[i]->TranMI;
-				 traceSto[i]->TranMQHi = trace[i]->TranMQHi;
-				 traceSto[i]->TranPI = trace[i]->TranPI;
+//				 traceSto[i]->TranMI = trace[i]->TranMI;
+//				 traceSto[i]->TranMQHi = trace[i]->TranMQHi;
+//				 traceSto[i]->TranPI = trace[i]->TranPI;
 				 traceSto[i]->TranPQ = trace[i]->TranPQ;
-				 traceSto[i]->Vref2 = trace[i]->Vref2;
+//				 traceSto[i]->Vref2 = trace[i]->Vref2;
 				 traceSto[i]->TranMQ = trace[i]->TranMQ;
-				 traceSto[i]->TranMQMid = trace[i]->TranMQMid;
-				 traceSto[i]->TranPILow = trace[i]->TranPILow;
-				 traceSto[i]->TranPQLow = trace[i]->TranPQLow;
+//				 traceSto[i]->TranMQMid = trace[i]->TranMQMid;
+//				 traceSto[i]->TranPILow = trace[i]->TranPILow;
+//				 traceSto[i]->TranPQLow = trace[i]->TranPQLow;
 			 }
 		 }
 
@@ -6544,20 +6316,20 @@ private: System::Void RecallMenuItem_Click(System::Object^  sender, System::Even
 		 {
  			 for(int i=0; i<1024; i++)		// recall display traces from memory
 			 {
-				 trace[i]->ReflMI = traceSto[i]->ReflMI;
+//				 trace[i]->ReflMI = traceSto[i]->ReflMI;
 				 trace[i]->ReflMQ = traceSto[i]->ReflMQ;
-				 trace[i]->ReflPI = traceSto[i]->ReflPI;
+//				 trace[i]->ReflPI = traceSto[i]->ReflPI;
 				 trace[i]->ReflPQ = traceSto[i]->ReflPQ;
 				 trace[i]->Vref1 = traceSto[i]->Vref1;
-				 trace[i]->TranMI = traceSto[i]->TranMI;
-				 trace[i]->TranMQHi = traceSto[i]->TranMQHi;
-				 trace[i]->TranPI = traceSto[i]->TranPI;
+//				 trace[i]->TranMI = traceSto[i]->TranMI;
+//				 trace[i]->TranMQHi = traceSto[i]->TranMQHi;
+//				 trace[i]->TranPI = traceSto[i]->TranPI;
 				 trace[i]->TranPQ = traceSto[i]->TranPQ;
-				 trace[i]->Vref2 = traceSto[i]->Vref2;
+//				 trace[i]->Vref2 = traceSto[i]->Vref2;
 				 trace[i]->TranMQ = traceSto[i]->TranMQ;
-				 trace[i]->TranMQMid = traceSto[i]->TranMQMid;
-				 trace[i]->TranPILow = traceSto[i]->TranPILow;
-				 trace[i]->TranPQLow = traceSto[i]->TranPQLow;
+//				 trace[i]->TranMQMid = traceSto[i]->TranMQMid;
+//				 trace[i]->TranPILow = traceSto[i]->TranPILow;
+//				 trace[i]->TranPQLow = traceSto[i]->TranPQLow;
 			 }
 			 Refresh();
 		 }
@@ -7361,7 +7133,7 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 		 /// Paint event handler
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
-			try {
+//			try {
 #if 0
 			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
@@ -7388,7 +7160,7 @@ private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms
 			//delete(pg);
 
 #endif
-			} catch (Exception^) {}
+//			} catch (Exception^) {}
 		 }
 
 	/// Resize event handler

@@ -38,22 +38,24 @@ using namespace System::Windows::Forms;
 
 
 /// Convert Magnitude to rectangular Y display coordinate
-int ToDisplayRectMag(double magnitude, int height, float dbScaleFactor, int refLevel);
+int ToDisplayRectMag(double magnitude, System::Drawing::Rectangle scopeDisp, float dbScaleFactor, int refLevel);
 
 /// Convert Phase to rectangular Y display coordinate
-int ToDisplayRectPhs(double phase, int height);
+int ToDisplayRectPhs(double phase, System::Drawing::Rectangle scopeDisp);
 
 /// Convert Group Delay to rectangular Y display coordinate
-int ToDisplayRectGD(double groupdelay, int height, int scaleFactor);
+int ToDisplayRectGD(double groupdelay, System::Drawing::Rectangle scopeDisp, int scaleFactor);
 
 /// Convert Magnitude and Phase to polar (X,Y) display coordinates
 void ToDisplayPolar(double magnitude, double phase, int polarRad, int xoffset, int yoffset, int& X, int& Y);
 
 /// Convert Resistance portion of S11 to Y display coordinate
-int ToDisplayRectR(float resistance, int scale, int height);
+int ToDisplayRectR(float resistance, int scale, System::Drawing::Rectangle scopeDisp);
 
 /// Convert Reactance portion of S11 to Y display coordinate
-int ToDisplayRectjX(float reactance, int scale, int height);
+int ToDisplayRectjX(float reactance, int scale, System::Drawing::Rectangle scopeDisp);
+
+int ToDisplayRectScaled(double value, System::Drawing::Rectangle scopeDisp, int scaleFactor);
 
 /// Compensate for ModAmpbuffer amplifer phase distortions
 double BufferAmpPhaseComp(double phaseDegrees, int Frequency);
@@ -143,7 +145,7 @@ unsigned short TxLevLinear(int tranLevel);
 float dBFromLinear(int DAClevel);
 
 /// Convert Return Loss (S11 mag) to SWR, then to vertical display coordinate
-int ToDisplayAsSWR(double mag, int height, int scaledB);
+int ToDisplayAsSWR(double mag, System::Drawing::Rectangle scopeDisp, int scaledB);
 
 /// Export S Parameters to a file
 void ExportSParams(int format,  FrequencyGrid^ FG,	array<Double>^ S11Mag, array<Double>^ S11Phs,

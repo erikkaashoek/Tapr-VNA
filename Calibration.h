@@ -750,13 +750,13 @@ namespace VNAR3
 					}
 
 
-					calPoint->TranPI = RxBuf->TranPI;
+//					calPoint->TranPI = RxBuf->TranPI;
 					calPoint->TranPQ = RxBuf->TranPQ;
-					calPoint->TranMQHi = RxBuf->TranMQHi;
+//					calPoint->TranMQHi = RxBuf->TranMQHi;
 					calPoint->TranMQ = RxBuf->TranMQ;
-					calPoint->TranMQMid = RxBuf->TranMQMid;
-					calPoint->TranPILow = RxBuf->TranPILow;
-					calPoint->TranPQLow = RxBuf->TranPQLow;
+//					calPoint->TranMQMid = RxBuf->TranMQMid;
+//					calPoint->TranPILow = RxBuf->TranPILow;
+//					calPoint->TranPQLow = RxBuf->TranPQLow;
 
 					Cal->ResolveTranPolar(calPoint, Fdesired, rmag, rphs);
 

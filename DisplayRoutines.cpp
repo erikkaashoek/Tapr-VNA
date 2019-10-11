@@ -110,16 +110,15 @@ void ToDisplayPolar(double magnitude, double phase, int polarRad, int xoffset, i
 
 }
 
-
-
 // Convert Magnitude to rectangular (X, Y) display coordinates
-int ToDisplayRectMag(double magnitude, int height, float dbScaleFactor, int refLevel)
+int ToDisplayRectMag(double magnitude, System::Drawing::Rectangle scopeDisp, float dbScaleFactor, int refLevel)
 {
 	/// magnitude has a normalized value.
 	/// Zero dB is the top of the screen - magnitude value = 1.000
 	/// -100 dB is the bottom of the screen (@ 10 db/div) - magnitude value 1e-5
 	/// Convert magnitude to vertical display accounting for the scale factor in dB/division
 
+	int height = scopeDisp.Height;
 	double dbmag;
 
 	if(magnitude < 0.0000000001)
@@ -130,29 +129,42 @@ int ToDisplayRectMag(double magnitude, int height, float dbScaleFactor, int refL
 	dbmag /= ((double)dbScaleFactor * 10.0);			// 0 to +1 for 10db/div
 
 	// scale to the vertical screen display area
-	int vertical = (int)(dbmag * (double)height);	// 0 to scopeDisp.height for zero dB to height for max dB
+	int vertical = (int)(dbmag * (double)height);	// 0 to scopeDisp.Height for zero dB to height for max dB
 
 	if (vertical > height)					// crop display - probably a better way to do this
 		vertical = height;
 	if (vertical < 0)
 		vertical = 0;
 
-	return(vertical);						// return Y as positive number
+	return(scopeDisp.Y + vertical);						// return Y as positive number
 
 }
 // Convert Phase to rectangular (X, Y) display coordinates
-int ToDisplayRectPhs(double phase, int height)
+int ToDisplayRectPhs(double phase, System::Drawing::Rectangle scopeDisp)
 {
+
+	int height = scopeDisp.Height;
 	// phase in degrees ranges from -180 to +180
 
 	phase += 180.0;								///< offset the phase display so zero is centerline
 	double range = phase * (double)height / 360.0; ///< top to bottom of display is 360 degrees
 
-	return((int)range);
+	return(scopeDisp.Bottom - (int)range);
 }
-// Convert value of groupdelay to Y-display coordinate
-int ToDisplayRectGD(double groupdelay, int height, int scaleFactor)
+
+
+// Convert value with scale to Y-display coordinate
+int ToDisplayRectScaled(double value, System::Drawing::Rectangle scopeDisp, int scaleFactor)
 {
+	return scopeDisp.Bottom - (int)(value * scopeDisp.Height / scaleFactor);
+}
+
+
+// Convert value of groupdelay to Y-display coordinate
+int ToDisplayRectGD(double groupdelay, System::Drawing::Rectangle scopeDisp, int scaleFactor)
+{
+
+	int height = scopeDisp.Height;
 
 	// scale factor = 1  implies 100 picoseconds
 	// convert to nanoseconds
@@ -169,11 +181,13 @@ int ToDisplayRectGD(double groupdelay, int height, int scaleFactor)
 	if (groupdelay > height)
 		groupdelay = height;
 
-	return((int)groupdelay);
+	return(scopeDisp.Bottom - (int)groupdelay);
 }
 // Convert Resistance portion of S11 to Y display coordinate
-int ToDisplayRectR(float resistance, int scale, int height)
+int ToDisplayRectR(float resistance, int scale, System::Drawing::Rectangle scopeDisp)
 {
+
+	int height = scopeDisp.Height;
 	int vertical;
 
 	vertical = (int)((resistance * (float)height) / ((float)scale * 10.0));
@@ -183,12 +197,14 @@ int ToDisplayRectR(float resistance, int scale, int height)
 	if (vertical < 0)
 		vertical =  0;
 
-	return(vertical);
+	return(scopeDisp.Bottom - vertical);
 };
 
 // Convert Reactance portion of S11 to Y display coordinate
-int ToDisplayRectjX(float reactance, int scale, int height)
+int ToDisplayRectjX(float reactance, int scale, System::Drawing::Rectangle scopeDisp)
 {
+
+	int height = scopeDisp.Height;
 	int vertical;
 
 	vertical = (int)((reactance * (float)height) / ((float)scale * 10.0));
@@ -200,7 +216,7 @@ int ToDisplayRectjX(float reactance, int scale, int height)
 	if (vertical < 0)
 		vertical =  0;
 
-	return(vertical);
+	return(scopeDisp.Bottom - vertical);
 
 };
 
@@ -1016,8 +1032,10 @@ float dBFromLinear(int DAClevel)
 
 
 // Convert Return Loss (S11 mag) to SWR, then to Y-coordinate.
-int ToDisplayAsSWR(double mag, int height, int scaledB)
+int ToDisplayAsSWR(double mag, System::Drawing::Rectangle scopeDisp, int scaledB)
 {
+
+	int height = scopeDisp.Height;
 
 	/// Derive vertical plot value using dB scale factor as SWR range.
 	/// scaledB has value 10, 5, 2 or 1 dB/division.
@@ -1039,7 +1057,7 @@ int ToDisplayAsSWR(double mag, int height, int scaledB)
 	if (vertical < 0)
 		vertical = 0;
 
-	return(vertical);						// return Y as positive number
+	return(scopeDisp.Y + vertical);						// return Y as positive number
 
 }
 	// Export S-parameters to file.
@@ -1269,8 +1287,7 @@ void StoreSParams(bool calmode, bool ReflExtn, FrequencyGrid^ FG, InstrumentCalD
 		
 		// Compute S21 or S12
 		CalData->ResolveTranPolar(dataSet[i], FG->Frequency(i), rmag, rphs);
-		if (calmode)
-			CorrectS21(CalData, FG->Frequency(i), calmode, fmagnitude, fphase, rmag, rphs);
+		CorrectS21(CalData, FG->Frequency(i), calmode, fmagnitude, fphase, rmag, rphs);
 
 		tranMag[i] = fmagnitude;	// store transmitted component in polar form
 		tranPhs[i] = fphase;
@@ -1466,6 +1483,7 @@ int ExpectedValue(array<UInt16>^ data, int index, bool mode)
 	return(MedianValue);
 }
 
+#if 0
 // Deglitch an entire array of raw VNA readings using ExpectedValue
 void DeGlitch(array<UInt16>^ raw, int count, bool phasemode)
 {
@@ -1547,6 +1565,7 @@ void DeGlitch(array<MeasurementSet^>^ dataSet, int count)
 
 
 }
+#endif
 
 // Smooth a phase error table
 void SmoothPhaseTable(array<Double>^ table)
@@ -1701,13 +1720,13 @@ bool ExcessRxNoiseIngress(array<MeasurementSet^>^ trace, int points)
 {
 	// check for cases where noise is flooding the receive detector
 	// due to poor shielding.  09-27-2008
-
+#if 0
 	int faultCount = 0;
 	for(int i=15; i<(points-15); i++)
 	{
-		UInt16 Mid = trace[i]->TranMQMid;
+//		UInt16 Mid = trace[i]->TranMQMid;
 		UInt16 Lo = trace[i]->TranMQ;
-		UInt16 Hi = trace[i]->TranMQHi;
+//		UInt16 Hi = trace[i]->TranMQHi;
 
 		if(Mid >= 2300 && Mid < 3300)
 			if(Lo > (Mid - 750))
@@ -1722,7 +1741,7 @@ bool ExcessRxNoiseIngress(array<MeasurementSet^>^ trace, int points)
 
 	if(faultCount > 3)	// ~3 percent threshold
 		return(true);	// noise ingress detected
-
+#endif
 	return(false);		// no noise ingress detected
 };
 
