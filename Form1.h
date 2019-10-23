@@ -34,7 +34,7 @@ using the .NET style of Event Delegates.
 #include "DisplayRoutines.h"
 #include "Calibration.h"
 #include "DataDisplay.h"
-//#include "InstrumentCal.h"
+#include "InstrumentCal.h"
 #include "MarkerEntry.h"
 #include "About.h"
 #include "CursorStatus.h"
@@ -68,7 +68,7 @@ using namespace std;
 
 extern  int audio_delay;
 
-#define SOFTWARE_VERSION		"TAPR VNA 4.0"
+#define SOFTWARE_VERSION		"TAPR VNA 4.3"
 
 namespace VNAR3
 {
@@ -401,6 +401,9 @@ private: System::Windows::Forms::ToolStripMenuItem^  dumpMeasurementsToolStripMe
 private: System::Windows::Forms::TrackBar^  MIndex;
 private: System::Windows::Forms::Button^  AddMarkerButton;
 private: System::Windows::Forms::TextBox^  delayBox;
+private: System::Windows::Forms::ToolStripMenuItem^  bridgeCalibrationToolStripMenuItem;
+private: System::Windows::Forms::Panel^  outputPanel;
+
 
 
 
@@ -484,6 +487,7 @@ private: System::Windows::Forms::TextBox^  delayBox;
 			this->signalGeneratorToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->mockupDeviceToolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->calibrateMenu = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->bridgeCalibrationToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->runItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->loadItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->mockupDeviceToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -608,6 +612,7 @@ private: System::Windows::Forms::TextBox^  delayBox;
 			this->MIndex = (gcnew System::Windows::Forms::TrackBar());
 			this->AddMarkerButton = (gcnew System::Windows::Forms::Button());
 			this->delayBox = (gcnew System::Windows::Forms::TextBox());
+			this->outputPanel = (gcnew System::Windows::Forms::Panel());
 			this->menuStrip1->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->MIndex))->BeginInit();
 			this->SuspendLayout();
@@ -1177,11 +1182,18 @@ private: System::Windows::Forms::TextBox^  delayBox;
 			// 
 			// calibrateMenu
 			// 
-			this->calibrateMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->runItem, 
-				this->loadItem, this->mockupDeviceToolStripMenuItem});
+			this->calibrateMenu->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->bridgeCalibrationToolStripMenuItem, 
+				this->runItem, this->loadItem, this->mockupDeviceToolStripMenuItem});
 			this->calibrateMenu->Name = L"calibrateMenu";
 			this->calibrateMenu->Size = System::Drawing::Size(77, 20);
 			this->calibrateMenu->Text = L"&Calibration";
+			// 
+			// bridgeCalibrationToolStripMenuItem
+			// 
+			this->bridgeCalibrationToolStripMenuItem->Name = L"bridgeCalibrationToolStripMenuItem";
+			this->bridgeCalibrationToolStripMenuItem->Size = System::Drawing::Size(230, 22);
+			this->bridgeCalibrationToolStripMenuItem->Text = L"Bridge Calibration";
+			this->bridgeCalibrationToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::instrumentCalItem_Click);
 			// 
 			// runItem
 			// 
@@ -2101,6 +2113,15 @@ private: System::Windows::Forms::TextBox^  delayBox;
 			this->delayBox->TabIndex = 34;
 			this->delayBox->TextChanged += gcnew System::EventHandler(this, &Form1::delayBox_TextChanged);
 			// 
+			// outputPanel
+			// 
+			this->outputPanel->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
+				| System::Windows::Forms::AnchorStyles::Left));
+			this->outputPanel->Location = System::Drawing::Point(1, 27);
+			this->outputPanel->Name = L"outputPanel";
+			this->outputPanel->Size = System::Drawing::Size(934, 285);
+			this->outputPanel->TabIndex = 35;
+			// 
 			// Form1
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -2108,6 +2129,7 @@ private: System::Windows::Forms::TextBox^  delayBox;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 431);
+			this->Controls->Add(this->outputPanel);
 			this->Controls->Add(this->delayBox);
 			this->Controls->Add(this->RefExtnCheckBox);
 			this->Controls->Add(this->Spectrum);
@@ -5324,10 +5346,16 @@ private: System::Void exitItem_Click(System::Object^  sender, System::EventArgs^
 private: System::Void runItem_Click(System::Object^  sender, System::EventArgs^  e)
         {
 			Calibration^ pcal = gcnew Calibration(CalData, VNA, FG);
-			if (pcal->ShowDialog() == ::DialogResult::OK)
+			System::Windows::Forms::DialogResult res = pcal->ShowDialog();
+			if (res == ::DialogResult::OK)
 			{
 				calCheckBox->Enabled = true;		// Fixture calibration ran OK and saved a file
 				FixtureCalFileName = pcal->outfile->FileName;	// Update FixtureCalFileName
+				Refresh();
+			} else if (res == ::DialogResult::Yes)
+			{
+				calCheckBox->Enabled = true;		// Fixture calibration ran OK and saved a file
+				Refresh();
 			}
         }
 		/// Load Fixture Calibration File menu item handler
@@ -5870,8 +5898,9 @@ private: System::Void grid1024menu_Click(System::Object^  sender, System::EventA
 		 /// Run Instrument Calibration menu item click handler
 private: System::Void instrumentCalItem_Click(System::Object^  sender, System::EventArgs^  e)
 		 {
-//			InstrumentCal^ Ical = gcnew InstrumentCal(CalData, VNA, FG, AllUsersDataPath);
+			InstrumentCal^ Ical = gcnew InstrumentCal(CalData, VNA, FG, AllUsersDataPath);
 //			Ical->ShowDialog();
+			Ical->Show();
 			Refresh();
 		 }
 		 /// Help menu item click handler
@@ -7134,7 +7163,7 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
 //			try {
-#if 0
+#if 1
 			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
 			delete(pg);

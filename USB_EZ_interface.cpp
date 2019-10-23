@@ -456,25 +456,37 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //						sa = Perform("pause");
 					again_1:
 						sa = Perform("data 0");
-						if (sa->Length != 103)
-							goto again_1;
 						startIndex = 1;
+						if (sa->Length == 102) {
+							startIndex = 0;
+						} else if (sa->Length != 103)
+							goto again_1;
 						for (int i = 0; i < sa->Length-1-startIndex; i++) {
 							s = sa[i+startIndex];
 							ss = s->Split(' ');
-							S11Real[i+base] = Convert::ToDouble(ss[0]);
-							S11Imag[i+base] = Convert::ToDouble(ss[1]);
+							S11Real[i+base] = Convert::ToDouble(ss[0])*10.0;
+							S11Imag[i+base] = Convert::ToDouble(ss[1])*10.0;
+						}
+						if (S11Real[base] > 10000.0) {
+							S11Real[base] = S11Real[base+1];
+							S11Imag[base] = S11Imag[base+1];
 						}
 					again_2:
 						sa = Perform("data 1");
-						if (sa->Length != 103)
-							goto again_2;
 						startIndex = 1;
+						if (sa->Length == 102) {
+							startIndex = 0;
+						} else if (sa->Length != 103)
+							goto again_2;
 						for (int i = 0; i < sa->Length-1-startIndex; i++) {
 							s = sa[i+startIndex];
 							ss = s->Split(' ');
-							S21Real[i+base] = Convert::ToDouble(ss[0]);
-							S21Imag[i+base] = Convert::ToDouble(ss[1]);
+							S21Real[i+base] = Convert::ToDouble(ss[0])*3.0;
+							S21Imag[i+base] = Convert::ToDouble(ss[1])*3.0;
+						}
+						if (S21Real[base] > 10000.0) {
+							S21Real[base] = S21Real[base+1];
+							S21Imag[base] = S21Imag[base+1];
 						}
 
 						base += 101;
@@ -597,6 +609,7 @@ bool VNADevice::FindVNA()
 							 Perform("pause");
 						 } else {
 							 hasScanCommand = false;
+							 Perform("resume");
 							 Perform("cal off");
 						 }
 

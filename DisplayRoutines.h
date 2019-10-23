@@ -25,10 +25,10 @@
 
 
 #include "stdafx.h"
-//#include "DirectionalCoupler.h"
+#include "DirectionalCoupler.h"
+#include "Detector.h"
 #include "USB_EZ_interface.h"
 
-//#include "Detector.h"
 #include "DataDisplay.h"
 #using <mscorlib.dll>
 #using <System.dll>
@@ -95,15 +95,17 @@ public ref class InstrumentCalDataSet
 {
 public:
 
-//	Detector^ RxDet, ^TxDet;		///< Holds detector constants
-//	DirectionalCoupler^ DirCoupler;		///< Holds Directional coupler error model
+	Detector^ RxDet, ^TxDet;		///< Holds detector constants
+	DirectionalCoupler^ DirCoupler;		///< Holds Directional coupler error model
 
 	// Fixture Cal data (may not be any)
 	array<Double>^ EdReal, ^EdImag, ^EsReal, ^EsImag;
 	array<Double>^ EtReal, ^EtImag, ^ThReal, ^ThImag;
+	double OpenC0, ShortL0,OpenLength,ShortLength,LoadL0;
 	array<Double>^ S11shortReal, ^S11shortImag;
 	array<Double>^ S11openReal, ^S11openImag;
 	array<Double>^ S11termReal, ^S11termImag;
+	array<Double>^ S21termReal, ^S21termImag;
 	bool FixtureCalLogFreqMode;
 	__int64 minCalFreq, maxCalFreq;
 	VNADevice^ VNA;
@@ -120,6 +122,11 @@ void ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, dou
 void ResolveTranPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, double& rphs);
 /// get frequency of calibration grid point
 __int64 GetFreqFromFixtureCalGrid(long index, bool Freqmode);
+/// Convert Detector Magnitude Calibration Grid index to Frequency.
+int GetFreqFromDetMagCalGrid(long index);
+/// Convert Phase Calibration Grid index to Frequency.
+int GetFreqFromPhaseCalGrid(long index);	
+
 };
 
 
@@ -158,7 +165,8 @@ void StoreSParams(bool calmode, bool ReflExtn, FrequencyGrid^ FG, InstrumentCalD
 					array<Double>^ tranMag, array<Double>^ tranPhs);
 
 /// Linear interpolation of Xval between Xlow and Xhigh yielding Y result between Ylow and Yhi
-double Interpolate(int Xval, int Xlow, double Ylow, int Xhi, double Yhi);
+//double Interpolate(int Xval, int Xlow, double Ylow, int Xhi, double Yhi);
+double Interpolate(__int64 Xval, __int64 Xlow, double Ylow, __int64 Xhi, double Yhi);
 //double Interpolate(int Xval, int Xlow, int Ylow, int Xhi, int Yhi);
 //double Interpolate(float Xval, float Xlow, float Ylow, float Xhi, float Yhi);
 
@@ -205,10 +213,6 @@ void DrawLineBound(System::Drawing::Graphics^, System::Drawing::Rectangle, Syste
 void AddPolar(double& linearMag, double& phaseDegr, double linearMagadd, double phaseDegrAdd);
 /// Convert MeasurementDelay string to target's loop count
 int MeasureDelayStringToCount(String^  value);
-/// Convert Detector Magnitude Calibration Grid index to Frequency.
-int GetFreqFromDetMagCalGrid(long index);
-/// Convert Phase Calibration Grid index to Frequency.
-int GetFreqFromPhaseCalGrid(long index);	
 /// Wrap phase to +/- 180 degree range.
 int NormalizePhaseDegr(int phase);	///< phase as an int.
 /// Wrap phase to +/- 180 degree range.

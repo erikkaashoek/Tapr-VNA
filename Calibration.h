@@ -102,6 +102,25 @@ namespace VNAR3
 	private: System::Windows::Forms::Label^  label8;
 	private: System::Windows::Forms::TextBox^  minFreq;
 	private: System::Windows::Forms::TextBox^  refPlaneBox;
+	private: System::Windows::Forms::Label^  label9;
+	private: System::Windows::Forms::Label^  label10;
+	private: System::Windows::Forms::Label^  label11;
+	private: System::Windows::Forms::Label^  label12;
+	private: System::Windows::Forms::Label^  label13;
+	private: System::Windows::Forms::Label^  label14;
+	private: System::Windows::Forms::Label^  label15;
+	private: System::Windows::Forms::Label^  label16;
+	private: System::Windows::Forms::TextBox^  shortL0Box;
+	private: System::Windows::Forms::TextBox^  shortLengthBox;
+	private: System::Windows::Forms::TextBox^  openLengthBox;
+
+
+
+	private: System::Windows::Forms::TextBox^  openC0Box;
+	private: System::Windows::Forms::TextBox^  loadL0Box;
+	private: System::Windows::Forms::Button^  applyButton;
+
+
 
 
 
@@ -148,6 +167,20 @@ namespace VNAR3
 			this->label8 = (gcnew System::Windows::Forms::Label());
 			this->minFreq = (gcnew System::Windows::Forms::TextBox());
 			this->refPlaneBox = (gcnew System::Windows::Forms::TextBox());
+			this->label9 = (gcnew System::Windows::Forms::Label());
+			this->label10 = (gcnew System::Windows::Forms::Label());
+			this->label11 = (gcnew System::Windows::Forms::Label());
+			this->label12 = (gcnew System::Windows::Forms::Label());
+			this->label13 = (gcnew System::Windows::Forms::Label());
+			this->label14 = (gcnew System::Windows::Forms::Label());
+			this->label15 = (gcnew System::Windows::Forms::Label());
+			this->label16 = (gcnew System::Windows::Forms::Label());
+			this->shortL0Box = (gcnew System::Windows::Forms::TextBox());
+			this->shortLengthBox = (gcnew System::Windows::Forms::TextBox());
+			this->openLengthBox = (gcnew System::Windows::Forms::TextBox());
+			this->openC0Box = (gcnew System::Windows::Forms::TextBox());
+			this->loadL0Box = (gcnew System::Windows::Forms::TextBox());
+			this->applyButton = (gcnew System::Windows::Forms::Button());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -156,7 +189,7 @@ namespace VNAR3
 			this->shortCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->shortCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->shortCal->Location = System::Drawing::Point(408, 189);
+			this->shortCal->Location = System::Drawing::Point(408, 281);
 			this->shortCal->Name = L"shortCal";
 			this->shortCal->Size = System::Drawing::Size(184, 40);
 			this->shortCal->TabIndex = 0;
@@ -168,7 +201,7 @@ namespace VNAR3
 			this->openCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->openCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->openCal->Location = System::Drawing::Point(408, 245);
+			this->openCal->Location = System::Drawing::Point(408, 337);
 			this->openCal->Name = L"openCal";
 			this->openCal->Size = System::Drawing::Size(184, 40);
 			this->openCal->TabIndex = 1;
@@ -180,7 +213,7 @@ namespace VNAR3
 			this->termCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->termCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->termCal->Location = System::Drawing::Point(408, 301);
+			this->termCal->Location = System::Drawing::Point(408, 393);
 			this->termCal->Name = L"termCal";
 			this->termCal->Size = System::Drawing::Size(184, 40);
 			this->termCal->TabIndex = 2;
@@ -192,7 +225,7 @@ namespace VNAR3
 			this->thruCal->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->thruCal->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->thruCal->Location = System::Drawing::Point(408, 357);
+			this->thruCal->Location = System::Drawing::Point(408, 449);
 			this->thruCal->Name = L"thruCal";
 			this->thruCal->Size = System::Drawing::Size(184, 40);
 			this->thruCal->TabIndex = 3;
@@ -217,7 +250,7 @@ namespace VNAR3
 			this->CancelButton->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->CancelButton->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->CancelButton->Location = System::Drawing::Point(384, 411);
+			this->CancelButton->Location = System::Drawing::Point(496, 503);
 			this->CancelButton->Name = L"CancelButton";
 			this->CancelButton->Size = System::Drawing::Size(96, 23);
 			this->CancelButton->TabIndex = 6;
@@ -229,7 +262,7 @@ namespace VNAR3
 			this->label2->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label2->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label2->Location = System::Drawing::Point(112, 197);
+			this->label2->Location = System::Drawing::Point(112, 289);
 			this->label2->Name = L"label2";
 			this->label2->Size = System::Drawing::Size(272, 32);
 			this->label2->TabIndex = 7;
@@ -241,7 +274,7 @@ namespace VNAR3
 			this->label3->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label3->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label3->Location = System::Drawing::Point(112, 253);
+			this->label3->Location = System::Drawing::Point(112, 345);
 			this->label3->Name = L"label3";
 			this->label3->Size = System::Drawing::Size(272, 32);
 			this->label3->TabIndex = 8;
@@ -253,7 +286,7 @@ namespace VNAR3
 			this->label4->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
 			this->label4->ImageAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			this->label4->Location = System::Drawing::Point(112, 309);
+			this->label4->Location = System::Drawing::Point(112, 401);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(272, 32);
 			this->label4->TabIndex = 9;
@@ -264,7 +297,7 @@ namespace VNAR3
 			this->label5->BackColor = System::Drawing::Color::Transparent;
 			this->label5->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->label5->Location = System::Drawing::Point(112, 365);
+			this->label5->Location = System::Drawing::Point(112, 457);
 			this->label5->Name = L"label5";
 			this->label5->Size = System::Drawing::Size(280, 32);
 			this->label5->TabIndex = 10;
@@ -274,7 +307,7 @@ namespace VNAR3
 			// 
 			this->statShort->BackColor = System::Drawing::Color::Transparent;
 			this->statShort->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statShort.Image")));
-			this->statShort->Location = System::Drawing::Point(32, 197);
+			this->statShort->Location = System::Drawing::Point(32, 289);
 			this->statShort->Name = L"statShort";
 			this->statShort->Size = System::Drawing::Size(32, 32);
 			this->statShort->TabIndex = 11;
@@ -285,7 +318,7 @@ namespace VNAR3
 			this->calSave->FlatStyle = System::Windows::Forms::FlatStyle::System;
 			this->calSave->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->calSave->Location = System::Drawing::Point(184, 411);
+			this->calSave->Location = System::Drawing::Point(115, 503);
 			this->calSave->Name = L"calSave";
 			this->calSave->Size = System::Drawing::Size(152, 24);
 			this->calSave->TabIndex = 15;
@@ -297,7 +330,7 @@ namespace VNAR3
 			this->label6->BackColor = System::Drawing::Color::Transparent;
 			this->label6->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Underline, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(0)));
-			this->label6->Location = System::Drawing::Point(24, 165);
+			this->label6->Location = System::Drawing::Point(24, 257);
 			this->label6->Name = L"label6";
 			this->label6->Size = System::Drawing::Size(56, 23);
 			this->label6->TabIndex = 16;
@@ -307,7 +340,7 @@ namespace VNAR3
 			// 
 			this->statOpen->BackColor = System::Drawing::Color::Transparent;
 			this->statOpen->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statOpen.Image")));
-			this->statOpen->Location = System::Drawing::Point(32, 253);
+			this->statOpen->Location = System::Drawing::Point(32, 345);
 			this->statOpen->Name = L"statOpen";
 			this->statOpen->Size = System::Drawing::Size(32, 32);
 			this->statOpen->TabIndex = 17;
@@ -317,7 +350,7 @@ namespace VNAR3
 			// 
 			this->statTerm->BackColor = System::Drawing::Color::Transparent;
 			this->statTerm->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statTerm.Image")));
-			this->statTerm->Location = System::Drawing::Point(32, 309);
+			this->statTerm->Location = System::Drawing::Point(32, 401);
 			this->statTerm->Name = L"statTerm";
 			this->statTerm->Size = System::Drawing::Size(32, 32);
 			this->statTerm->TabIndex = 18;
@@ -327,7 +360,7 @@ namespace VNAR3
 			// 
 			this->statThru->BackColor = System::Drawing::Color::Transparent;
 			this->statThru->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statThru.Image")));
-			this->statThru->Location = System::Drawing::Point(32, 365);
+			this->statThru->Location = System::Drawing::Point(32, 457);
 			this->statThru->Name = L"statThru";
 			this->statThru->Size = System::Drawing::Size(32, 32);
 			this->statThru->TabIndex = 19;
@@ -335,10 +368,10 @@ namespace VNAR3
 			// 
 			// calProgressBar
 			// 
-			this->calProgressBar->Location = System::Drawing::Point(112, 459);
+			this->calProgressBar->Location = System::Drawing::Point(112, 543);
 			this->calProgressBar->Maximum = 1024;
 			this->calProgressBar->Name = L"calProgressBar";
-			this->calProgressBar->Size = System::Drawing::Size(472, 16);
+			this->calProgressBar->Size = System::Drawing::Size(480, 16);
 			this->calProgressBar->TabIndex = 20;
 			// 
 			// LinLogBox
@@ -388,7 +421,7 @@ namespace VNAR3
 			// 
 			this->label7->AutoSize = true;
 			this->label7->BackColor = System::Drawing::Color::Transparent;
-			this->label7->Location = System::Drawing::Point(112, 167);
+			this->label7->Location = System::Drawing::Point(112, 259);
 			this->label7->Name = L"label7";
 			this->label7->Size = System::Drawing::Size(156, 13);
 			this->label7->TabIndex = 22;
@@ -396,7 +429,7 @@ namespace VNAR3
 			// 
 			// maxFreq
 			// 
-			this->maxFreq->Location = System::Drawing::Point(408, 163);
+			this->maxFreq->Location = System::Drawing::Point(408, 255);
 			this->maxFreq->Name = L"maxFreq";
 			this->maxFreq->Size = System::Drawing::Size(184, 20);
 			this->maxFreq->TabIndex = 23;
@@ -406,7 +439,7 @@ namespace VNAR3
 			// 
 			this->statThruF->BackColor = System::Drawing::Color::Transparent;
 			this->statThruF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statThruF.Image")));
-			this->statThruF->Location = System::Drawing::Point(32, 365);
+			this->statThruF->Location = System::Drawing::Point(32, 457);
 			this->statThruF->Name = L"statThruF";
 			this->statThruF->Size = System::Drawing::Size(32, 32);
 			this->statThruF->TabIndex = 24;
@@ -416,7 +449,7 @@ namespace VNAR3
 			// 
 			this->statTermF->BackColor = System::Drawing::Color::Transparent;
 			this->statTermF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statTermF.Image")));
-			this->statTermF->Location = System::Drawing::Point(32, 309);
+			this->statTermF->Location = System::Drawing::Point(32, 401);
 			this->statTermF->Name = L"statTermF";
 			this->statTermF->Size = System::Drawing::Size(32, 32);
 			this->statTermF->TabIndex = 25;
@@ -426,7 +459,7 @@ namespace VNAR3
 			// 
 			this->statOpenF->BackColor = System::Drawing::Color::Transparent;
 			this->statOpenF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statOpenF.Image")));
-			this->statOpenF->Location = System::Drawing::Point(32, 253);
+			this->statOpenF->Location = System::Drawing::Point(32, 345);
 			this->statOpenF->Name = L"statOpenF";
 			this->statOpenF->Size = System::Drawing::Size(32, 32);
 			this->statOpenF->TabIndex = 26;
@@ -436,7 +469,7 @@ namespace VNAR3
 			// 
 			this->statShortF->BackColor = System::Drawing::Color::Transparent;
 			this->statShortF->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"statShortF.Image")));
-			this->statShortF->Location = System::Drawing::Point(32, 197);
+			this->statShortF->Location = System::Drawing::Point(32, 289);
 			this->statShortF->Name = L"statShortF";
 			this->statShortF->Size = System::Drawing::Size(32, 32);
 			this->statShortF->TabIndex = 27;
@@ -446,7 +479,7 @@ namespace VNAR3
 			// 
 			this->label8->AutoSize = true;
 			this->label8->BackColor = System::Drawing::Color::Transparent;
-			this->label8->Location = System::Drawing::Point(112, 140);
+			this->label8->Location = System::Drawing::Point(112, 232);
 			this->label8->Name = L"label8";
 			this->label8->Size = System::Drawing::Size(153, 13);
 			this->label8->TabIndex = 28;
@@ -454,7 +487,7 @@ namespace VNAR3
 			// 
 			// minFreq
 			// 
-			this->minFreq->Location = System::Drawing::Point(408, 137);
+			this->minFreq->Location = System::Drawing::Point(408, 229);
 			this->minFreq->Name = L"minFreq";
 			this->minFreq->Size = System::Drawing::Size(184, 20);
 			this->minFreq->TabIndex = 29;
@@ -469,13 +502,155 @@ namespace VNAR3
 			this->refPlaneBox->Text = L"0";
 			this->refPlaneBox->TextChanged += gcnew System::EventHandler(this, &Calibration::refPlaneBox_TextChanged);
 			// 
+			// label9
+			// 
+			this->label9->AutoSize = true;
+			this->label9->BackColor = System::Drawing::Color::Transparent;
+			this->label9->Location = System::Drawing::Point(155, 153);
+			this->label9->Name = L"label9";
+			this->label9->Size = System::Drawing::Size(32, 13);
+			this->label9->TabIndex = 37;
+			this->label9->Text = L"Short";
+			// 
+			// label10
+			// 
+			this->label10->AutoSize = true;
+			this->label10->BackColor = System::Drawing::Color::Transparent;
+			this->label10->Location = System::Drawing::Point(298, 153);
+			this->label10->Name = L"label10";
+			this->label10->Size = System::Drawing::Size(33, 13);
+			this->label10->TabIndex = 38;
+			this->label10->Text = L"Open";
+			// 
+			// label11
+			// 
+			this->label11->AutoSize = true;
+			this->label11->BackColor = System::Drawing::Color::Transparent;
+			this->label11->Location = System::Drawing::Point(432, 153);
+			this->label11->Name = L"label11";
+			this->label11->Size = System::Drawing::Size(31, 13);
+			this->label11->TabIndex = 39;
+			this->label11->Text = L"Load";
+			// 
+			// label12
+			// 
+			this->label12->AutoSize = true;
+			this->label12->BackColor = System::Drawing::Color::Transparent;
+			this->label12->Location = System::Drawing::Point(112, 197);
+			this->label12->Name = L"label12";
+			this->label12->Size = System::Drawing::Size(40, 13);
+			this->label12->TabIndex = 40;
+			this->label12->Text = L"Length";
+			// 
+			// label13
+			// 
+			this->label13->AutoSize = true;
+			this->label13->BackColor = System::Drawing::Color::Transparent;
+			this->label13->Location = System::Drawing::Point(262, 197);
+			this->label13->Name = L"label13";
+			this->label13->Size = System::Drawing::Size(40, 13);
+			this->label13->TabIndex = 41;
+			this->label13->Text = L"Length";
+			// 
+			// label14
+			// 
+			this->label14->AutoSize = true;
+			this->label14->BackColor = System::Drawing::Color::Transparent;
+			this->label14->Location = System::Drawing::Point(133, 175);
+			this->label14->Name = L"label14";
+			this->label14->Size = System::Drawing::Size(19, 13);
+			this->label14->TabIndex = 42;
+			this->label14->Text = L"L0";
+			// 
+			// label15
+			// 
+			this->label15->AutoSize = true;
+			this->label15->BackColor = System::Drawing::Color::Transparent;
+			this->label15->Location = System::Drawing::Point(410, 175);
+			this->label15->Name = L"label15";
+			this->label15->Size = System::Drawing::Size(19, 13);
+			this->label15->TabIndex = 43;
+			this->label15->Text = L"L0";
+			// 
+			// label16
+			// 
+			this->label16->AutoSize = true;
+			this->label16->BackColor = System::Drawing::Color::Transparent;
+			this->label16->Location = System::Drawing::Point(275, 175);
+			this->label16->Name = L"label16";
+			this->label16->Size = System::Drawing::Size(20, 13);
+			this->label16->TabIndex = 44;
+			this->label16->Text = L"C0";
+			// 
+			// shortL0Box
+			// 
+			this->shortL0Box->Location = System::Drawing::Point(158, 172);
+			this->shortL0Box->Name = L"shortL0Box";
+			this->shortL0Box->Size = System::Drawing::Size(104, 20);
+			this->shortL0Box->TabIndex = 45;
+			// 
+			// shortLengthBox
+			// 
+			this->shortLengthBox->Location = System::Drawing::Point(158, 194);
+			this->shortLengthBox->Name = L"shortLengthBox";
+			this->shortLengthBox->Size = System::Drawing::Size(104, 20);
+			this->shortLengthBox->TabIndex = 46;
+			// 
+			// openLengthBox
+			// 
+			this->openLengthBox->Location = System::Drawing::Point(301, 194);
+			this->openLengthBox->Name = L"openLengthBox";
+			this->openLengthBox->Size = System::Drawing::Size(104, 20);
+			this->openLengthBox->TabIndex = 47;
+			// 
+			// openC0Box
+			// 
+			this->openC0Box->Location = System::Drawing::Point(301, 172);
+			this->openC0Box->Name = L"openC0Box";
+			this->openC0Box->Size = System::Drawing::Size(104, 20);
+			this->openC0Box->TabIndex = 48;
+			// 
+			// loadL0Box
+			// 
+			this->loadL0Box->Location = System::Drawing::Point(435, 172);
+			this->loadL0Box->Name = L"loadL0Box";
+			this->loadL0Box->Size = System::Drawing::Size(104, 20);
+			this->loadL0Box->TabIndex = 49;
+			// 
+			// applyButton
+			// 
+			this->applyButton->DialogResult = System::Windows::Forms::DialogResult::Cancel;
+			this->applyButton->FlatStyle = System::Windows::Forms::FlatStyle::System;
+			this->applyButton->Font = (gcnew System::Drawing::Font(L"Verdana", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+				static_cast<System::Byte>(0)));
+			this->applyButton->Location = System::Drawing::Point(333, 503);
+			this->applyButton->Name = L"applyButton";
+			this->applyButton->Size = System::Drawing::Size(96, 23);
+			this->applyButton->TabIndex = 50;
+			this->applyButton->Text = L"Apply";
+			this->applyButton->Click += gcnew System::EventHandler(this, &Calibration::applyButton_Click);
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
 			this->AutoValidate = System::Windows::Forms::AutoValidate::EnableAllowFocusChange;
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
-			this->ClientSize = System::Drawing::Size(640, 492);
+			this->ClientSize = System::Drawing::Size(638, 571);
+			this->Controls->Add(this->applyButton);
+			this->Controls->Add(this->loadL0Box);
+			this->Controls->Add(this->openC0Box);
+			this->Controls->Add(this->openLengthBox);
+			this->Controls->Add(this->shortLengthBox);
+			this->Controls->Add(this->shortL0Box);
+			this->Controls->Add(this->label16);
+			this->Controls->Add(this->label15);
+			this->Controls->Add(this->label14);
+			this->Controls->Add(this->label13);
+			this->Controls->Add(this->label12);
+			this->Controls->Add(this->label11);
+			this->Controls->Add(this->label10);
+			this->Controls->Add(this->label9);
 			this->Controls->Add(this->refPlaneBox);
 			this->Controls->Add(this->minFreq);
 			this->Controls->Add(this->label8);
@@ -765,6 +940,8 @@ namespace VNAR3
 					double fy = fmagnitude * sin(fphase * DEGR2RAD);
 
 					// save it as S21-meas-through
+					Cal->S21termReal[i] = fx; Cal->S21termImag[i] = fy;
+
 					Cal->ThReal[i] = fx; Cal->ThImag[i] = fy;
 
 					calProgressBar->Value = i;
@@ -784,6 +961,12 @@ namespace VNAR3
 		/// Fixture Save Calibration button click handler
 	private: System::Void calSave_Click(System::Object^  sender, System::EventArgs^  e)
 			{
+				Cal->OpenC0 = Convert::ToDouble(openC0Box->Text);
+				Cal->ShortL0 = Convert::ToDouble(shortL0Box->Text);
+				Cal->OpenLength = Convert::ToDouble(openLengthBox->Text);
+				Cal->ShortLength = Convert::ToDouble(shortLengthBox->Text);
+				Cal->LoadL0 = Convert::ToDouble(loadL0Box->Text);
+
 				// Compute Error Terms
 				CalToErrorTerms(Cal);
 
@@ -823,9 +1006,14 @@ private: System::Void FreqModeChanged(System::Object^  sender, System::EventArgs
 
 
 private: System::Void Calibration_Load(System::Object^  sender, System::EventArgs^  e) {
-			 minFreq->Text = String::Format("{0}",Cal->minCalFreq);
-			 maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
+			minFreq->Text = String::Format("{0}",Cal->minCalFreq);
+			maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
 			refPlaneBox->Text = (Cal->reflTimeDelayEquivalent*1e12).ToString();
+			openC0Box->Text = (Cal->OpenC0).ToString();
+			shortL0Box->Text = (Cal->ShortL0).ToString();
+			openLengthBox->Text = (Cal->OpenLength).ToString();
+			shortLengthBox->Text = (Cal->ShortLength).ToString();
+			loadL0Box->Text = (Cal->LoadL0).ToString();
 		 }
 
 private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
@@ -877,6 +1065,35 @@ private: System::Void minFreq_Leave(System::Object^  sender, System::EventArgs^ 
 		 }
 private: System::Void refPlaneBox_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 //			Cal->reflTimeDelayEquivalent = Convert::ToDouble(refPlaneBox->Text);
+		 }
+private: System::Void applyButton_Click(System::Object^  sender, System::EventArgs^  e) {
+				Cal->OpenC0 = Convert::ToDouble(openC0Box->Text);
+				Cal->ShortL0 = Convert::ToDouble(shortL0Box->Text);
+				Cal->OpenLength = Convert::ToDouble(openLengthBox->Text);
+				Cal->ShortLength = Convert::ToDouble(shortLengthBox->Text);
+				Cal->LoadL0 = Convert::ToDouble(loadL0Box->Text);
+
+				// Compute Error Terms
+				CalToErrorTerms(Cal);
+
+				// update the type of Fixture Calibration Frequency mode in the dataset
+				Cal->FixtureCalLogFreqMode = LogFreqButton->Checked;
+#if 0			// No save with Apply
+
+				// Save results to file
+				outfile = gcnew SaveFileDialog();
+				outfile->Filter = "calibration files (*.cal)|*.cal";
+				outfile->AddExtension = true;
+				if (outfile->ShowDialog() == ::DialogResult::OK)
+				{
+					SaveCalDataSet(outfile, Cal);		// InstrumentCalDataSet holds Fixture CalData also.
+														// Extract only Fixture CalData during save.
+					DialogResult = ::DialogResult::OK;	// Let caller know that Fixture Cal saved a valid file
+				}
+				else
+#endif
+					DialogResult = ::DialogResult::Yes;
+
 		 }
 };
 }

@@ -325,13 +325,13 @@ void FrequencyGrid::Build(void)
 //   Also holds specific fixture calibration data - if any. 
 InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev)	
 {
-//	RxDet = gcnew Detector();		// construct AD8702 objects
-//	RxDet->name = "REFL";
+	RxDet = gcnew Detector(this);		// construct AD8702 objects
+	RxDet->name = "REFL";
 
-//	TxDet = gcnew Detector();
-//	TxDet->name = "TRAN";
+	TxDet = gcnew Detector(this);
+	TxDet->name = "TRAN";
 
-//	DirCoupler = gcnew DirectionalCoupler();		/// Holds Directional coupler error model
+	DirCoupler = gcnew DirectionalCoupler(this);		/// Holds Directional coupler error model
 
 	VNA = VNADev;			///< VNA hardware device
 
@@ -342,9 +342,15 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 	S11shortReal = gcnew array<Double>(1024); S11shortImag = gcnew array<Double>(1024);
 	S11openReal = gcnew array<Double>(1024); S11openImag = gcnew array<Double>(1024);
 	S11termReal = gcnew array<Double>(1024); S11termImag = gcnew array<Double>(1024);
+	S21termReal = gcnew array<Double>(1024); S21termImag = gcnew array<Double>(1024);
 	FixtureCalLogFreqMode = false;					// Default to Linear Frequency mode for Fixture Cal
 	maxCalFreq = VNA->GetMaxFreq();
 	minCalFreq =    VNA->GetMinFreq();
+	OpenC0 = 0.0;
+	ShortL0 = 0.0;
+	OpenLength = 0.0;
+	ShortLength = 0.0;
+	LoadL0 = 0.0;
 
 // Try to read in the detector.ica file to pre-load the Detector calibration constants
 // If the file does not exist, warn user to run detector cal first
@@ -527,6 +533,31 @@ __int64 InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode
 		}												
 };
 
+#if 1
+int InstrumentCalDataSet::GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
+		{											/// Grid is 21 points.
+//			if (index < 9 && index >= 0)
+//				return (Convert::ToInt32((index + 2) * 100000));	// Every 100 KHz from 200 kHz to 1 Mhz.
+//			if (index < 21 && index >= 0)
+//				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
+			if (index < PHASECALGRIDSIZE && index >= 0)
+				return (Convert::ToInt32(minCalFreq + (index * (maxCalFreq - minCalFreq)/(21-1))));
+			else
+				throw gcnew System::ArgumentOutOfRangeException(
+				  "GetFreqFromDetMagCalGrid: index is invalid ");	// bad index value
+		};
+
+int InstrumentCalDataSet::GetFreqFromPhaseCalGrid(long index)	/// Convert Phase Calibration Grid index to Frequency.
+{
+			if (index < PHASECALGRIDSIZE && index >= 0)
+				return (Convert::ToInt32(minCalFreq + (index * (maxCalFreq - minCalFreq)/(NUMCALPTS-1))));
+			else
+				throw gcnew System::ArgumentOutOfRangeException(
+				  "GetFreqFromPhaseCalGrid: index is invalid ");	// bad index value
+};
+
+#endif
+
 
 // Resolve reflected measured data set to Linear Magnitude and Phase in Degrees
 void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, __int64 Frequency, double& rmagLin, double& rphsDegr,
@@ -604,6 +635,8 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 {
     for (int i=0; i<1024; i++)
 	{
+#if 0
+		double freq = (double) Cal->GetFreqFromFixtureCalGrid(i, false);
 		std::complex<double> two(2.0, 0.0);
 		std::complex<double> rslt(0.0, 0.0);
 		
@@ -634,6 +667,93 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 		rslt = ((two * (Sopen - Sterm) * (Sshort - Sterm)) / (Sshort - Sopen));
 		Cal->EtReal[i] = real(rslt);
 		Cal->EtImag[i] = imag(rslt);
+
+		// Thru error term
+		Cal->ThReal[i] = Cal->S21termReal[i];
+		Cal->ThImag[i] = Cal->S21termImag[i];
+							 
+#else
+		double freq = (double) Cal->GetFreqFromFixtureCalGrid(i, false);
+		std::complex<double> g1(-1, 0.0);
+		std::complex<double> g2(1, 0.0);
+		std::complex<double> g3(0.0, 0.0);
+		std::complex<double> plusJ(0.0, 1.0);
+		std::complex<double> minJ(0.0, -1.0);
+		std::complex<double> Zsp,Zop,Zl, gammaShort,gammaOpen, denominator,e00,e11,e10e32,e30,deltaE;
+		std::complex<double> two(2.0, 0.0);
+		std::complex<double> one(1.0, 0.0);
+		std::complex<double> pi(Math::PI, 0.0);
+		std::complex<double> e(Math::E, 0.0);
+//double pi = Math::PI;
+
+		double shortL0 = Cal->ShortL0 * 1e-12;
+		double loadL0 = Cal->LoadL0 * 1e-12;
+		double openC0 = Cal->OpenC0 * 1e-15;
+		double openLength = Cal->OpenLength;
+		double shortLength = Cal->ShortLength;
+		double loadLength = 0;
+		double loadR = 50.0;
+		double divisor;
+		
+		double realpart, imagpart;
+
+		realpart = Cal->S11shortReal[i];
+		imagpart = Cal->S11shortImag[i];
+        std::complex<double>	gm1(realpart, imagpart);
+
+		realpart = Cal->S11openReal[i];
+		imagpart = Cal->S11openImag[i];
+		std::complex<double> gm2(realpart, imagpart);
+
+		realpart = Cal->S11termReal[i];
+		imagpart = Cal->S11termImag[i];
+		std::complex<double> gm3(realpart, imagpart);
+
+		realpart = Cal->S21termReal[i];
+		imagpart = Cal->S21termImag[i];
+		std::complex<double> s21m(realpart, imagpart);
+
+		Zsp = plusJ * two * pi * freq * shortL0 / 50.0;
+		gammaShort = (Zsp - one)/(Zsp + one);
+		g1 = gammaShort * std::pow(e, plusJ * pi * (2*2*freq*shortLength*-1.0));
+
+		divisor = 2 * Math::PI * freq * openC0;
+		if (divisor != 0.0) {
+			Zop= (minJ / divisor) / 50.0;
+			gammaOpen = (Zop - one)/(Zop + one);
+			g2 = gammaOpen * std::pow(e, plusJ * pi * (2*2*freq*openLength*-1.0));
+		} else
+			g2 = one;
+		Zl = (loadR + plusJ * pi * (2 * freq * loadL0))/50.0;
+		g3 = (Zl - one)/ (Zl + one);
+		g3 = g3 * std::pow(e, plusJ * pi * (2*2*freq*loadLength*-1.0));
+
+        denominator = g1*(g2-g3)*gm1;
+		denominator = denominator + g2*g3*gm2 - g2*g3*gm3 - (g2*gm2-g3*gm3)*g1;
+        e00 = - ((g2*gm3 - g3*gm3)*g1*gm2 - (g2*g3*gm2 - g2*g3*gm3 - (g3*gm2 - g2*gm3)*g1)*gm1) / denominator;
+        e11 = ((g2-g3)*gm1-g1*(gm2-gm3)+g3*gm2-g2*gm3) / denominator;
+        deltaE = - ((g1*(gm2-gm3)-g2*gm2+g3*gm3)*gm1+(g2*gm3-g3*gm3)*gm2) / denominator;
+
+		e10e32 = s21m * (one - (e11*e11));
+
+		// Directivity error term
+		Cal->EdReal[i] = real(e00);
+		Cal->EdImag[i] = imag(e00);
+
+		// Source mismatch error term
+		Cal->EsReal[i] = real(e11);
+		Cal->EsImag[i] = imag(e11);
+
+		// Tracking error term
+		Cal->EtReal[i] = real(deltaE);
+		Cal->EtImag[i] = imag(deltaE);
+
+		// Thru error term
+		Cal->ThReal[i] = real(e10e32);
+		Cal->ThImag[i] = imag(e10e32);
+
+
+#endif
 	}
 
 };
@@ -716,7 +836,11 @@ void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, boo
 	imagpart = Cal->EtImag[i] + ((Cal->EtImag[j] - Cal->EtImag[i]) * position);
 	std::complex<double>	Et(realpart, imagpart);
 	
+#if 0
 	rslt = ((rslt - Ed) / (Es * (rslt - Ed) + Et));
+#else
+	rslt = (rslt - Ed) / ((Es * rslt) - Et);
+#endif
 	}
 
 	if (ReflExtn)		// extend reference plane with calculated value
@@ -842,8 +966,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 
 			// Define header to match file identifying type and version
 
-		String^ recognizedLinear = gcnew String("VNA Calibration Data Set Version 1.0.0");
-		String^ recognizedLog = gcnew String("VNA Calibration Data Set Version 1.0.0.LOG");
+		String^ recognizedLinear = gcnew String("VNA Calibration Data Set Version 1.1.0");
+		String^ recognizedLog = gcnew String("VNA Calibration Data Set Version 1.1.0.LOG");
 
 		String^ header;
 		header = br->ReadString();		// get string header on infile
@@ -856,7 +980,7 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 		else									// not a valide cal file
 		{
 			MessageBox::Show(
-				"InstrumentCalDataSet file is incompatible type or version.\n\rExpecting Version 1.0.0",
+				"InstrumentCalDataSet file is incompatible type or version.\n\rExpecting Version 1.1.0",
 				"Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
 			br->Close();
 			fs->Close();
@@ -880,6 +1004,8 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 			Cal->S11shortImag[i] = br->ReadDouble();
 			Cal->S11termReal[i] = br->ReadDouble();
 			Cal->S11termImag[i] = br->ReadDouble();
+			Cal->S21termReal[i] = br->ReadDouble();
+			Cal->S21termImag[i] = br->ReadDouble();
 		}
 
 		try 
@@ -888,6 +1014,11 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 			Cal->minCalFreq = (__int64) br->ReadDouble();
 			Cal->VNA->SetAudioRefLevel(br->ReadDouble());
 			Cal->VNA->SetIF(br->ReadInt32());
+			Cal->OpenC0 = br->ReadDouble();
+			Cal->ShortL0 = br->ReadDouble();
+			Cal->OpenLength = br->ReadDouble();
+			Cal->ShortLength = br->ReadDouble();
+			Cal->LoadL0 = br->ReadDouble();
 		}
 		catch( Exception^ /* e */ )	// Don't bother warning the user ...
 		{											// They probably don't care anyway
@@ -964,9 +1095,9 @@ void SaveCalDataSet(SaveFileDialog^ outfile, InstrumentCalDataSet^ Cal)
 		String^ recognized;
 
 		if (Cal->FixtureCalLogFreqMode)	//Log mode - use new identifier string
-			recognized = gcnew String("VNA Calibration Data Set Version 1.0.0.LOG");
+			recognized = gcnew String("VNA Calibration Data Set Version 1.1.0.LOG");
 		else							// Linear mode - use backwards compatible identifier string
-			recognized = gcnew String("VNA Calibration Data Set Version 1.0.0");
+			recognized = gcnew String("VNA Calibration Data Set Version 1.1.0");
 
 		bw->Write(recognized);		// put string header on outfile
 
@@ -988,11 +1119,18 @@ void SaveCalDataSet(SaveFileDialog^ outfile, InstrumentCalDataSet^ Cal)
 			bw->Write(Cal->S11shortImag[i]);
 			bw->Write(Cal->S11termReal[i]);
 			bw->Write(Cal->S11termImag[i]);
+			bw->Write(Cal->S21termReal[i]);
+			bw->Write(Cal->S21termImag[i]);
 		}
 		bw->Write((double)(Cal->maxCalFreq));
 		bw->Write((double)(Cal->minCalFreq));
 		bw->Write(Cal->VNA->GetAudioRefLevel());
 		bw->Write(Cal->VNA->GetIF());
+		bw->Write(Cal->OpenC0);
+		bw->Write(Cal->ShortL0);
+		bw->Write(Cal->OpenLength);
+		bw->Write(Cal->ShortLength);
+		bw->Write(Cal->LoadL0);
     }
 	catch(System::IO::IOException^ pe)
 	{
@@ -1296,7 +1434,14 @@ void StoreSParams(bool calmode, bool ReflExtn, FrequencyGrid^ FG, InstrumentCalD
 }
 
 // Linear interpolation of Xval between Xlow and Xhigh yielding Y result between Ylow and Yhi
-double Interpolate(int Xval, int Xlow, double Ylow, int Xhi, double Yhi)
+//double Interpolate(int Xval, int Xlow, double Ylow, int Xhi, double Yhi)
+//{
+//    double slope = (Yhi - Ylow) / ((double)Xhi-(double)Xlow);
+//	double result = Ylow + (((double)Xval - (double)Xlow) * slope);
+//	return(result);
+//}
+
+double Interpolate(__int64 Xval, __int64 Xlow, double Ylow, __int64 Xhi, double Yhi)
 {
     double slope = (Yhi - Ylow) / ((double)Xhi-(double)Xlow);
 	double result = Ylow + (((double)Xval - (double)Xlow) * slope);
@@ -1671,30 +1816,6 @@ int MeasureDelayStringToCount(String^ value)
 	return 1;	// no delay if unexpected string 
 };
 
-#if 0
-int GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
-		{											/// Grid is 21 points.
-//			if (index < 9 && index >= 0)
-//				return (Convert::ToInt32((index + 2) * 100000));	// Every 100 KHz from 200 kHz to 1 Mhz.
-//			if (index < 21 && index >= 0)
-//				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
-			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(Cal->minCalFreq + (index * (Cal->maxCalFreq - Cal->minCalFreq)/(21-1))));
-			else
-				throw gcnew System::ArgumentOutOfRangeException(
-				  "GetFreqFromDetMagCalGrid: index is invalid ");	// bad index value
-		};
-
-int GetFreqFromPhaseCalGrid(long index)	/// Convert Phase Calibration Grid index to Frequency.
-{
-			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(Cal->minCalFreq + (index * (Cal->maxCalFreq - Cal->minCalFreq)/(NUMCALPTS-1))));
-			else
-				throw gcnew System::ArgumentOutOfRangeException(
-				  "GetFreqFromPhaseCalGrid: index is invalid ");	// bad index value
-};
-
-#endif
 
 // Wrap phase to be in the range -180 to +180.  Three overloads.
 int NormalizePhaseDegr(int phase)
