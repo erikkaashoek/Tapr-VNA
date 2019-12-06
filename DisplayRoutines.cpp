@@ -76,7 +76,7 @@ using namespace System::Windows::Forms;
 
 #include <float.h>
 
-// #define DIRECTCAL		// enable compensation of coupler directivity to magnitude
+//#define DIRECTCAL		// enable compensation of coupler directivity to magnitude
 
 	// Convert Mag and Phase to X,Y screen display coordinates in polar display mode
 void ToDisplayPolar(double magnitude, double phase, int polarRad, int xoffset, int yoffset, int& X, int& Y)
@@ -347,10 +347,16 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 	maxCalFreq = VNA->GetMaxFreq();
 	minCalFreq =    VNA->GetMinFreq();
 	OpenC0 = 0.0;
+	OpenC1 = 0.0;
+	OpenC2 = 0.0;
 	ShortL0 = 0.0;
+	ShortL1 = 0.0;
+	ShortL2 = 0.0;
 	OpenLength = 0.0;
 	ShortLength = 0.0;
+	LoadLength = 0.0;
 	LoadL0 = 0.0;
+	LoadR0 = 50.0;
 
 // Try to read in the detector.ica file to pre-load the Detector calibration constants
 // If the file does not exist, warn user to run detector cal first
@@ -358,7 +364,7 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 	FileStream^ fs;
 	BinaryReader^ br;
 
-	String^ filename = String::Concat(StartUpDir, "\\detector.ica");
+	String^ filename = String::Concat(StartUpDir, "\\detector_",Convert::ToString(VNA->GetHardware()),".ica" );
 	try
 	{
 		// Create a filestream & binary reader
@@ -369,11 +375,11 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 	catch(System::IO::IOException^ pe)
 	{
 		(void) pe;
-/*
+
 		MessageBox::Show("Detector Calibration File Not Found.\n\r"
 			"Be sure to run   Calibration->Detector Calibration...   first", pe->Message,
 			MessageBoxButtons::OK, MessageBoxIcon::Exclamation);
-*/		if (br)
+		if (br)
 			br->Close();
 		if (fs)
 			fs->Close();
@@ -438,16 +444,18 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 			TxDet->r[FreqIdx] = br->ReadDouble();
 			TxDet->flat[FreqIdx] = br->ReadDouble();
 		}
+		RxDet->phaseCalibrated = true;		// loaded a valid detector calibration
+		TxDet->phaseCalibrated = true;
 #endif
 		// Read in the Internal Crystal Frequency Error
 		// Test the value to make sure it's within reasonable range.
 		FreqError = br->ReadInt32();
 		if (Math::Abs(FreqError) > 3000000)
 			FreqError = 0;
-#if 0
+#if 1
 		// Read in the directivity calibration raw values   10-18-2005
 		// Moved from RxDet to DirCoupler					05-27-2007
-		for (int i=0; i<21; i++)
+		for (int i=0; i<PHASECALGRIDSIZE; i++)
 		{
 			DirCoupler->DirIphs[i] = br->ReadInt32();
 			DirCoupler->DirQphs[i] = br->ReadInt32();
@@ -477,6 +485,16 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 		//RxDet->ImidLo = 0;		// these are not meaningful for REFL
 		//RxDet->ImagLo = 0;		// and should be initialized to zero by constructor
 
+		// Read the directional coupler calibration data - to ease debugging.
+		for(int i=0; i<PHASECALGRIDSIZE; i++)
+		{
+			DirCoupler->phaseError[i] = br->ReadDouble();
+			DirCoupler->magError[i] = br->ReadDouble();
+			DirCoupler->openAngle[i] = br->ReadDouble();
+			DirCoupler->shortAngle[i] = br->ReadDouble();
+		}
+
+
 		fs->Flush();
 		fs->Close();
 	}
@@ -497,10 +515,8 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 			fs->Close();
 	}
 
-//	RxDet->phaseCalibrated = true;		// loaded a valid detector calibration
-//	TxDet->phaseCalibrated = true;
-//	DirCoupler->DirCalibrated = true;
-//	DirCoupler->RippleCalibrated = true;
+	DirCoupler->DirCalibrated = true;
+	DirCoupler->RippleCalibrated = true;
 };
 
 
@@ -534,14 +550,12 @@ __int64 InstrumentCalDataSet::GetFreqFromFixtureCalGrid(long index, bool LogMode
 };
 
 #if 1
-int InstrumentCalDataSet::GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
+__int64 InstrumentCalDataSet::GetFreqFromDetMagCalGrid(long index)	/// Convert Detector Magnitude Calibration Grid index to Frequency.
 		{											/// Grid is 21 points.
-//			if (index < 9 && index >= 0)
-//				return (Convert::ToInt32((index + 2) * 100000));	// Every 100 KHz from 200 kHz to 1 Mhz.
-//			if (index < 21 && index >= 0)
-//				return (Convert::ToInt32((index - 8) * 10000000));	// Then every ten MHz starting at 10 MHz.
-			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(minCalFreq + (index * (maxCalFreq - minCalFreq)/(21-1))));
+			if (index < 10 && index >= 0)
+				return(VNA->GetMaxFreq()/100*index + VNA->GetMaxFreq());
+			if (index < PHASECALGRIDSIZE && index >= 10)
+				return(VNA->GetMaxFreq()/10*(index+1));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromDetMagCalGrid: index is invalid ");	// bad index value
@@ -550,7 +564,7 @@ int InstrumentCalDataSet::GetFreqFromDetMagCalGrid(long index)	/// Convert Detec
 int InstrumentCalDataSet::GetFreqFromPhaseCalGrid(long index)	/// Convert Phase Calibration Grid index to Frequency.
 {
 			if (index < PHASECALGRIDSIZE && index >= 0)
-				return (Convert::ToInt32(minCalFreq + (index * (maxCalFreq - minCalFreq)/(NUMCALPTS-1))));
+				return (Convert::ToInt32(VNA->GetMaxFreq() + (index * (VNA->GetMaxFreq() - VNA->GetMaxFreq())/(NUMCALPTS-1))));
 			else
 				throw gcnew System::ArgumentOutOfRangeException(
 				  "GetFreqFromPhaseCalGrid: index is invalid ");	// bad index value
@@ -579,15 +593,15 @@ void InstrumentCalDataSet::ResolveReflPolar(MeasurementSet^ dataPoint, __int64 F
 #ifdef DIRECTCAL
 	DirCoupler->CompensateDirectivity(this, rmagnitudeLin, rphase, Frequency);
 #endif
-#if 0
-	if(CouplerComp)
+#if 1
+	if(CouplerComp && false)
 	{
 
 		if(RxDet->phaseCalibrated)
 		{
 			// Compensate for buffer amp phase delays due to highpass filter formed by
 			// coupling caps, and time delay of the amplifier.
-			phase = BufferAmpPhaseComp(phase, Frequency);
+			//phase = BufferAmpPhaseComp(phase, Frequency);
 
 			// Compensate for coupler phase & magnitude ripple  09-23-2007
 			phase = DirCoupler->PhaseRippleCompensate(phase, Frequency);
@@ -687,12 +701,18 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 //double pi = Math::PI;
 
 		double shortL0 = Cal->ShortL0 * 1e-12;
+		double shortL1 = Cal->ShortL1 * 1e-24;
+		double shortL2 = Cal->ShortL2 * 1e-32;
 		double loadL0 = Cal->LoadL0 * 1e-12;
+		double loadR0 = Cal->LoadR0;
+
 		double openC0 = Cal->OpenC0 * 1e-15;
+		double openC1 = Cal->OpenC1 * 1e-24;
+		double openC2 = Cal->OpenC2 * 1e-34;
 		double openLength = Cal->OpenLength;
 		double shortLength = Cal->ShortLength;
-		double loadLength = 0;
-		double loadR = 50.0;
+		double loadLength = Cal->LoadLength;
+//		double loadR = 50.0;
 		double divisor;
 		
 		double realpart, imagpart;
@@ -713,18 +733,18 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 		imagpart = Cal->S21termImag[i];
 		std::complex<double> s21m(realpart, imagpart);
 
-		Zsp = plusJ * two * pi * freq * shortL0 / 50.0;
+		Zsp = plusJ * two * pi * freq * (shortL0 + shortL1 * freq + shortL2 * freq * freq) / 50.0;
 		gammaShort = (Zsp - one)/(Zsp + one);
 		g1 = gammaShort * std::pow(e, plusJ * pi * (2*2*freq*shortLength*-1.0));
 
-		divisor = 2 * Math::PI * freq * openC0;
+		divisor = 2 * Math::PI * freq * (openC0 + openC1 * freq + openC2 * freq * freq);
 		if (divisor != 0.0) {
 			Zop= (minJ / divisor) / 50.0;
 			gammaOpen = (Zop - one)/(Zop + one);
 			g2 = gammaOpen * std::pow(e, plusJ * pi * (2*2*freq*openLength*-1.0));
 		} else
 			g2 = one;
-		Zl = (loadR + plusJ * pi * (2 * freq * loadL0))/50.0;
+		Zl = (loadR0 + plusJ * pi * (2 * freq * loadL0))/50.0;
 		g3 = (Zl - one)/ (Zl + one);
 		g3 = g3 * std::pow(e, plusJ * pi * (2*2*freq*loadLength*-1.0));
 
@@ -734,7 +754,8 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
         e11 = ((g2-g3)*gm1-g1*(gm2-gm3)+g3*gm2-g2*gm3) / denominator;
         deltaE = - ((g1*(gm2-gm3)-g2*gm2+g3*gm3)*gm1+(g2*gm3-g3*gm3)*gm2) / denominator;
 
-		e10e32 = s21m * (one - (e11*e11));
+//		e10e32 = s21m * (one - (e11*e11));
+		e10e32 = s21m; // * (one - (e11*e11));
 
 		// Directivity error term
 		Cal->EdReal[i] = real(e00);
@@ -1015,10 +1036,16 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 			Cal->VNA->SetAudioRefLevel(br->ReadDouble());
 			Cal->VNA->SetIF(br->ReadInt32());
 			Cal->OpenC0 = br->ReadDouble();
+			Cal->OpenC1 = br->ReadDouble();
+			Cal->OpenC2 = br->ReadDouble();
 			Cal->ShortL0 = br->ReadDouble();
+			Cal->ShortL1 = br->ReadDouble();
+			Cal->ShortL2 = br->ReadDouble();
 			Cal->OpenLength = br->ReadDouble();
 			Cal->ShortLength = br->ReadDouble();
 			Cal->LoadL0 = br->ReadDouble();
+			Cal->LoadR0 = br->ReadDouble();
+			Cal->LoadLength = br->ReadDouble();
 		}
 		catch( Exception^ /* e */ )	// Don't bother warning the user ...
 		{											// They probably don't care anyway
@@ -1127,10 +1154,16 @@ void SaveCalDataSet(SaveFileDialog^ outfile, InstrumentCalDataSet^ Cal)
 		bw->Write(Cal->VNA->GetAudioRefLevel());
 		bw->Write(Cal->VNA->GetIF());
 		bw->Write(Cal->OpenC0);
+		bw->Write(Cal->OpenC1);
+		bw->Write(Cal->OpenC2);
 		bw->Write(Cal->ShortL0);
+		bw->Write(Cal->ShortL1);
+		bw->Write(Cal->ShortL2);
 		bw->Write(Cal->OpenLength);
 		bw->Write(Cal->ShortLength);
 		bw->Write(Cal->LoadL0);
+		bw->Write(Cal->LoadR0);
+		bw->Write(Cal->LoadLength);
     }
 	catch(System::IO::IOException^ pe)
 	{

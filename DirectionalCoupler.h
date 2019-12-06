@@ -74,9 +74,9 @@ void DirectivityCal(array<UInt16,2>^ readings);
 void CompensateDirectivity(InstrumentCalDataSet^ cal, double& rmagnitudeLin, double& rphase, int Freq); 
 	// Generate table of unit-length ripple compensation vectors
 bool GenerateShortOpenComp(InstrumentCalDataSet^ cal, array<UInt16,2>^ shortedrefl , array<UInt16,2>^ openrefl);
-double PhaseRippleCompensate(double phase, int frequency);
+double PhaseRippleCompensate(double phase, __int64 frequency);
 	// Compensate coupler magnitude ripple error   NEW 09-23-2007
-double MagRippleCorrection(double phase, int frequency);
+double MagRippleCorrection(double phase, __int64 frequency);
 	// Update parameter estimates by descending along the gradient   NEW 09-23-2007
 void DirectionalCoupler::Descend(array<Double>^ partialDerivative, array<Double>^ weight, array<PerErrModelCoeff^>^ coeff);
 	// Compute error predicted by point-wise periodic error model

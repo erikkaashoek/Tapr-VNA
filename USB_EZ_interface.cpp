@@ -438,8 +438,8 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //					sa = Perform(String::Format("offset {0}",IFREQ));
 					s = serialPort->ReadExisting();		// In case previous scan was aborted
 
-//					serialPort->WriteLine(String::Format("scan {0} {1} {2} {3}",startF, stepF, numPoints, duration));
 					serialPort->WriteLine(String::Format("scan {0} {1} {2}",startF, stepF, numPoints));
+//					serialPort->WriteLine(String::Format("scanraw {0} {1} {2} {3}",startF, stepF, numPoints, duration));
 
 					s = serialPort->ReadLine();
 //					Sleep(20);

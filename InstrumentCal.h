@@ -66,9 +66,9 @@ namespace VNAR3
 			Qphase = gcnew array<UInt16>(1024);	///< Q-Phase Measurements
 			IphaseLo = gcnew array<UInt16>(1024);	///< I-phase low ref measurements
 			ReflMagRegression = gcnew array<UInt16,2>(21, 60); ///< Shorted Reflection amplitude measurements
-			ReflMagPhDir = gcnew array<UInt16,2>(21, 3);	///< Directivity Reflection raw ADC counts
-			ReflMagPhOpen = gcnew array<UInt16,2>(21, 3);	///< Open Reflection raw ADC counts
-			ReflMagPhShort = gcnew array<UInt16,2>(21, 3);	///< Shorted Reflection raw ADC counts
+			ReflMagPhDir = gcnew array<UInt16,2>(PHASECALGRIDSIZE, 3);	///< Directivity Reflection raw ADC counts
+			ReflMagPhOpen = gcnew array<UInt16,2>(PHASECALGRIDSIZE, 3);	///< Open Reflection raw ADC counts
+			ReflMagPhShort = gcnew array<UInt16,2>(PHASECALGRIDSIZE, 3);	///< Shorted Reflection raw ADC counts
 			ReflDetailMagPhShort = gcnew array<UInt16,2>(1024, 3);  ///< Shorted Detailed Reflection raw ADC counts
 			ReflDetailMagPhOpen = gcnew array<UInt16,2>(1024, 3);  ///< Open Detailed Reflection raw ADC counts
 			ReflLongDetailMagPhOpen = gcnew array<UInt16,2>(1024, 3);  ///< Terminated Detailed Reflection raw ADC counts
@@ -976,7 +976,9 @@ private: System::Void DirectivityCalButton_Click(System::Object^  sender, System
 
 			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
-			int Fdesired;
+			__int64 Fdesired;
+			__int64 maxFreq = VNA->GetMaxFreq();
+			__int64 minFreq = VNA->GetMinFreq();
 			
 			TxBuf->ReplyType = 0;
 			TxBuf->MeasureDelay = 0;		
@@ -985,31 +987,23 @@ private: System::Void DirectivityCalButton_Click(System::Object^  sender, System
 
 			progressBar1->Value = 0;
 
-			// run a sweep of 21 frequencies, measuring residual Refl Amplitude
-			VNA->Sweep(Cal->GetFreqFromDetMagCalGrid(0), Cal->GetFreqFromDetMagCalGrid(1) - Cal->GetFreqFromDetMagCalGrid(0), 21, 10);
-			for (long FreqIdx=0; FreqIdx<21; FreqIdx++)
+			// run a sweep of 1024 frequencies, calibrating Refl Amplitude detector
+			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10);
+
+			VNA->Sweep(minFreq, (maxFreq/PHASECALGRIDSIZE), PHASECALGRIDSIZE, 10);
+			for (long FreqIdx=0; FreqIdx<PHASECALGRIDSIZE; FreqIdx++)
 			{
-
-				// Compute spot frequency for each DetectorCalGrid Point
-				Fdesired = Cal->GetFreqFromDetMagCalGrid(FreqIdx);
-
+				// Compute spot frequency
+				Fdesired = Cal->GetFreqFromPhaseCalGrid(FreqIdx);
 				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
-
-				// Take 7 readings, use median value
-//				for(int k=0; k<7; k++)
-//				{
-					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
-//					BufferM[k] = RxBuf->ReflMQ;
-//					BufferI[k] = RxBuf->ReflPI;
-//					BufferQ[k] = RxBuf->ReflPQ;
-//				}
-				ReflMagPhDir[FreqIdx, MagQ] =RxBuf->ReflMQ; // Median7(BufferM);
+ 				TxBuf->IDAClevelHi = TxLevLinear(0);	// 0  dbm
+				VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
+				ReflMagPhDir[FreqIdx, MagQ] =  RxBuf->ReflMQ; // Median7(BufferM);
 				ReflMagPhDir[FreqIdx, PhaseI] = RxBuf->ReflPI; // Median7(BufferI);
 				ReflMagPhDir[FreqIdx, PhaseQ] = RxBuf->ReflPQ; // Median7(BufferQ);
-
-				progressBar1->Value = FreqIdx * progressBar1->Maximum/20;
+				progressBar1->Value = FreqIdx * progressBar1->Maximum/40;
+				progressBar1->Update();
 			}
-
 
 			Cal->DirCoupler->DirectivityCal(ReflMagPhDir);		// Save the raw counts in the DirCoupler object
 			Cal->DirCoupler->DirCalibrated = true;
@@ -1028,9 +1022,11 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 #if 0			 
 			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
-			int Fdesired;
+			__int64 Fdesired;
 			int i;
-			
+			__int64 minFreq = VNA->GetMinFreq();
+			__int64 maxFreq = VNA->MaxMinFreq();
+
 
 			TxBuf->ReplyType = 0;
 			TxBuf->MeasureDelay = 0;			// No Measruement Delay
@@ -1039,30 +1035,17 @@ private: System::Void RxAmpButtonOpen_Click(System::Object^  sender, System::Eve
 			progressBar1->Value = 0;
 
 			// run a sweep of 21 frequencies, calibrating Refl Amplitude detector
-			VNA->Sweep(Cal->GetFreqFromDetMagCalGrid(0), Cal->GetFreqFromDetMagCalGrid(1) - Cal->GetFreqFromDetMagCalGrid(0), 21, 10);
-			for (long FreqIdx=0; FreqIdx<21; FreqIdx++)
+			VNA->Sweep(minFreq, (maxFreq/100), 10, 10);
+			for (long FreqIdx=0; FreqIdx<10; FreqIdx++)
 			{
-
 				// Compute spot frequency
-
 				Fdesired = Cal->GetFreqFromDetMagCalGrid(FreqIdx);
-
 				TxBuf->TxAccum = FreqIdx; //FG->DDS(Fdesired);
-
  				TxBuf->IDAClevelHi = TxLevLinear(0);	// 0  dbm
-
-				// Take 7  magnitude & phase readings, use median value
-//				for(int k=0; k<7; k++)
-//				{
 					VNA->WriteRead(TxBuf, RxBuf, DIR_REFL);
-//					BufferM[k] = RxBuf->ReflMQ;
-//					BufferI[k] = RxBuf->ReflPI;
-//					BufferQ[k] = RxBuf->ReflPQ;
-//				}
 				ReflMagPhOpen[FreqIdx, MagQ] =  RxBuf->ReflMQ; // Median7(BufferM);
 				ReflMagPhOpen[FreqIdx, PhaseI] = RxBuf->ReflPI; // Median7(BufferI);
 				ReflMagPhOpen[FreqIdx, PhaseQ] = RxBuf->ReflPQ; // Median7(BufferQ);
-
 				progressBar1->Value = FreqIdx * progressBar1->Maximum/40;
 				progressBar1->Update();
 			}
@@ -1269,6 +1252,77 @@ private: System::Void TxLongCableOpenButton_Click(System::Object^  sender, Syste
 
 			}
 
+
+
+
+
+
+	// Step 1.  Construct the error vs. frequency and open-angle vs. frequency arrays.
+	//          Also construct the magnitude difference between open and short vs. frequency.
+	for(int i=0; i<PHASECALGRIDSIZE; i++)
+	{
+		double mag, phs, shortPhase, openPhase;
+		double shortMag, openMag;
+		double& rmag = mag;
+		double& rphs = phs;
+		__int64	Freq;
+		MeasurementSet^ calPoint = gcnew MeasurementSet;
+
+		Freq = Cal->GetFreqFromPhaseCalGrid(i);
+
+
+		calPoint->ReflPI = ReflLongDetailMagPhShort[i, PhaseI];
+		calPoint->ReflPQ = ReflLongDetailMagPhShort[i, PhaseQ];
+		calPoint->ReflMQ = ReflLongDetailMagPhShort[i, MagQ];
+
+		Cal->ResolveReflPolar(calPoint,	Freq, rmag, rphs, true);
+		shortPhase = phs;
+		shortMag = mag;
+
+
+		calPoint->ReflPI = ReflLongDetailMagPhOpen[i, PhaseI];
+		calPoint->ReflPQ = ReflLongDetailMagPhOpen[i, PhaseQ];
+		calPoint->ReflMQ = ReflLongDetailMagPhOpen[i, MagQ];
+
+		Cal->ResolveReflPolar(calPoint, Freq, rmag, rphs, true);
+		openPhase = phs;
+		openMag = mag;
+
+		// invert the shorted-meas angle
+		shortPhase = NormalizePhaseDegr(shortPhase - 180.0);
+
+		Cal->DirCoupler->openAngle[i] = openPhase;
+		Cal->DirCoupler->shortAngle[i] = shortPhase;
+
+		// Open and inverted short should be the same angle, record half the difference as error
+		Cal->DirCoupler->phaseError[i] = NormalizePhaseDegr(openPhase - shortPhase) / 2.0;
+
+		// Linear magnitude difference between open and short on 3 meter cable. half the difference
+		// is the error.
+		Cal->DirCoupler->magError[i] = (openMag - shortMag) / 2.0;
+	}	
+	
+	// Clean up any glitches on the error terms
+	array<Double>^ TempPhaseError = gcnew array<Double>(PHASECALGRIDSIZE);
+	array<Double>^ TempMagError = gcnew array<Double>(PHASECALGRIDSIZE);
+
+	for (int i=0; i<PHASECALGRIDSIZE; i++)	// Make a copy of the data
+	{
+		TempPhaseError[i] = Cal->DirCoupler->phaseError[i];
+		TempMagError[i] = Cal->DirCoupler->magError[i];
+	}
+
+	for (int i=0; i<PHASECALGRIDSIZE-6; i++)
+	{
+		Cal->DirCoupler->phaseError[i+3] = Median7(TempPhaseError,i);
+		Cal->DirCoupler->magError[i+3] = Median7(TempMagError,i);
+	}
+
+
+
+
+
+
 			CalStepPass[6] = true;
 			TxLongCableOpenStat->Image = ICO1Label->Image;	// check mark (OK)
 			TxLongCableOpenStat->Visible = true;
@@ -1295,7 +1349,7 @@ private: System::Void OKbutton_Click(System::Object^  sender, System::EventArgs^
 
 			 // Check that all relevant groups of data have been run, else
 			 // display error message and give chance to rerun missing sets.
-#if 1
+#if 0
 			for (int k = 0; k<NUMCALSTEPS; k++)
 				if(CalStepPass[k] == false)
 				{
@@ -1342,16 +1396,17 @@ private: System::Void OKbutton_Click(System::Object^  sender, System::EventArgs^
 			if(!success)		// OpenShortComp failed - give error message
 			{
 				MessageBox::Show("OpenShort calibration failed."
-					"\n\rClose this window, then 'Cancel' if you do not wish to save Detector Cal data.",
+//					"\n\rClose this window, then 'Cancel' if you do not wish to save Detector Cal data.",
+					"\n\rData will be saved anyway to support debugging",
 					"Error: failed convergence", MessageBoxButtons::OK, MessageBoxIcon::Error);
-				return;
+//				return;
 			}
 
 			// Save Instrument Calibration values to detector.ica
 			FileStream^ fs;
 			BinaryWriter^ bw;
 
-			String^ filename = String::Concat(AllUsersDir, "\\detector.ica");
+			String^ filename = String::Concat(AllUsersDir, "\\detector_",Convert::ToString(VNA->GetHardware()),".ica");
 			try
 			{
 				// Create a filestream & binary writer
@@ -1371,6 +1426,7 @@ private: System::Void OKbutton_Click(System::Object^  sender, System::EventArgs^
 			String^ recognized = gcnew String("VNA Detector Calibration Data Set Version 2.1.1");
 			bw->Write(recognized);		// put string header on outfile
 
+#if 0
 			// write the AD8302 Phase Detector constants and error tables
 			bw->Write(Cal->RxDet->Qmid);
 			bw->Write(Cal->RxDet->Qmag);
@@ -1409,14 +1465,14 @@ private: System::Void OKbutton_Click(System::Object^  sender, System::EventArgs^
                 bw->Write(Cal->TxDet->r[i]);
 				bw->Write(Cal->TxDet->flat[i]);
 			}
-
+#endif
 			// write the frequency error (or zero if none entered)
 
 			bw->Write(FG->ferror);
 
 			// Write the Directivity Calibration raw values 10-18-2005
 
-			for (int i=0; i<21; i++)
+			for (int i=0; i<PHASECALGRIDSIZE; i++)
 			{
 				bw->Write(Cal->DirCoupler->DirIphs[i]);
 				bw->Write(Cal->DirCoupler->DirQphs[i]);
@@ -1528,6 +1584,75 @@ private: System::Void TxLongCableShortButton_Click(System::Object^  sender, Syst
                     progressBar1->Update();
 
 			}
+
+
+
+
+	// Step 1.  Construct the error vs. frequency and open-angle vs. frequency arrays.
+	//          Also construct the magnitude difference between open and short vs. frequency.
+	for(int i=0; i<PHASECALGRIDSIZE; i++)
+	{
+		double mag, phs, shortPhase, openPhase;
+		double shortMag, openMag;
+		double& rmag = mag;
+		double& rphs = phs;
+		__int64	Freq;
+		MeasurementSet^ calPoint = gcnew MeasurementSet;
+
+		Freq = Cal->GetFreqFromPhaseCalGrid(i);
+
+
+		calPoint->ReflPI = ReflLongDetailMagPhShort[i, PhaseI];
+		calPoint->ReflPQ = ReflLongDetailMagPhShort[i, PhaseQ];
+		calPoint->ReflMQ = ReflLongDetailMagPhShort[i, MagQ];
+
+		Cal->ResolveReflPolar(calPoint,	Freq, rmag, rphs, true);
+		shortPhase = phs;
+		shortMag = mag;
+
+
+		calPoint->ReflPI = ReflLongDetailMagPhOpen[i, PhaseI];
+		calPoint->ReflPQ = ReflLongDetailMagPhOpen[i, PhaseQ];
+		calPoint->ReflMQ = ReflLongDetailMagPhOpen[i, MagQ];
+
+		Cal->ResolveReflPolar(calPoint, Freq, rmag, rphs, true);
+		openPhase = phs;
+		openMag = mag;
+
+		// invert the shorted-meas angle
+		shortPhase = NormalizePhaseDegr(shortPhase - 180.0);
+
+		Cal->DirCoupler->openAngle[i] = openPhase;
+		Cal->DirCoupler->shortAngle[i] = shortPhase;
+
+		// Open and inverted short should be the same angle, record half the difference as error
+		Cal->DirCoupler->phaseError[i] = NormalizePhaseDegr(openPhase - shortPhase) / 2.0;
+
+		// Linear magnitude difference between open and short on 3 meter cable. half the difference
+		// is the error.
+		Cal->DirCoupler->magError[i] = (openMag - shortMag) / 2.0;
+	}	
+	
+	// Clean up any glitches on the error terms
+	array<Double>^ TempPhaseError = gcnew array<Double>(PHASECALGRIDSIZE);
+	array<Double>^ TempMagError = gcnew array<Double>(PHASECALGRIDSIZE);
+
+	for (int i=0; i<PHASECALGRIDSIZE; i++)	// Make a copy of the data
+	{
+		TempPhaseError[i] = Cal->DirCoupler->phaseError[i];
+		TempMagError[i] = Cal->DirCoupler->magError[i];
+	}
+
+	for (int i=0; i<PHASECALGRIDSIZE-6; i++)
+	{
+		Cal->DirCoupler->phaseError[i+3] = Median7(TempPhaseError,i);
+		Cal->DirCoupler->magError[i+3] = Median7(TempMagError,i);
+	}
+
+
+
+
+
 
 			CalStepPass[7] = true;
 			TxLongCableShortStat->Image = ICO1Label->Image;	// check mark (OK)

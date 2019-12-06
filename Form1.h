@@ -415,6 +415,7 @@ private: System::Windows::Forms::Panel^  outputPanel;
 
 
 
+
 	private: System::ComponentModel::IContainer^  components;
 
 	private:
@@ -1192,7 +1193,7 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			// 
 			this->bridgeCalibrationToolStripMenuItem->Name = L"bridgeCalibrationToolStripMenuItem";
 			this->bridgeCalibrationToolStripMenuItem->Size = System::Drawing::Size(230, 22);
-			this->bridgeCalibrationToolStripMenuItem->Text = L"Bridge Calibration";
+			this->bridgeCalibrationToolStripMenuItem->Text = L"Detector Calibration";
 			this->bridgeCalibrationToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::instrumentCalItem_Click);
 			// 
 			// runItem
@@ -2115,12 +2116,15 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			// 
 			// outputPanel
 			// 
-			this->outputPanel->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
-				| System::Windows::Forms::AnchorStyles::Left));
-			this->outputPanel->Location = System::Drawing::Point(1, 27);
+			this->outputPanel->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
+				| System::Windows::Forms::AnchorStyles::Left) 
+				| System::Windows::Forms::AnchorStyles::Right));
+			this->outputPanel->BackColor = System::Drawing::Color::White;
+			this->outputPanel->Location = System::Drawing::Point(0, 0);
 			this->outputPanel->Name = L"outputPanel";
-			this->outputPanel->Size = System::Drawing::Size(934, 285);
+			this->outputPanel->Size = System::Drawing::Size(935, 329);
 			this->outputPanel->TabIndex = 35;
+			this->outputPanel->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &Form1::outputPanel_Paint);
 			// 
 			// Form1
 			// 
@@ -2129,7 +2133,6 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			this->BackColor = System::Drawing::Color::White;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(935, 431);
-			this->Controls->Add(this->outputPanel);
 			this->Controls->Add(this->delayBox);
 			this->Controls->Add(this->RefExtnCheckBox);
 			this->Controls->Add(this->Spectrum);
@@ -2164,13 +2167,13 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			this->Controls->Add(this->label3);
 			this->Controls->Add(this->menuStrip1);
 			this->Controls->Add(this->MIndex);
+			this->Controls->Add(this->outputPanel);
 			this->MainMenuStrip = this->menuStrip1;
 			this->MinimumSize = System::Drawing::Size(600, 300);
 			this->Name = L"Form1";
 			this->Text = L"TAPR Vector Network Analyzer";
 			this->Closing += gcnew System::ComponentModel::CancelEventHandler(this, &Form1::Form_Close);
 			this->Load += gcnew System::EventHandler(this, &Form1::Form1_Load);
-			this->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &Form1::Form_Paint);
 			this->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseDown);
 			this->MouseHover += gcnew System::EventHandler(this, &Form1::Form_MouseHover);
 			this->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseMove);
@@ -2185,7 +2188,7 @@ private: System::Windows::Forms::Panel^  outputPanel;
 
 private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 		{
-			FG = gcnew FrequencyGrid(200);	// Grid containing 200 frequencies (default size)
+			FG = gcnew FrequencyGrid(201);	// Grid containing 200 frequencies (default size)
 			FG->SetStartF(200000);			// Default start frequency to 200 KHz.
 			FG->SetStopF(200000000);		// Default stop frequency to 100 MHz.
 			FrequencyDigitIndex = 0;		// Initialize digit selector to one_hertz position
@@ -2238,7 +2241,7 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 
 
 			// Add resize event handler
-			Resize += gcnew EventHandler(this, &Form1::Form_Resize);
+//			Resize += gcnew EventHandler(this, &Form1::Form_Resize);
 
 			// Instantiate PrintDocument to hold printer settings
 			pdoc = gcnew PrintDocument();
@@ -2453,8 +2456,8 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 
 		if(!printer)
 			gr->Clear(Form1::BackColor);	// computer screen painted with background color
-		else
-			gr->Clear(Color::White);		// printer uses white background to save ink
+//		else
+//			gr->Clear(Color::White);		// printer uses white background to save ink
 
 
 		// Determine the rectangle coordinates for the scope display
@@ -2490,6 +2493,62 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 		Point unShieldText(scopeDisp.Left + 20, scopeDisp.Top + 28);
 	    Point unFixComp(scopeDisp.Left + 20, scopeDisp.Top + 48);
 		Point unConnected(scopeDisp.Right - 300, scopeDisp.Top + 8);
+
+		// Display plot title 
+           gr->DrawString(plotTitle, Titlefont, brBlack, botTitleCenter, Centerformat);	// Plot Title 
+
+		// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
+		// or when in Fast sweep mode.
+#if 0
+		if((CalData->RxDet->phaseCalibrated == false) || (CalData->TxDet->phaseCalibrated == false)
+				|| (txLevel < 0) || String::Compare(SweepSpd->Text, "Fast") == 0)
+				gr->DrawString("Uncalibrated", Warningfont, brGray, unCalText);
+#endif
+		if(!calCheckBox->Checked)
+			gr->DrawString("Uncalibrated", Warningfont, brGray, unFixComp);
+		else
+			gr->DrawString(FixtureCalFileName, Warningfont, brGray, unFixComp );
+
+
+		if(!VNAConnected)
+			gr->DrawString("VNA Instrument Not Connected", Titlefont, brBlack, unConnected);
+
+		if (polarItem->Checked == true && !Spectrum->Checked )							// render screen in polar mode ?????
+		{
+
+//			// Display plot title 
+//			gr->DrawString(plotTitle, Titlefont, brBlack, botTitleCenter, Centerformat);	// Plot Title 
+
+			// Display software version
+//            gr->DrawString(SOFTWARE_VERSION, Statusfont, brBlack, topright);	// TAPR & Version
+
+//			if(!calCheckBox->Checked)
+//				gr->DrawString("Fixture Uncompensated", Warningfont, brGray, unFixComp);
+
+//			if(!VNAConnected)
+//				gr->DrawString("VNA Instrument Not Connected", Titlefont, brBlack, unConnected);
+
+
+			// find the smaller of the horizontal or vertical size & set RightCenter coordinates
+			if (scopeDisp.Height > scopeDisp.Width)
+				polarRadius = scopeDisp.Width/2;
+			else
+				polarRadius = scopeDisp.Height/2;
+
+			polarRightCenter.X = polarCenter.X + polarRadius;
+
+			// build the bounding rectangle for the polar display
+			polarBox.X = polarCenter.X - polarRadius;
+			polarBox.Width = polarRadius * 2;
+			polarBox.Y = polarCenter.Y - polarRadius;
+			polarBox.Height = polarRadius *2;
+
+			// draw polar display and outside circle
+//			if ( !rectItem->Checked ) 
+//				gr->FillEllipse(brwhite, polarBox);
+			gr->DrawEllipse(penBlack2, polarBox);
+		}
+
 
 		if (rectItem->Checked == true ||  Spectrum->Checked)  // render screen in rectangular mode
 		{
@@ -2706,7 +2765,7 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 //			leftstatuspoint.Y = scopeDisp.Y + 250;
 //			gr->DrawString(String::Concat("Ref Lvl:\n", refLevel.ToString(), " dB"),
 //				Statusfont, brBlack, leftstatuspoint);
-
+#if 0
 			// Display plot title 
             gr->DrawString(plotTitle, Titlefont, brBlack, botTitleCenter, Centerformat);	// Plot Title 
 
@@ -2722,13 +2781,13 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			else
 				gr->DrawString(FixtureCalFileName, Warningfont, brGray, unFixComp );
 
-			if(ExcessRxNoiseIngress(trace, FG->points) && (s21magItem->Checked || s21phsItem->Checked
-				|| s21groupdelayItem->Checked))
-				gr->DrawString("Unshielded: noise or interference ingress", Warningfont, brGray, unShieldText);
 
 			if(!VNAConnected)
 				gr->DrawString("VNA Instrument Not Connected", Titlefont, brBlack, unConnected);
-
+#endif
+			if(ExcessRxNoiseIngress(trace, FG->points) && (s21magItem->Checked || s21phsItem->Checked
+				|| s21groupdelayItem->Checked))
+				gr->DrawString("Unshielded: noise or interference ingress", Warningfont, brGray, unShieldText);
 
 			PixelsPerGrid = (float)scopeDisp.Width / (float)FG->points;
 
@@ -3639,22 +3698,22 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 #endif
 		}
 
-		if (polarItem->Checked == true && !Spectrum->Checked )							// render screen in polar mode
+		if (polarItem->Checked == true && !Spectrum->Checked )							// render screen in polar mode ?????
 		{
 
-			// Display plot title 
-			gr->DrawString(plotTitle, Titlefont, brBlack, botTitleCenter, Centerformat);	// Plot Title 
+//			// Display plot title 
+//			gr->DrawString(plotTitle, Titlefont, brBlack, botTitleCenter, Centerformat);	// Plot Title 
 
 			// Display software version
-            gr->DrawString(SOFTWARE_VERSION, Statusfont, brBlack, topright);	// TAPR & Version
+//            gr->DrawString(SOFTWARE_VERSION, Statusfont, brBlack, topright);	// TAPR & Version
 
-			if(!calCheckBox->Checked)
-				gr->DrawString("Fixture Uncompensated", Warningfont, brGray, unFixComp);
+//			if(!calCheckBox->Checked)
+//				gr->DrawString("Fixture Uncompensated", Warningfont, brGray, unFixComp);
 
-			if(!VNAConnected)
-				gr->DrawString("VNA Instrument Not Connected", Titlefont, brBlack, unConnected);
+//			if(!VNAConnected)
+//				gr->DrawString("VNA Instrument Not Connected", Titlefont, brBlack, unConnected);
 
-
+#if 0
 			// find the smaller of the horizontal or vertical size & set RightCenter coordinates
 			if (scopeDisp.Height > scopeDisp.Width)
 				polarRadius = scopeDisp.Width/2;
@@ -3670,10 +3729,10 @@ private: System::Void Form_Render(Graphics^ gr,  System::Drawing::Rectangle rect
 			polarBox.Height = polarRadius *2;
 
 			// draw polar display and outside circle
-			if ( !rectItem->Checked ) 
-				gr->FillEllipse(brwhite, polarBox);
+//			if ( !rectItem->Checked ) 
+//				gr->FillEllipse(brwhite, polarBox);
 			gr->DrawEllipse(penBlack2, polarBox);
-
+#endif
 			// Display "Uncalibrated" on the scope when InstrumentCal is not valid, when txLevel is not zero,
 			// or when in Fast sweep mode.
 #if 0
@@ -4989,10 +5048,10 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay, Spectrum->Checked);
 			for (int m=0; m<FG->points; m++)
 			{
-				if (!WorkerCollect) {
-					MessageBox::Show("Sweep aborted", "Abort", MessageBoxButtons::OK, MessageBoxIcon::Error);
-					break;
-				}
+//				if (!WorkerCollect) {
+//					MessageBox::Show("Sweep aborted", "Abort", MessageBoxButtons::OK, MessageBoxIcon::Error);
+//					break;
+//				}
 				// calculate linear frequency spot for each sweep
 				TxBuf->TxAccum = m; 
 				TxBuf->Freq2 = FG->Frequency(m);
@@ -5077,8 +5136,12 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 //				trace[m]->TranPQLow = RxBuf->TranPQLow;
 
 				// Update Sweep Progress
-				if ((m % 10) == 0) SweepProgressBar->Value = (m+1);
-
+				if (TxBuf->MeasureDelay == 1) {
+					if ((m % 20) == 0) SweepProgressBar->Value = (m+1);
+				}
+				else {
+					if ((m % 10) == 0) SweepProgressBar->Value = (m+1);
+				}
 
 			// Glitch detection using median filtering algorithm,
 			// faster but not as accurate as slow version.
@@ -7159,22 +7222,23 @@ private: System::Single GetVerticalScaleFactor(System::Void)
 			//throw new System::Exception("Invalid value of VerticalScaleFactor. No Scale_dB checked");
 			return 1.0f;	// default in case no Scale_dB is checked in the menu.
 		 };
+#if 0
 		 /// Paint event handler
 private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e)
 		 {
 //			try {
-#if 1
+#if 0
 			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
 			Form_Render(pg, ClientSize);
 			delete(pg);
 #else
 		 // Double-buffered version of paint
 			Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
-			if (!bufferBitmapInitialized) {
+//			if (!bufferBitmapInitialized) {
 				bufferBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
 				bufferBitmapInitialized = true;
 				bitmapGraphics = Graphics::FromImage(bufferBitmap);
-			}
+//			}
 //			Bitmap ^ localBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
 			bitmapGraphics->Clip = pg->Clip;
 
@@ -7191,14 +7255,38 @@ private: System::Void Form_Paint(System::Object^  sender, System::Windows::Forms
 #endif
 //			} catch (Exception^) {}
 		 }
+#endif
 
-	/// Resize event handler
-private: System::Void Form_Resize(System::Object^  sender, System::EventArgs^  e)
-		 {
-			Graphics^ pg = CreateGraphics();	// don't set any clipping region on a resize event
-			Form_Render(pg, ClientSize);		// EventArgs is the empty argument set
+private: System::Void outputPanel_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e) {
+#if 0
+			 Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
+			Form_Render(pg, ClientSize);
 			delete(pg);
+#else
+		 // Double-buffered version of paint
+			Graphics^ pg = e->Graphics;			// copy from the PaintEvent so we get proper clipping bounds
+//			if (!bufferBitmapInitialized) {
+				bufferBitmap = gcnew Bitmap(ClientRectangle.Width, ClientRectangle.Height);
+				bufferBitmapInitialized = true;
+				bitmapGraphics = Graphics::FromImage(bufferBitmap);
+//			}
+			bitmapGraphics->Clip = pg->Clip;
+
+			Form_Render(bitmapGraphics, ClientSize);	// redraw to our local bitmap
+			pg->DrawImageUnscaled(bufferBitmap, 0, 0);			// draw our local bitmap to the screen
+
+			delete(bufferBitmap);
+
+//			bitmapGraphics->Dispose();
+//			localBitmap->Dispose();
+//			pg->Dispose();
+			//delete(bitmapGraphics);
+			//delete(localBitmap);
+			//delete(pg);
+
+#endif
 		 }
+
 
 private: System::Void Form_Close(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e)
 		 {
@@ -7610,6 +7698,8 @@ private: System::Void delayBox_TextChanged(System::Object^  sender, System::Even
 			}
 			catch (Exception^ /* pe */ ) {CalData->reflTimeDelayEquivalent = 0.0;}
 		 }
+//private: System::Void outputPanel_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e) {
+//		 }
 }
 ;};
 

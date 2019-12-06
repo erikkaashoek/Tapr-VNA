@@ -50,9 +50,9 @@ using namespace System::Globalization;
 	/// Constructor for DirectionalCoupler
 DirectionalCoupler::DirectionalCoupler(InstrumentCalDataSet^ Calset)
 {
-	DirMag = gcnew array<Int32>(21);					///< Directivity Magnitude ADC count at each frequnecy
-	DirIphs = gcnew array<Int32>(21);					///< Directivity I phase ADC count at each frequency
-	DirQphs = gcnew array<Int32>(21);					///< Directivity Q phase ADC count at each frequency
+	DirMag = gcnew array<Int32>(PHASECALGRIDSIZE);					///< Directivity Magnitude ADC count at each frequnecy
+	DirIphs = gcnew array<Int32>(PHASECALGRIDSIZE);					///< Directivity I phase ADC count at each frequency
+	DirQphs = gcnew array<Int32>(PHASECALGRIDSIZE);					///< Directivity Q phase ADC count at each frequency
 
 	openAngle = gcnew array<Double>(PHASECALGRIDSIZE);		///< Array of open angles actually measured
 	shortAngle = gcnew array<Double>(PHASECALGRIDSIZE);		///< Array of shorted angles actually measured
@@ -103,11 +103,11 @@ DirectionalCoupler::DirectionalCoupler(InstrumentCalDataSet^ Calset)
 	MagRipCoeff[5]->freq = 1500000000; MagRipCoeff[5]->offset = -86.80; MagRipCoeff[5]->mag = 0.013;
 #endif
 	// initialized by .NET constructor
-	//DirCalibrated = false;					// directivity calibration not yet run
-	//RippleCalibrated = false;					// Mag & Phase ripple calibration not yet run
+	DirCalibrated = false;					// directivity calibration not yet run
+	RippleCalibrated = false;					// Mag & Phase ripple calibration not yet run
 
-	//PhaseDCOffset = 0.0;						// initialize offset to none
-	//MagDCOffset = 0.0;						// initialize offset to none
+	PhaseDCOffset = 0.0;						// initialize offset to none
+	MagDCOffset = 0.0;						// initialize offset to none
 
 }
 
@@ -117,7 +117,7 @@ void DirectionalCoupler::DirectivityCal(array<UInt16,2>^ DirectivityMag)
 	// Store the raw ADC counts from the Directivity Calibration
 	// The consuming routine needs to convert them to mag+phase
 
-	for (int i=0; i<21; i++)
+	for (int i=0; i<PHASECALGRIDSIZE; i++)
 	{
 		DirMag[i] = DirectivityMag[i, MagQ];
 		DirIphs[i] = DirectivityMag[i, PhaseI];
@@ -142,7 +142,7 @@ void DirectionalCoupler::CompensateDirectivity(InstrumentCalDataSet^ cal, double
 
 	// Build interpolated dataset between two frequencies
 
-	if (Freq <= 1000000)	// 1 MHZ and below
+	if (Freq <= cal->VNA->GetMaxFreq()/10)
 	{
 		FreqBase = (Freq - 200000)/100000;
 		FreqRemainder = (double)(Freq - (FreqBase + 2) * 100000)/100000;  // Remainder of frequency, value between  0..1
@@ -181,7 +181,7 @@ void DirectionalCoupler::CompensateDirectivity(InstrumentCalDataSet^ cal, double
 
 };
 	/// Compensate coupler phase ripple error NEW 09-23-2007
-double DirectionalCoupler::PhaseRippleCompensate(double phase, int frequency)
+double DirectionalCoupler::PhaseRippleCompensate(double phase, __int64 frequency)
 {
 	// Correct the coupler phase ripple error.
 	// The correction consists of phase error amplitude, and offset angle to the measurement.
@@ -199,7 +199,7 @@ double DirectionalCoupler::PhaseRippleCompensate(double phase, int frequency)
 };
 
 	// Compensate coupler magnitude ripple error   NEW 09-23-2007
-double DirectionalCoupler::MagRippleCorrection(double phase, int frequency)
+double DirectionalCoupler::MagRippleCorrection(double phase, __int64 frequency)
 {
 	if (!RippleCalibrated)
 		return 0.0;		// no compensation
@@ -233,6 +233,7 @@ bool DirectionalCoupler::GenerateShortOpenComp(InstrumentCalDataSet^ cal, array<
 
 	RippleCalibrated = false;		// disable the new ripple compensators
 
+#if 0
 
 	// Step 1.  Construct the error vs. frequency and open-angle vs. frequency arrays.
 	//          Also construct the magnitude difference between open and short vs. frequency.
@@ -294,6 +295,7 @@ bool DirectionalCoupler::GenerateShortOpenComp(InstrumentCalDataSet^ cal, array<
 		magError[i+3] = Median7(TempMagError,i);
 	}
 
+#endif
 	
 	//	Step 2.   Determine the bias of all the phase & mag samples.
 	//

@@ -101,7 +101,7 @@ public:
 	// Fixture Cal data (may not be any)
 	array<Double>^ EdReal, ^EdImag, ^EsReal, ^EsImag;
 	array<Double>^ EtReal, ^EtImag, ^ThReal, ^ThImag;
-	double OpenC0, ShortL0,OpenLength,ShortLength,LoadL0;
+	double OpenC0, OpenC1, OpenC2, ShortL0, ShortL1, ShortL2,OpenLength,ShortLength,LoadL0,LoadR0,LoadLength;
 	array<Double>^ S11shortReal, ^S11shortImag;
 	array<Double>^ S11openReal, ^S11openImag;
 	array<Double>^ S11termReal, ^S11termImag;
@@ -123,7 +123,7 @@ void ResolveTranPolar(MeasurementSet^ dataPoint, __int64 Freq, double& rmag, dou
 /// get frequency of calibration grid point
 __int64 GetFreqFromFixtureCalGrid(long index, bool Freqmode);
 /// Convert Detector Magnitude Calibration Grid index to Frequency.
-int GetFreqFromDetMagCalGrid(long index);
+__int64 GetFreqFromDetMagCalGrid(long index);
 /// Convert Phase Calibration Grid index to Frequency.
 int GetFreqFromPhaseCalGrid(long index);	
 

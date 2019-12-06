@@ -119,6 +119,18 @@ namespace VNAR3
 	private: System::Windows::Forms::TextBox^  openC0Box;
 	private: System::Windows::Forms::TextBox^  loadL0Box;
 	private: System::Windows::Forms::Button^  applyButton;
+	private: System::Windows::Forms::TextBox^  openC1Box;
+	private: System::Windows::Forms::TextBox^  shortL1Box;
+	private: System::Windows::Forms::Label^  label17;
+	private: System::Windows::Forms::Label^  label19;
+	private: System::Windows::Forms::TextBox^  openC2Box;
+	private: System::Windows::Forms::TextBox^  shortL2Box;
+	private: System::Windows::Forms::Label^  label20;
+	private: System::Windows::Forms::Label^  label22;
+	private: System::Windows::Forms::TextBox^  loadR0Box;
+	private: System::Windows::Forms::Label^  label18;
+	private: System::Windows::Forms::TextBox^  loadLengthBox;
+	private: System::Windows::Forms::Label^  label21;
 
 
 
@@ -181,6 +193,18 @@ namespace VNAR3
 			this->openC0Box = (gcnew System::Windows::Forms::TextBox());
 			this->loadL0Box = (gcnew System::Windows::Forms::TextBox());
 			this->applyButton = (gcnew System::Windows::Forms::Button());
+			this->openC1Box = (gcnew System::Windows::Forms::TextBox());
+			this->shortL1Box = (gcnew System::Windows::Forms::TextBox());
+			this->label17 = (gcnew System::Windows::Forms::Label());
+			this->label19 = (gcnew System::Windows::Forms::Label());
+			this->openC2Box = (gcnew System::Windows::Forms::TextBox());
+			this->shortL2Box = (gcnew System::Windows::Forms::TextBox());
+			this->label20 = (gcnew System::Windows::Forms::Label());
+			this->label22 = (gcnew System::Windows::Forms::Label());
+			this->loadR0Box = (gcnew System::Windows::Forms::TextBox());
+			this->label18 = (gcnew System::Windows::Forms::Label());
+			this->loadLengthBox = (gcnew System::Windows::Forms::TextBox());
+			this->label21 = (gcnew System::Windows::Forms::Label());
 			this->LinLogBox->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -506,7 +530,7 @@ namespace VNAR3
 			// 
 			this->label9->AutoSize = true;
 			this->label9->BackColor = System::Drawing::Color::Transparent;
-			this->label9->Location = System::Drawing::Point(155, 153);
+			this->label9->Location = System::Drawing::Point(155, 135);
 			this->label9->Name = L"label9";
 			this->label9->Size = System::Drawing::Size(32, 13);
 			this->label9->TabIndex = 37;
@@ -516,7 +540,7 @@ namespace VNAR3
 			// 
 			this->label10->AutoSize = true;
 			this->label10->BackColor = System::Drawing::Color::Transparent;
-			this->label10->Location = System::Drawing::Point(298, 153);
+			this->label10->Location = System::Drawing::Point(298, 135);
 			this->label10->Name = L"label10";
 			this->label10->Size = System::Drawing::Size(33, 13);
 			this->label10->TabIndex = 38;
@@ -526,7 +550,7 @@ namespace VNAR3
 			// 
 			this->label11->AutoSize = true;
 			this->label11->BackColor = System::Drawing::Color::Transparent;
-			this->label11->Location = System::Drawing::Point(432, 153);
+			this->label11->Location = System::Drawing::Point(447, 134);
 			this->label11->Name = L"label11";
 			this->label11->Size = System::Drawing::Size(31, 13);
 			this->label11->TabIndex = 39;
@@ -536,7 +560,7 @@ namespace VNAR3
 			// 
 			this->label12->AutoSize = true;
 			this->label12->BackColor = System::Drawing::Color::Transparent;
-			this->label12->Location = System::Drawing::Point(112, 197);
+			this->label12->Location = System::Drawing::Point(112, 207);
 			this->label12->Name = L"label12";
 			this->label12->Size = System::Drawing::Size(40, 13);
 			this->label12->TabIndex = 40;
@@ -546,7 +570,7 @@ namespace VNAR3
 			// 
 			this->label13->AutoSize = true;
 			this->label13->BackColor = System::Drawing::Color::Transparent;
-			this->label13->Location = System::Drawing::Point(262, 197);
+			this->label13->Location = System::Drawing::Point(262, 207);
 			this->label13->Name = L"label13";
 			this->label13->Size = System::Drawing::Size(40, 13);
 			this->label13->TabIndex = 41;
@@ -556,7 +580,7 @@ namespace VNAR3
 			// 
 			this->label14->AutoSize = true;
 			this->label14->BackColor = System::Drawing::Color::Transparent;
-			this->label14->Location = System::Drawing::Point(133, 175);
+			this->label14->Location = System::Drawing::Point(133, 153);
 			this->label14->Name = L"label14";
 			this->label14->Size = System::Drawing::Size(19, 13);
 			this->label14->TabIndex = 42;
@@ -566,7 +590,7 @@ namespace VNAR3
 			// 
 			this->label15->AutoSize = true;
 			this->label15->BackColor = System::Drawing::Color::Transparent;
-			this->label15->Location = System::Drawing::Point(410, 175);
+			this->label15->Location = System::Drawing::Point(410, 170);
 			this->label15->Name = L"label15";
 			this->label15->Size = System::Drawing::Size(19, 13);
 			this->label15->TabIndex = 43;
@@ -576,7 +600,7 @@ namespace VNAR3
 			// 
 			this->label16->AutoSize = true;
 			this->label16->BackColor = System::Drawing::Color::Transparent;
-			this->label16->Location = System::Drawing::Point(275, 175);
+			this->label16->Location = System::Drawing::Point(275, 153);
 			this->label16->Name = L"label16";
 			this->label16->Size = System::Drawing::Size(20, 13);
 			this->label16->TabIndex = 44;
@@ -584,35 +608,35 @@ namespace VNAR3
 			// 
 			// shortL0Box
 			// 
-			this->shortL0Box->Location = System::Drawing::Point(158, 172);
+			this->shortL0Box->Location = System::Drawing::Point(158, 150);
 			this->shortL0Box->Name = L"shortL0Box";
 			this->shortL0Box->Size = System::Drawing::Size(104, 20);
 			this->shortL0Box->TabIndex = 45;
 			// 
 			// shortLengthBox
 			// 
-			this->shortLengthBox->Location = System::Drawing::Point(158, 194);
+			this->shortLengthBox->Location = System::Drawing::Point(158, 204);
 			this->shortLengthBox->Name = L"shortLengthBox";
 			this->shortLengthBox->Size = System::Drawing::Size(104, 20);
 			this->shortLengthBox->TabIndex = 46;
 			// 
 			// openLengthBox
 			// 
-			this->openLengthBox->Location = System::Drawing::Point(301, 194);
+			this->openLengthBox->Location = System::Drawing::Point(301, 204);
 			this->openLengthBox->Name = L"openLengthBox";
 			this->openLengthBox->Size = System::Drawing::Size(104, 20);
 			this->openLengthBox->TabIndex = 47;
 			// 
 			// openC0Box
 			// 
-			this->openC0Box->Location = System::Drawing::Point(301, 172);
+			this->openC0Box->Location = System::Drawing::Point(301, 150);
 			this->openC0Box->Name = L"openC0Box";
 			this->openC0Box->Size = System::Drawing::Size(104, 20);
 			this->openC0Box->TabIndex = 48;
 			// 
 			// loadL0Box
 			// 
-			this->loadL0Box->Location = System::Drawing::Point(435, 172);
+			this->loadL0Box->Location = System::Drawing::Point(450, 167);
 			this->loadL0Box->Name = L"loadL0Box";
 			this->loadL0Box->Size = System::Drawing::Size(104, 20);
 			this->loadL0Box->TabIndex = 49;
@@ -630,6 +654,108 @@ namespace VNAR3
 			this->applyButton->Text = L"Apply";
 			this->applyButton->Click += gcnew System::EventHandler(this, &Calibration::applyButton_Click);
 			// 
+			// openC1Box
+			// 
+			this->openC1Box->Location = System::Drawing::Point(301, 167);
+			this->openC1Box->Name = L"openC1Box";
+			this->openC1Box->Size = System::Drawing::Size(104, 20);
+			this->openC1Box->TabIndex = 55;
+			// 
+			// shortL1Box
+			// 
+			this->shortL1Box->Location = System::Drawing::Point(158, 167);
+			this->shortL1Box->Name = L"shortL1Box";
+			this->shortL1Box->Size = System::Drawing::Size(104, 20);
+			this->shortL1Box->TabIndex = 54;
+			// 
+			// label17
+			// 
+			this->label17->AutoSize = true;
+			this->label17->BackColor = System::Drawing::Color::Transparent;
+			this->label17->Location = System::Drawing::Point(275, 170);
+			this->label17->Name = L"label17";
+			this->label17->Size = System::Drawing::Size(20, 13);
+			this->label17->TabIndex = 53;
+			this->label17->Text = L"C1";
+			// 
+			// label19
+			// 
+			this->label19->AutoSize = true;
+			this->label19->BackColor = System::Drawing::Color::Transparent;
+			this->label19->Location = System::Drawing::Point(133, 170);
+			this->label19->Name = L"label19";
+			this->label19->Size = System::Drawing::Size(19, 13);
+			this->label19->TabIndex = 51;
+			this->label19->Text = L"L1";
+			// 
+			// openC2Box
+			// 
+			this->openC2Box->Location = System::Drawing::Point(301, 184);
+			this->openC2Box->Name = L"openC2Box";
+			this->openC2Box->Size = System::Drawing::Size(104, 20);
+			this->openC2Box->TabIndex = 61;
+			// 
+			// shortL2Box
+			// 
+			this->shortL2Box->Location = System::Drawing::Point(158, 184);
+			this->shortL2Box->Name = L"shortL2Box";
+			this->shortL2Box->Size = System::Drawing::Size(104, 20);
+			this->shortL2Box->TabIndex = 60;
+			// 
+			// label20
+			// 
+			this->label20->AutoSize = true;
+			this->label20->BackColor = System::Drawing::Color::Transparent;
+			this->label20->Location = System::Drawing::Point(275, 187);
+			this->label20->Name = L"label20";
+			this->label20->Size = System::Drawing::Size(20, 13);
+			this->label20->TabIndex = 59;
+			this->label20->Text = L"C2";
+			// 
+			// label22
+			// 
+			this->label22->AutoSize = true;
+			this->label22->BackColor = System::Drawing::Color::Transparent;
+			this->label22->Location = System::Drawing::Point(133, 187);
+			this->label22->Name = L"label22";
+			this->label22->Size = System::Drawing::Size(19, 13);
+			this->label22->TabIndex = 57;
+			this->label22->Text = L"L2";
+			// 
+			// loadR0Box
+			// 
+			this->loadR0Box->Location = System::Drawing::Point(450, 150);
+			this->loadR0Box->Name = L"loadR0Box";
+			this->loadR0Box->Size = System::Drawing::Size(104, 20);
+			this->loadR0Box->TabIndex = 62;
+			// 
+			// label18
+			// 
+			this->label18->AutoSize = true;
+			this->label18->BackColor = System::Drawing::Color::Transparent;
+			this->label18->Location = System::Drawing::Point(410, 153);
+			this->label18->Name = L"label18";
+			this->label18->Size = System::Drawing::Size(21, 13);
+			this->label18->TabIndex = 63;
+			this->label18->Text = L"R0";
+			// 
+			// loadLengthBox
+			// 
+			this->loadLengthBox->Location = System::Drawing::Point(450, 204);
+			this->loadLengthBox->Name = L"loadLengthBox";
+			this->loadLengthBox->Size = System::Drawing::Size(104, 20);
+			this->loadLengthBox->TabIndex = 64;
+			// 
+			// label21
+			// 
+			this->label21->AutoSize = true;
+			this->label21->BackColor = System::Drawing::Color::Transparent;
+			this->label21->Location = System::Drawing::Point(410, 207);
+			this->label21->Name = L"label21";
+			this->label21->Size = System::Drawing::Size(40, 13);
+			this->label21->TabIndex = 65;
+			this->label21->Text = L"Length";
+			// 
 			// Calibration
 			// 
 			this->AutoScaleBaseSize = System::Drawing::Size(5, 13);
@@ -637,6 +763,18 @@ namespace VNAR3
 			this->BackgroundImage = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"$this.BackgroundImage")));
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
 			this->ClientSize = System::Drawing::Size(638, 571);
+			this->Controls->Add(this->label21);
+			this->Controls->Add(this->loadLengthBox);
+			this->Controls->Add(this->label18);
+			this->Controls->Add(this->loadR0Box);
+			this->Controls->Add(this->openC2Box);
+			this->Controls->Add(this->shortL2Box);
+			this->Controls->Add(this->label20);
+			this->Controls->Add(this->label22);
+			this->Controls->Add(this->openC1Box);
+			this->Controls->Add(this->shortL1Box);
+			this->Controls->Add(this->label17);
+			this->Controls->Add(this->label19);
 			this->Controls->Add(this->applyButton);
 			this->Controls->Add(this->loadL0Box);
 			this->Controls->Add(this->openC0Box);
@@ -962,10 +1100,16 @@ namespace VNAR3
 	private: System::Void calSave_Click(System::Object^  sender, System::EventArgs^  e)
 			{
 				Cal->OpenC0 = Convert::ToDouble(openC0Box->Text);
+				Cal->OpenC1 = Convert::ToDouble(openC1Box->Text);
+				Cal->OpenC2 = Convert::ToDouble(openC2Box->Text);
 				Cal->ShortL0 = Convert::ToDouble(shortL0Box->Text);
+				Cal->ShortL1 = Convert::ToDouble(shortL1Box->Text);
+				Cal->ShortL2 = Convert::ToDouble(shortL2Box->Text);
 				Cal->OpenLength = Convert::ToDouble(openLengthBox->Text);
 				Cal->ShortLength = Convert::ToDouble(shortLengthBox->Text);
 				Cal->LoadL0 = Convert::ToDouble(loadL0Box->Text);
+				Cal->LoadR0 = Convert::ToDouble(loadR0Box->Text);
+				Cal->LoadLength = Convert::ToDouble(loadLengthBox->Text);
 
 				// Compute Error Terms
 				CalToErrorTerms(Cal);
@@ -1010,10 +1154,16 @@ private: System::Void Calibration_Load(System::Object^  sender, System::EventArg
 			maxFreq->Text = String::Format("{0}",Cal->maxCalFreq);
 			refPlaneBox->Text = (Cal->reflTimeDelayEquivalent*1e12).ToString();
 			openC0Box->Text = (Cal->OpenC0).ToString();
+			openC1Box->Text = (Cal->OpenC1).ToString();
+			openC2Box->Text = (Cal->OpenC2).ToString();
 			shortL0Box->Text = (Cal->ShortL0).ToString();
+			shortL1Box->Text = (Cal->ShortL1).ToString();
+			shortL2Box->Text = (Cal->ShortL2).ToString();
 			openLengthBox->Text = (Cal->OpenLength).ToString();
 			shortLengthBox->Text = (Cal->ShortLength).ToString();
 			loadL0Box->Text = (Cal->LoadL0).ToString();
+			loadR0Box->Text = (Cal->LoadR0).ToString();
+			loadLengthBox->Text = (Cal->LoadLength).ToString();
 		 }
 
 private: System::Void maxFreq_Leave(System::Object^  sender, System::EventArgs^  e) {
@@ -1068,10 +1218,16 @@ private: System::Void refPlaneBox_TextChanged(System::Object^  sender, System::E
 		 }
 private: System::Void applyButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				Cal->OpenC0 = Convert::ToDouble(openC0Box->Text);
+				Cal->OpenC1 = Convert::ToDouble(openC1Box->Text);
+				Cal->OpenC2 = Convert::ToDouble(openC2Box->Text);
 				Cal->ShortL0 = Convert::ToDouble(shortL0Box->Text);
+				Cal->ShortL1 = Convert::ToDouble(shortL1Box->Text);
+				Cal->ShortL2 = Convert::ToDouble(shortL2Box->Text);
 				Cal->OpenLength = Convert::ToDouble(openLengthBox->Text);
 				Cal->ShortLength = Convert::ToDouble(shortLengthBox->Text);
+				Cal->LoadLength = Convert::ToDouble(loadLengthBox->Text);
 				Cal->LoadL0 = Convert::ToDouble(loadL0Box->Text);
+				Cal->LoadR0 = Convert::ToDouble(loadR0Box->Text);
 
 				// Compute Error Terms
 				CalToErrorTerms(Cal);
