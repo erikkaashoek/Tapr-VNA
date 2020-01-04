@@ -76,6 +76,7 @@ using namespace System::Windows::Forms;
 
 #include <float.h>
 
+std::complex<double> Ed_static[1025];
 //#define DIRECTCAL		// enable compensation of coupler directivity to magnitude
 
 	// Convert Mag and Phase to X,Y screen display coordinates in polar display mode
@@ -330,12 +331,15 @@ InstrumentCalDataSet::InstrumentCalDataSet(String^ StartUpDir, VNADevice^ VNADev
 
 	TxDet = gcnew Detector(this);
 	TxDet->name = "TRAN";
-
 	DirCoupler = gcnew DirectionalCoupler(this);		/// Holds Directional coupler error model
 
 	VNA = VNADev;			///< VNA hardware device
 
 	EdReal = gcnew array<Double>(1024); EdImag = gcnew array<Double>(1024);
+
+//	Ed = gcnew array<mycomplex>(1024);
+//	Es = gcnew array<mycomplex>(1024);
+
 	EsReal = gcnew array<Double>(1024); EsImag = gcnew array<Double>(1024);
 	EtReal = gcnew array<Double>(1024); EtImag = gcnew array<Double>(1024);
 	ThReal = gcnew array<Double>(1024); ThImag = gcnew array<Double>(1024);
@@ -668,6 +672,7 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 		imagpart = Cal->S11termImag[i];
 		std::complex<double> Sterm(realpart, imagpart);
 
+		Cal->Ed[i] = Cal->Es[i];
 		// Directivity error term
 		Cal->EdReal[i] = Cal->S11termReal[i];
 		Cal->EdImag[i] = Cal->S11termImag[i];
@@ -778,6 +783,12 @@ void CalToErrorTerms(InstrumentCalDataSet^ Cal)
 	}
 
 };
+
+std::complex<double> CorrectS11(std::complex<double> point, InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs)
+{
+	return point;
+}
+
 
 // Convert measured S11 into actual S11 via fixture calibration
 void CorrectS11(InstrumentCalDataSet^ Cal, __int64 Frequency, bool ReflExtn, bool calMode, double measmag, double measphs, double& rsltmag, double& rsltphs)
@@ -972,6 +983,16 @@ void CorrectS21(InstrumentCalDataSet^ Cal, __int64 Frequency, bool calMode, doub
 	rsltmag = fmagnitude;
 	rsltphs = fphase;
 }
+
+std::complex<double> ReadComplex(BinaryReader^ br)
+{
+	double r,i;
+	r = br->ReadDouble();
+	i = br->ReadDouble();
+	std::complex<double> c(r,i);
+	return(c);
+}
+
 	// Load Fixture Calibration Data Set. Modified 02-07-2010 to recognize LOG(f) type Fixture Cal file
 bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 {
@@ -1012,6 +1033,10 @@ bool LoadCalDataSet(OpenFileDialog^ infile, InstrumentCalDataSet^ Cal)
 		{
 			Cal->EdReal[i] = br->ReadDouble();
 			Cal->EdImag[i] = br->ReadDouble();
+//		Cal->Ed[i] = (std::complex<double>) ReadComplex(br);
+//   std::complex<double>	two(2, 0);
+//		Cal->Ed[i] = (mycomplex)two;
+
 			Cal->EsReal[i] = br->ReadDouble();
 			Cal->EsImag[i] = br->ReadDouble();
 			Cal->EtReal[i] = br->ReadDouble();

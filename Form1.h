@@ -416,6 +416,18 @@ private: System::Windows::Forms::Panel^  outputPanel;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 	private: System::ComponentModel::IContainer^  components;
 
 	private:
@@ -2125,6 +2137,10 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			this->outputPanel->Size = System::Drawing::Size(935, 329);
 			this->outputPanel->TabIndex = 35;
 			this->outputPanel->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &Form1::outputPanel_Paint);
+			this->outputPanel->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseDown);
+			this->outputPanel->MouseHover += gcnew System::EventHandler(this, &Form1::Form_MouseHover);
+			this->outputPanel->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseMove);
+			this->outputPanel->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Form1::Form_MouseUp);
 			// 
 			// Form1
 			// 
@@ -2205,7 +2221,7 @@ private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e)
 			PolarZoom = 1.0f;			// default Polar scale to no zoom
 
 			TDRStartTime = 0.0f;			// default TDR start time in nanoseconds
-			TDRStopTime = 4255.0f;		// default TDR stop time
+			TDRStopTime = 1020 * 1.11f;		// default TDR stop time	for 900MHz max freq
 			TDRvf = 0.68f;				// default TDR velocity factor
 			TDRMetricMode = true;		// default TDR to metric mode
 
@@ -4589,7 +4605,7 @@ private: System::Void Form_MouseDown(Object^ pSender, MouseEventArgs^ pe)
 			MarkerMousePick = -1;			// no marker active
 			for (int i=0; i<5; i++)
 			{
-				if (Marker[i] == Freq)		// if mouse picks an active marker
+				if (abs(Marker[i]-Freq) < 3)		// if mouse picks an active marker
 				{
 					MarkerMousePick = i;	// record which one is picked
 					break;
@@ -4619,7 +4635,7 @@ private: System::Void Form_MouseDown(Object^ pSender, MouseEventArgs^ pe)
 			MarkerMousePick = -1;			// no marker active
 			for (int i=0; i<5; i++)
 			{
-				if (MarkerT[i] == Indexer)		// if mouse picks an active marker
+				if (abs(MarkerT[i]-Indexer) < 5)		// if mouse picks an active marker
 				{
 					MarkerMousePick = i;	// record which one is picked
 					break;

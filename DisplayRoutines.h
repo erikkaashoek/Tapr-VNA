@@ -29,6 +29,8 @@
 #include "Detector.h"
 #include "USB_EZ_interface.h"
 
+#include <complex>
+
 #include "DataDisplay.h"
 #using <mscorlib.dll>
 #using <System.dll>
@@ -94,12 +96,27 @@ private:
 public ref class InstrumentCalDataSet
 {
 public:
-
+#if 0
+value struct mycomplex { private: double Real; double Imag; 
+public:
+void mycomplex::operator= 
+	(const std::complex<double> &c)
+{
+    // do the copy
+    Real = c.real();
+    Imag = c.imag();
+ 
+    // return the existing object so we can chain this operator
+    return ;
+}
+};
+#endif
 	Detector^ RxDet, ^TxDet;		///< Holds detector constants
 	DirectionalCoupler^ DirCoupler;		///< Holds Directional coupler error model
 
 	// Fixture Cal data (may not be any)
 	array<Double>^ EdReal, ^EdImag, ^EsReal, ^EsImag;
+//	array<mycomplex>^ Ed, ^Es;
 	array<Double>^ EtReal, ^EtImag, ^ThReal, ^ThImag;
 	double OpenC0, OpenC1, OpenC2, ShortL0, ShortL1, ShortL2,OpenLength,ShortLength,LoadL0,LoadR0,LoadLength;
 	array<Double>^ S11shortReal, ^S11shortImag;
@@ -109,6 +126,8 @@ public:
 	bool FixtureCalLogFreqMode;
 	__int64 minCalFreq, maxCalFreq;
 	VNADevice^ VNA;
+
+//	array<mycomplex>^ Ed;
 
 	int FreqError;					// Internal Crystal Frequency Error
 	double reflTimeDelayEquivalent; // Equivalent time delay of reflection cable go and return (for RefExtn - not enabled)

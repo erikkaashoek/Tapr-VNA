@@ -137,6 +137,27 @@ public ref class NumEntBox : public System::Windows::Forms::Form
 
 		}		
 	
+private: __int64 GetFreq(String ^t)
+		 {
+			__int64 suff = 1;
+			 if (t->Length > 1 && t[t->Length-1] > '9'){
+				switch(t[t->Length-1]) {
+			    case 'g':
+				case 'G':
+					suff *= 1000;
+				case 'm':
+				case 'M':
+					suff *= 1000;
+				case 'k':
+				case 'K':
+					suff *= 1000;
+				default:;
+				}
+			 }
+			 if (suff > 1)
+				t = t->Remove(t->Length-1,1);
+			 return((__int64)(Convert::ToInt64(t) * suff));
+		 }
 	
 	public:
 	    void set_NumericValue(__int64 number)   { NumberBox->Text = number.ToString(); } // display existing value
@@ -146,7 +167,7 @@ public ref class NumEntBox : public System::Windows::Forms::Form
 			__int64 n;
 			try										// make sure it's an long number
 			{
-				n = Convert::ToInt64(NumberBox->Text);	
+				n = GetFreq(NumberBox->Text);	
 			}
 			catch (System::FormatException^ pe)
 			{

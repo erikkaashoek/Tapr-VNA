@@ -724,12 +724,12 @@ private: System::Void RxPhaseButton_Click(System::Object^  sender, System::Event
 
 			 // Reflection Phase Detector Calibration
 
-			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
-			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
-			int Fdesired;
 
 			progressBar1->Value = 0;
 #if 0	
+			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
+			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
+			int Fdesired;
 
 			// run a sweep of 1024 points, calibrating Rx phase detector
 			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10);
@@ -861,11 +861,11 @@ private: System::Void TxLowAmpButton_Click(System::Object^  sender, System::Even
 			
 			// Transmission Amplitude detector Calibration - with 40 dB attenuator in path
 		 
+
+#if 0
 			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
 			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 			int Fdesired;
-
-#if 0
 			TxBuf->ReplyType = 0;
 			TxBuf->MeasureDelay = 0;		    // No delay
 			TxBuf->QDAClevel = QDAC_ZERODBM;	// Reference level
@@ -1094,12 +1094,10 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 			 // Performs two functions:
 			 //		1. Captures amplitude over 60 dB range for linear regression
 			 //		2. Captures Mag, I-phase and Q-phase at 0 dbm for coupler correction
-			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
-			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
-			int Fdesired;
-			int i;
 //			long FreqIdx;
 			
+			VNA_RXBUFFER *RxBuf = new VNA_RXBUFFER;
+			VNA_TXBUFFER *TxBuf = new VNA_TXBUFFER;
 			double mag, phase;
 			double& rmag = mag;
 			double& rphase = phase;
@@ -1112,6 +1110,8 @@ private: System::Void RxAmpButtonShort_Click(System::Object^  sender, System::Ev
 
 			progressBar1->Value = 0;
 #if 0			 
+			int Fdesired;
+			int i;
 
 			// run a sweep of 21 frequencies, calibrating Refl Amplitude detector
 			VNA->Sweep(Cal->GetFreqFromDetMagCalGrid(0), Cal->GetFreqFromDetMagCalGrid(1) - Cal->GetFreqFromDetMagCalGrid(0), 21, 10);
@@ -1343,7 +1343,7 @@ private: System::Void OKbutton_Click(System::Object^  sender, System::EventArgs^
 			double& rmag = mag;
 			double& rphase = phase;
 			double bopen, bshorted;
-			int Fdesired;
+			__int64 Fdesired;
 			int FreqIdx;
 			MeasurementSet^ calPoint = gcnew MeasurementSet;
 

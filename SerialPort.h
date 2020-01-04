@@ -522,9 +522,10 @@ namespace VNAR3 {
 					 this->Port->Close();
 					 System::Threading::Thread::Sleep(2000);
 				 }
-
-				Port->PortName = this->comboBox1->Text;
-				Port->BaudRate = 115200;
+				if (VNA->GetHardware() != HW_MOCKUP) {
+					Port->PortName = this->comboBox1->Text;
+					Port->BaudRate = 115200;
+				}
 				sampleRate = sampleRateTable[this->sampleRateBox->SelectedIndex];
 				VNA->SetMinFreq((__int64) ( Convert::ToDouble(this->minFreqBox->Text)*1000000.0));
 				VNA->SetMaxFreq((__int64) ( Convert::ToDouble(this->maxFreqBox->Text)*1000000.0));

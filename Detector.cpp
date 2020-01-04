@@ -156,12 +156,12 @@ bool Detector::PhaseCal(array<UInt16>^ Iphase, array<UInt16>^ Qphase, array<UInt
 		const int firstImin = 0;				// first min is at zero
 		int thirdQmid;							// 3rd mid-value crossing of Qphase
 		int firstQmin, firstQmax, secondQmin;	// 1st local min, 1st local max, 2nd local min of Qphase
-		int epsilon, Isearch, Qsearch;			// hold local minima and deltas during searches
-		int cableIPeriod;
+		int epsilon, Qsearch;					// hold local minima and deltas during searches
 		int stopI, startI;						// stop & start indexes for search
 		bool ErrorFlag = false;					// is true if the calibration failed
 
 #if 0
+		int Isearch, cableIPeriod;
 		// find firstImid
 		epsilon = 2000;
 		for (int i = 50; i<375; i++)

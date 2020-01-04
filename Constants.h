@@ -80,7 +80,7 @@
 
 // constants used by Time Domain display
 //#define	TDRTIMETICK		4.167				// 4.167 nanoseconds per TDR time tick
-#define TDRTIMETICK		((1.0/(double)VNA->GetMaxFreq())*1e9/2.0)
+#define TDRTIMETICK		((1.0/(double)VNA->GetMaxFreq())*1e9)
 
 #define METERSPERNSEC	0.2998				// meters per nanosecond - free space
 #define FEETPERNSEC		0.9836				// feet per nanosecond - free space

@@ -438,7 +438,7 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //					sa = Perform(String::Format("offset {0}",IFREQ));
 					s = serialPort->ReadExisting();		// In case previous scan was aborted
 
-					serialPort->WriteLine(String::Format("scan {0} {1} {2}",startF, stepF, numPoints));
+					serialPort->WriteLine(String::Format("scanraw 2 {0} {1} {2}",startF, stepF, numPoints, duration));
 //					serialPort->WriteLine(String::Format("scanraw {0} {1} {2} {3}",startF, stepF, numPoints, duration));
 
 					s = serialPort->ReadLine();
@@ -596,15 +596,22 @@ bool VNADevice::FindVNA()
 		  		 if (!serialPort->IsOpen) {
 					 serialPort->ReadBufferSize = 40000;
 					 serialPort->Open();
+					 Sleep(200);
+
 				 }
 				 if (hardware == HW_NANOVNA) {
 					 String ^s;
-					s = serialPort->ReadExisting();
+				again1:
+					 s = serialPort->ReadExisting();
+					 if (s->Length != 0) {
+						Sleep(100);
+						goto again1;
+					 }
 					 serialPort->NewLine = "\r\n";
 					array<String ^>^ sa;
-					sa = Perform("scan");
+					sa = Perform("scanraw");
 					 step=1;
-						 if (sa->Length > 2 && sa[1]->StartsWith("usage: scan {start(Hz)")) {
+						 if (sa->Length > 2 && sa[1]->StartsWith("usage: scanraw {channel(0|1|2)}")) {
 							 hasScanCommand = true;
 							 Perform("pause");
 						 } else {
@@ -622,9 +629,16 @@ bool VNADevice::FindVNA()
 						 //						    s = serialPort->ReadExisting();
 						 return true;
 				 } else { 
+					 String ^s;
+				again2:
+					 s = serialPort->ReadExisting();	// Throw away whatever was send before
+					 if (s->Length != 0) {
+						Sleep(100);
+						goto again2;
+					 }
 					 serialPort->Write("f3");
 					 System::Threading::Thread::Sleep(200);
-					 String ^s = serialPort->ReadLine();
+					 s = serialPort->ReadLine();
 					 if (s->StartsWith("TAPR VNA v4"))
 						 return true;
 				 }
@@ -700,7 +714,7 @@ again:
 //					return false;
 //				if (s->StartsWith("start"))
 //					goto again;
-				if (s->StartsWith("scan"))
+				if (s->StartsWith("scanraw"))
 					goto again;
 				if (s->StartsWith("ch>"))
 					return false;
@@ -708,7 +722,7 @@ again:
 					goto again;
 				if (s->StartsWith("1 "))
 					goto again;
-				sa = s->Split(' ');
+				sa = s->Split('\t');
 
 				freq = Convert::ToInt32(sa[0]);
 				x =  Convert::ToDouble(sa[1]);
