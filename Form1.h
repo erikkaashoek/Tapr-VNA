@@ -2083,6 +2083,11 @@ private: System::Windows::Forms::Panel^  outputPanel;
 			this->label6->Text = L"ReflPlaneExt";
 			this->label6->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
 			// 
+			// serialPort1
+			// 
+			this->serialPort1->Handshake = System::IO::Ports::Handshake::RequestToSend;
+			this->serialPort1->ReadTimeout = 1000;
+			// 
 			// Spectrum
 			// 
 			this->Spectrum->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
@@ -5061,7 +5066,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 
 			SweepProgressBar->Maximum = FG->points;		// Bar's maximum = number of points to sweep
 
-			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay, Spectrum->Checked);
+			VNA->Sweep(FG->Frequency(0), FG->Frequency(1) - FG->Frequency(0), FG->points, TxBuf->MeasureDelay, SweepProgressBar, Spectrum->Checked);
 			for (int m=0; m<FG->points; m++)
 			{
 //				if (!WorkerCollect) {
@@ -5150,6 +5155,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				// New 09-30-2007
 //				trace[m]->TranPILow = RxBuf->TranPILow;
 //				trace[m]->TranPQLow = RxBuf->TranPQLow;
+				if (VNA->GetHardware() != HW_NANOV2) {
 
 				// Update Sweep Progress
 				if (TxBuf->MeasureDelay == 1) {
@@ -5158,7 +5164,7 @@ private: System::Void VNA_Worker(void)			// runs as a background thread
 				else {
 					if ((m % 10) == 0) SweepProgressBar->Value = (m+1);
 				}
-
+				}
 			// Glitch detection using median filtering algorithm,
 			// faster but not as accurate as slow version.
 			// Modified for V2.1 to examine the range of samples
@@ -7209,7 +7215,7 @@ private: System::Void FindVNA()
 					 throw; 
 				 }
 				 VNA->SetFreq(50000000L, true);
-				 if (VNA->GetHardware() != HW_NANOVNA) {
+				 if (VNA->GetHardware() != HW_NANOVNA && VNA->GetHardware() != HW_NANOV2 ) {
 					 System::Threading::Thread::Sleep(500);
 					 if (actualMeasurement.reference < -40.0 || actualMeasurement.reference > 15.0) {
 						 MessageBox::Show("Measurement signal level out of range", "Error",

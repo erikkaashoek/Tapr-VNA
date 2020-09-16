@@ -47,6 +47,7 @@ extern volatile float volSig;
 #define HW_NANOVNA	1
 #define HW_SI5351	2
 #define HW_ADF4351	3
+#define HW_NANOV2	4
 
 #define DIR_TRANS	0
 #define DIR_REFL	1
@@ -95,8 +96,8 @@ public:
 	int State();				// -1 = no device  +1 = device OK
 	bool Start();					// Release reset of the 8051 processor on VNA
 	bool Stop();					// Halt the 8051 processor on VNA
-	bool Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, int power);
-	void Sweep(__int64 startF, __int64 stepF, int numPoints, int duration);
+	bool Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, System::Windows::Forms::ProgressBar^  SweepProgressBar, int power);
+	void Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, System::Windows::Forms::ProgressBar^  SweepProgressBar);
 	void SetFreq(__int64 startF, int direction);
 	bool Download(array<System::Byte>^ Codebuffer, int CodeSize, unsigned short Address );	// download code to 8051
 	bool Read(VNA_RXBUFFER * readbuf);		// Read 64 bytes of data from BULK_IN_EP2 - it blocks the

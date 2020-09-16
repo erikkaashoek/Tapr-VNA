@@ -46,6 +46,7 @@
 #using <mscorlib.dll>
 #include <math.h>
 #include <cstdio>
+#include <complex>
 
 using namespace System;
 	using namespace System::Windows::Forms;
@@ -399,17 +400,21 @@ bool VNADevice::Write(VNA_TXBUFFER * writebuf)
 	return(true);
 };
 
-void VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration)
+void VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, System::Windows::Forms::ProgressBar^  SweepProgressBar)
 {
-	Sweep(startF, stepF, numPoints, duration, false);
+	Sweep(startF, stepF, numPoints, duration,SweepProgressBar, false);
 }
 
-bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, int power)
+static __int64 oldstartF=0;
+static __int64 oldstepF=0;
+static __int64 oldnumPoints=0;
+
+bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration, System::Windows::Forms::ProgressBar^  SweepProgressBar, int power)
 {
 	String ^s;
 	array<String ^>^ sa, ^ss;
 //	String ^ t;
-	if (hardware != HW_NANOVNA) {
+	if (hardware != HW_NANOVNA && hardware != HW_NANOV2 ) {
 		SetAudioPower(power);
 		ArmAudio(numPoints,serialPort);
 	}
@@ -438,7 +443,7 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 //					sa = Perform(String::Format("offset {0}",IFREQ));
 					s = serialPort->ReadExisting();		// In case previous scan was aborted
 
-					serialPort->WriteLine(String::Format("scanraw 2 {0} {1} {2}",startF, stepF, numPoints, duration));
+					serialPort->WriteLine(String::Format("scanraw 2 {0} {1} {2} {3}",startF, stepF, numPoints, duration));
 //					serialPort->WriteLine(String::Format("scanraw {0} {1} {2} {3}",startF, stepF, numPoints, duration));
 
 					s = serialPort->ReadLine();
@@ -495,6 +500,110 @@ bool VNADevice::Sweep(__int64 startF, __int64 stepF, int numPoints, int duration
 					}
 				}
 				index = 0;
+			} else if (hardware == HW_NANOV2) {
+					array <unsigned char> ^ buf;				// Start autoread
+
+#define SENDV2(...)	{ array <unsigned char> ^ _buf = { __VA_ARGS__}; serialPort->Write(_buf, 0 , _buf->Length);}
+#define FLUSHV2		Sleep(100); serialPort->ReadExisting()
+					buf = gcnew array<unsigned char>(500);
+
+
+//					if (startF != oldstartF || stepF != oldstepF || numPoints != oldnumPoints) {
+					FLUSHV2;
+					buf[0] = (unsigned char) 0x23;
+					buf[1] = (unsigned char) 0x0;
+					buf[2] = (unsigned char)(((unsigned __int64)startF));
+					buf[3] = (unsigned char)(((unsigned __int64)startF)>>8);
+					buf[4] = (unsigned char)(((unsigned __int64)startF)>>16);
+					buf[5] = (unsigned char)(((unsigned __int64)startF)>>24);
+					buf[6] = (unsigned char)(((unsigned __int64)startF)>>32);
+					buf[7] = (unsigned char)(((unsigned __int64)startF)>>40);
+					buf[8] = (unsigned char)(((unsigned __int64)startF)>>48);
+					buf[9] = (unsigned char)(((unsigned __int64)startF)>>56);
+					serialPort->Write(buf, 0 , 10);
+
+					buf[0] = 0x23;
+					buf[1] = 0x10;
+					buf[2] = (unsigned char)(((unsigned __int64)stepF));
+					buf[3] = (unsigned char)(((unsigned __int64)stepF)>>8);
+					buf[4] = (unsigned char)(((unsigned __int64)stepF)>>16);
+					buf[5] = (unsigned char)(((unsigned __int64)stepF)>>24);
+					buf[6] = (unsigned char)(((unsigned __int64)stepF)>>32);
+					buf[7] = (unsigned char)(((unsigned __int64)stepF)>>40);
+					buf[8] = (unsigned char)(((unsigned __int64)stepF)>>48);
+					buf[9] = (unsigned char)(((unsigned __int64)stepF)>>56);
+					serialPort->Write(buf, 0 , 10);
+
+					FLUSHV2;
+					buf[0] = 0x21;
+					buf[1] = 0x20;
+					buf[2] = (unsigned char)(((unsigned short)numPoints));
+					buf[3] = (unsigned char)(((unsigned short)numPoints)>>8);
+					serialPort->Write(buf, 0 , 4);
+					
+					oldstartF = startF;
+					oldstepF = stepF;
+					oldnumPoints = numPoints;
+//						Sleep(4000);
+					
+//					}
+					FLUSHV2;
+
+//					SENDV2(0,0,0,0,0,0,0,0);	// Reset protocol
+//					FLUSHV2;
+//					SENDV2(0,0,0,0,0,0,0,0); 
+//					FLUSHV2;
+
+					SENDV2(0x20, 0x30, 0x00);		// Clear FIFO
+
+					SweepProgressBar->Value = 0;
+					int base = 0;
+					while (numPoints > 0) {
+						int getPoints = 101;
+						if (getPoints > numPoints)
+							getPoints = numPoints;
+						FLUSHV2;
+						SENDV2(0x18, 0x30, (unsigned char)getPoints);	// Read FIFO
+
+
+						int bytes = numPoints * 32;
+						buf = gcnew array<unsigned char>(bytes);
+
+						int data[7];
+						for(int i=0; i<getPoints; i++) {
+							int r = serialPort->Read(buf, 0 ,32);
+							while (r != 32) {
+								r += serialPort->Read(buf, r ,32-r);
+							}
+							for (int k=0; k<6; k++) {
+								data[k] = (int)( (buf[0*32+k*4+0]) + (buf[0*32+k*4+1]<<8) + (buf[0*32+k*4+2]<<16) + (buf[0*32+k*4+3]<<24) );
+							}
+							data[6] = (int)( (buf[0*32+24+0]) + (buf[0*32+24+1]<<8) );
+
+							std::complex<double> fwd((double)data[0], (double)data[1]);
+							std::complex<double> refl((double)data[2], (double)data[3]);
+							std::complex<double> thru((double)data[4], (double)data[5]);
+							std::complex<double> zero((double)0.0, (double)0.0);
+							if (fwd != zero) {
+								std::complex<double> S11 = refl/fwd;
+								std::complex<double> S21 = thru/fwd;
+								double t;
+								int j = data[6];
+								t = real(S11);
+								S11Real[j] = t;
+								S11Imag[j] = imag(S11);
+								S21Real[j] = real(S21);
+								S21Imag[j] = imag(S21);
+							}
+							else
+								MessageBox::Show("Zero thru", "Error");
+								if (((base+i) % 10) == 0) SweepProgressBar->Value = (base+i+1);
+
+						}
+						numPoints -= getPoints;
+						base += getPoints;
+					}
+					index = 0; // Start from ReadWrite from0
 			} else {
 				//serialPort->ReadExisting();
 				if (power)
@@ -531,6 +640,8 @@ void VNADevice::SetFreq(__int64 startF, int direction)
 					s = serialPort->ReadLine();
 //					s = serialPort->ReadExisting();
 #endif
+				} else if (hardware == HW_NANOV2) {
+					// not implemented yet
 				} else {
 					SetAudioPower((direction == 2?true:false));
 					serialPort->WriteLine(String::Format("F{1} {0} 1 0 5 {2} {3}", startF, direction, IFREQ, hardware-2));
@@ -581,16 +692,15 @@ bool VNADevice::FindVNA()
 			 {
 				 if (hardware == HW_MOCKUP)
 					 return true;
-
 				 //					       serialPort->PortName = SetPortName(_serialPort->PortName);
 				 //        serialPort->BaudRate = SetPortBaudRate(_serialPort->BaudRate);
 				 serialPort->Parity =(System::IO::Ports::Parity) 0;
-				 //serialPort->DataBits = (System::IO::Ports::DataBits)8;
+				 serialPort->DataBits = 8;
 				 serialPort->StopBits = (System::IO::Ports::StopBits)1;
 				 serialPort->Handshake = (System::IO::Ports::Handshake)0;
 
 				 // Set the read/write timeouts
-				 serialPort->ReadTimeout = 2000;
+				 serialPort->ReadTimeout = 5000;
 				 serialPort->WriteTimeout = 1000;
 
 		  		 if (!serialPort->IsOpen) {
@@ -599,7 +709,17 @@ bool VNADevice::FindVNA()
 					 Sleep(200);
 
 				 }
-				 if (hardware == HW_NANOVNA) {
+				 if (hardware == HW_NANOV2) {
+					 array<unsigned char>^ buf = gcnew array<unsigned char>(1);	// read data
+					buf[0] = (unsigned char) 0x0D;
+					serialPort->Write(buf, 0 ,1);
+					Sleep(500);
+					String	^s = serialPort->ReadExisting();
+					if (s == "2")
+						return true;
+					else
+						return false;
+				 } else if (hardware == HW_NANOVNA) {
 					 String ^s;
 				again1:
 					 s = serialPort->ReadExisting();
@@ -643,8 +763,9 @@ bool VNADevice::FindVNA()
 						 return true;
 				 }
 			 }
-			 catch( Exception^ /* e */ )	
+			 catch( Exception^ e)	
 			 {	
+			MessageBox::Show(e->Message, "Error");
 				 return false;
 			 }
 			 return false;
@@ -746,6 +867,29 @@ again:
 				tranmag = (float)todb(sqrt(x*x + y*y));
 
 			}
+			index++;
+		}
+		catch( Exception^ e )	
+		{	
+			MessageBox::Show(e->Message, "Error");
+
+			return false;
+		}
+	} else if (hardware == HW_NANOV2) {
+//		String ^s;
+		double x;
+		double y;
+		reflevel = 0.0; // Always 0.0 for NanoVNA
+		try {
+
+			x = S11Real[index];
+			y = S11Imag[index];
+				reflphase = (float) (atan2(y, x) * RAD2DEGR);
+			reflmag = (float)todb(sqrt(x*x + y*y));
+			x = S21Real[index];
+			y = S21Imag[index];
+			tranphase = (float) (atan2(y, x) * RAD2DEGR);
+			tranmag = (float)todb(sqrt(x*x + y*y));
 			index++;
 		}
 		catch( Exception^ /* e */ )	

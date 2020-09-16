@@ -424,12 +424,14 @@ namespace VNAR3 {
 			// hardwareBox
 			// 
 			this->hardwareBox->FormattingEnabled = true;
-			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(4) {L"Mockup", L"NanoVNA", L"SI5351", L"ADF4351"});
+			this->hardwareBox->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"Mockup", L"NanoVNA", L"SI5351", L"ADF4351", 
+				L"nano V2"});
 			this->hardwareBox->Location = System::Drawing::Point(116, 171);
 			this->hardwareBox->Name = L"hardwareBox";
 			this->hardwareBox->Size = System::Drawing::Size(83, 21);
 			this->hardwareBox->TabIndex = 27;
 			this->hardwareBox->Text = L"Mockup";
+			this->hardwareBox->SelectedIndexChanged += gcnew System::EventHandler(this, &SerialPort::hardwareBox_SelectedIndexChanged);
 			// 
 			// SerialPort
 			// 
@@ -613,6 +615,9 @@ private: System::Void maxFreqBox_TextChanged(System::Object^  sender, System::Ev
 		 }
 private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
 			 SerialPort_Load(sender,e);
+		 }
+private: System::Void hardwareBox_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
+			 VNA->SelectHardware(hardwareBox->SelectedIndex);
 		 }
 };
 }

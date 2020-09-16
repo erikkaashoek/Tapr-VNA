@@ -988,9 +988,9 @@ private: System::Void DirectivityCalButton_Click(System::Object^  sender, System
 			progressBar1->Value = 0;
 
 			// run a sweep of 1024 frequencies, calibrating Refl Amplitude detector
-			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10);
+			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), PHASECALGRIDSIZE, 10, progressBar1);
 
-			VNA->Sweep(minFreq, (maxFreq/PHASECALGRIDSIZE), PHASECALGRIDSIZE, 10);
+			VNA->Sweep(minFreq, (maxFreq/PHASECALGRIDSIZE), PHASECALGRIDSIZE, 10, progressBar1);
 			for (long FreqIdx=0; FreqIdx<PHASECALGRIDSIZE; FreqIdx++)
 			{
 				// Compute spot frequency
@@ -1217,7 +1217,7 @@ private: System::Void TxLongCableOpenButton_Click(System::Object^  sender, Syste
 
 			// Collect detailed 1024 point sweep for Terminated Reflection Data
 
-			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), 1024, 10);
+			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), 1024, 10, progressBar1);
 			for (i=0; i<1024; i++)
             {
 				// Compute spot frequency
@@ -1548,7 +1548,7 @@ private: System::Void TxLongCableShortButton_Click(System::Object^  sender, Syst
 
 			// Collect detailed 1024 point sweep for Terminated Reflection Data
 
-			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), 1024, 10);
+			VNA->Sweep(Cal->GetFreqFromPhaseCalGrid(0), Cal->GetFreqFromPhaseCalGrid(1) - Cal->GetFreqFromPhaseCalGrid(0), 1024, 10, progressBar1);
 			for (i=0; i<1024; i++)
             {
 				// Compute spot frequency

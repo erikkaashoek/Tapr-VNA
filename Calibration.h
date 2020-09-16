@@ -853,7 +853,7 @@ namespace VNAR3
 				MeasurementSet^ calPoint = gcnew MeasurementSet;
 				//VNA->SetMode(M_SHORT);
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM, calProgressBar);
 				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -913,7 +913,7 @@ namespace VNAR3
 				//VNA->SetMode(M_OPEN);
 
 				 // run a sweep of 1024 points, collecting S11 data 'short'
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM, calProgressBar);
 				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -974,7 +974,7 @@ namespace VNAR3
 				//VNA->SetMode(M_LOAD);
 				 // run a sweep of 1024 points, collecting S11 data 'short'
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM, calProgressBar);
 				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
@@ -1035,7 +1035,7 @@ namespace VNAR3
 
 				// run a sweep of 1024 points, collecting S21 data 'thru'
 
-				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM);
+				VNA->Sweep(Cal->GetFreqFromFixtureCalGrid(0, false), Cal->GetFreqFromFixtureCalGrid(1, false) - Cal->GetFreqFromFixtureCalGrid(0, false), PHASECALGRIDSIZE, CALSUM, calProgressBar);
 				for (i=0; i<PHASECALGRIDSIZE; i++)
 				{
 					// Compute spot frequency
